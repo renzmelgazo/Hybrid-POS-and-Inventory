@@ -1,0 +1,2812 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Returns - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/global-search.css">
+    <link rel="stylesheet" href="/css/pagination.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            padding-top: 57px !important;
+            background: white;
+            min-width: 0;
+        }
+
+        /* ===== LIST VIEW — full-height flex column =====
+           page-header stays pinned at top;
+           #tableContainer scrolls internally with sticky th headers */
+        #listView {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 57px);
+            overflow: hidden;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            top: 0 !important;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* ===== TABLE CONTAINER — internal flex scroller ===== */
+        #tableContainer {
+            flex: 1;
+            min-height: 0;          /* required: lets flex child shrink below content size */
+            overflow-y: auto;
+            overflow-x: auto;
+            width: 100%;
+            background: white;
+        }
+
+        .returns-table {
+            width: 100%;
+            border-collapse: separate; /* required for position:sticky on th in Chrome/Safari */
+            border-spacing: 0;
+            background: transparent;
+        }
+
+        /* THEAD ROW — Blue-Grey band */
+        .returns-table thead tr {
+            border-bottom: 2px solid #8b9fb8;
+            background: #dde3ec !important;
+        }
+
+        .returns-table th {
+            position: sticky;
+            top: 0;              /* ← FIXED: top:0 inside overflow-y:auto container */
+            z-index: 10;
+            padding: 9px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2d3a4a;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            background: #dde3ec !important;  /* ← solid Blue-Grey, no bleed-through */
+            border-bottom: 2px solid #8b9fb8;
+            box-shadow: 0 2px 0 #8b9fb8;
+            white-space: nowrap;
+        }
+
+
+        .returns-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .returns-table tr:hover td {
+            background: #f8f9ff;
+        }
+
+        .returns-table th:first-child,
+        .returns-table td:first-child {
+            width: 36px;
+            text-align: center;
+            padding: 14px 8px 14px 16px;
+        }
+
+        .returns-table th:nth-child(2),
+        .returns-table td:nth-child(2) {
+            width: 36px;
+            text-align: center;
+            padding: 14px 8px;
+        }
+
+        .cust-filter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 6px;
+            border-radius: 4px;
+            background: #f0f5ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .cust-filter-icon:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .cust-filter-icon svg {
+            transition: all 0.2s ease;
+        }
+
+        .cust-filter-icon:hover svg {
+            fill: #6d1515;
+        }
+
+        .row-checkbox {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            accent-color: #4285f4;
+        }
+
+        .prn-link {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .prn-link:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== STATUS BADGES ===== */
+        .status-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.draft {
+            color: #555;
+        }
+
+        .status-badge.approved,
+        .status-badge.confirmed {
+            color: #1a73e8;
+        }
+
+        .status-badge.shipped {
+            color: #7c3aed;
+        }
+
+        .status-badge.cancelled {
+            color: #dc2626;
+        }
+
+        .status-badge.closed {
+            color: #16a34a;
+        }
+
+        .status-badge.pending {
+            color: #d97706;
+        }
+
+        .status-badge.credited {
+            color: #16a34a;
+        }
+
+        .status-badge.received-by-vendor {
+            color: #16a34a;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 150px 24px;
+            text-align: center;
+            min-height: calc(100vh - 100px);
+        }
+
+        .empty-state-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 16px 0;
+        }
+
+        .empty-state-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin: 0 0 32px 0;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .btn-new-return {
+            padding: 8px 18px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-new-return:hover {
+            background: #3367d6;
+        }
+
+        /* ===== DETAIL VIEW (SPLIT LAYOUT) ===== */
+        .detail-view {
+            display: none;
+            height: 100vh;
+        }
+
+        .detail-view.active {
+            display: flex;
+        }
+
+        /* Left sidebar */
+        .sr-left-panel {
+            width: 210px;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            background: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sr-left-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .sr-left-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sr-left-title:hover {
+            color: #4285f4;
+        }
+
+        .sr-left-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sr-left-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sr-left-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .sr-left-btn.primary {
+            background: linear-gradient(135deg, #a52222 0%, #800000 100%);
+            color: white;
+            transition: background 0.15s;
+        }
+
+        .sr-left-btn.primary:hover {
+            background: linear-gradient(135deg, #b52828 0%, #8e0000 100%);
+        }
+
+        .sr-left-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sr-left-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .sr-left-item:hover {
+            background: #f8f9ff;
+        }
+
+        .sr-left-item.active {
+            background: #e8f0fe;
+            border-left: 3px solid #4285f4;
+        }
+
+        .sr-left-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .sr-left-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sr-left-item-amount {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sr-left-item-bottom {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .sr-left-item-status {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .sr-left-item-status.approved {
+            color: #16a34a;
+        }
+
+        .sr-left-item-status.draft {
+            color: #888;
+        }
+
+        .sr-left-item-status.shipped {
+            color: #7c3aed;
+        }
+
+        .sr-left-item-status.cancelled {
+            color: #dc2626;
+        }
+
+        /* Right panel */
+        .sr-right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f9fafb;
+        }
+
+        .sr-right-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .sr-right-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sr-right-prn {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .sr-right-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sr-right-header-actions button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sr-right-header-actions button:hover {
+            background: #f0f0f0;
+        }
+
+        /* Action bar */
+        .sr-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .sr-action-btn {
+            padding: 6px 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .sr-action-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .sr-action-separator {
+            width: 1px;
+            height: 20px;
+            background: #e0e0e0;
+            margin: 0 4px;
+        }
+
+        /* Tabs */
+        .sr-tabs {
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .sr-tab {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sr-tab:hover {
+            color: #333;
+        }
+
+        .sr-tab.active {
+            color: #4285f4;
+            border-bottom-color: #4285f4;
+            font-weight: 500;
+        }
+
+        .sr-tab-count {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #1a73e8;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 4px;
+            font-weight: 600;
+        }
+
+        .assoc-record-area {
+            background: white;
+            padding: 0 20px;
+        }
+
+        .assoc-record-area table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .assoc-record-area th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e9ecef;
+            background: #f9fafb;
+        }
+
+        .assoc-record-area td {
+            padding: 10px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Detail scroll area */
+        .sr-detail-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Document card */
+        .sr-document-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 40px 48px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .sr-doc-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .sr-doc-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 4px 0;
+        }
+
+        .sr-doc-subtitle {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+
+        .sr-doc-subtitle strong {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sr-bill-to-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .sr-bill-to-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4285f4;
+        }
+
+        /* Status section */
+        .sr-status-section {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding: 16px 0;
+            border-left: 3px solid #ffc107;
+            padding-left: 16px;
+        }
+
+        .sr-status-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sr-status-label {
+            font-size: 13px;
+            color: #666;
+            min-width: 100px;
+        }
+
+        .sr-status-value {
+            font-size: 13px;
+        }
+
+        /* Date section */
+        .sr-date-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 30px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .sr-date-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            min-width: 80px;
+        }
+
+        .sr-date-value {
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* Items table in detail */
+        .sr-doc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .sr-doc-table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border-bottom: 2px solid #e9ecef;
+            background: #f9fafb;
+        }
+
+        .sr-doc-table td {
+            padding: 14px 12px;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+        }
+
+        .sr-doc-table th:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
+        .sr-doc-table td:first-child {
+            text-align: center;
+            color: #888;
+        }
+
+        .sr-doc-table th:nth-child(4),
+        .sr-doc-table td:nth-child(4),
+        .sr-doc-table th:nth-child(5),
+        .sr-doc-table td:nth-child(5) {
+            text-align: right;
+            width: 100px;
+        }
+
+        .sr-qty-returned {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .sr-qty-received {
+            color: #888;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .sr-item-img {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 16px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Footer */
+        .sr-left-footer {
+            padding: 10px 16px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+            flex-shrink: 0;
+        }
+
+        /* Filter Dropdown */
+        .sr-filter-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sr-filter-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        .sr-filter-btn:hover {
+            color: #4285f4;
+        }
+
+        .sr-filter-arrow {
+            font-size: 10px;
+            color: #8B1A1A;
+            transition: transform 0.2s;
+        }
+
+        .sr-filter-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .sr-filter-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 6px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            min-width: 240px;
+            z-index: 100;
+            padding: 8px 0;
+        }
+
+        .sr-filter-dropdown.open {
+            display: block;
+        }
+
+        .sr-filter-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: background 0.15s;
+        }
+
+        .sr-filter-option:hover {
+            background: #f5f8ff;
+        }
+
+        .sr-filter-option.active {
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        /* PDF/Print Dropdown */
+        .pdf-print-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .pdf-print-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            z-index: 500;
+            min-width: 160px;
+            overflow: hidden;
+        }
+
+        .pdf-print-menu.show {
+            display: block;
+        }
+
+        .pdf-print-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .pdf-print-menu-item:hover {
+            background: #f0f5ff;
+        }
+
+        .pdf-print-menu-item:first-child {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Kebab Dropdown */
+        .kebab-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .kebab-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            min-width: 190px;
+            z-index: 200;
+            padding: 4px 0;
+        }
+
+        .kebab-dropdown.show {
+            display: block;
+        }
+
+        .kebab-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 16px;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .kebab-item:hover {
+            background: #f5f8ff;
+        }
+
+        .kebab-item svg {
+            flex-shrink: 0;
+        }
+
+        .kebab-sep {
+            height: 1px;
+            background: #eee;
+            margin: 4px 0;
+        }
+
+        .btn-more {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-more:hover {
+            background: #f5f5f5;
+        }
+
+        /* ===== BULK ACTIONS BAR =====
+           White background, fixed height = page-header. The flex-column model
+           keeps it locked at the top — it never scrolls with the table rows. */
+        .bulk-actions-bar {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 0 24px;
+            min-height: 57px;        /* matches .page-header — zero layout shift */
+            box-sizing: border-box;
+            background: #fff;        /* white — same as page-header */
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;          /* never shrink inside the flex-column */
+        }
+
+        .bulk-actions-bar.show {
+            display: flex;
+        }
+
+        .bulk-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8B1A1A;    /* GiHon maroon */
+            margin-right: 8px;
+        }
+
+        .bulk-btn {
+            padding: 6px 14px;
+            border: 1px solid #c7d2fe;
+            border-radius: 4px;
+            background: white;
+            color: #333;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .bulk-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .bulk-btn.danger {
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+        .bulk-btn.danger:hover {
+            background: #fef2f2;
+        }
+
+        .bulk-btn-deselect {
+            margin-left: auto;
+            padding: 6px 12px;
+            border: none;
+            background: none;
+            color: #6366f1;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .bulk-btn-deselect:hover {
+            text-decoration: underline;
+        }
+
+        /* Hamburger Dropdown */
+        .hamburger-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .hamburger-dropdown {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 200px;
+            z-index: 9999;
+            padding: 8px 0;
+            overflow: visible;
+        }
+
+        .hamburger-dropdown.show {
+            display: block;
+            animation: prtnHbFadeIn 0.15s ease-out;
+        }
+
+        @keyframes prtnHbFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .hamburger-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .hamburger-dropdown-item:first-child {
+            background: #8B1A1A;
+            color: white;
+            margin: 4px 8px 8px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            width: calc(100% - 16px);
+        }
+
+        .hamburger-dropdown-item:first-child:hover {
+            background: #6d1515;
+        }
+
+        .hamburger-dropdown-item:hover {
+            background: #f3f4f6;
+            color: #1a1f3a;
+        }
+
+        .hamburger-dropdown-item svg {
+            flex-shrink: 0;
+        }
+
+        /* Clip Text */
+        .returns-table.clip-text td {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Toast */
+        /* Customize Columns Modal */
+        .cc-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 5000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cc-overlay.show {
+            display: flex;
+        }
+
+        .cc-panel {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .cc-search {
+            padding: 16px 24px;
+        }
+
+        .cc-search input {
+            width: 100%;
+            padding: 10px 12px 10px 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 10px center no-repeat;
+            box-sizing: border-box;
+        }
+
+        .cc-search input:focus {
+            border-color: #8B1A1A;
+            box-shadow: 0 0 0 2px rgba(139, 26, 26, 0.1);
+        }
+
+        .cc-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+            min-height: 0;
+        }
+
+        .cc-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            margin: 4px 0;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #f8fafc;
+            cursor: default;
+            transition: all 0.15s;
+        }
+
+        .cc-row:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .cc-row:has(.cc-check:checked) {
+            background: #e6f4ff;
+            border-color: #91caff;
+        }
+
+        .cc-drag {
+            color: #bbb;
+            font-size: 16px;
+            cursor: grab;
+            user-select: none;
+            flex-shrink: 0;
+            letter-spacing: 1px;
+        }
+
+        .cc-drag:active {
+            cursor: grabbing;
+        }
+
+        .cc-lock {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cc-lock svg {
+            color: #a0a0c0;
+        }
+
+        .cc-check {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            accent-color: #8B1A1A;
+            cursor: pointer;
+        }
+
+        .cc-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .cc-footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 24px;
+            border-top: 1px solid #e8e8e8;
+        }
+
+        .cc-save {
+            padding: 8px 22px;
+            background: #8B1A1A;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cc-save:hover {
+            background: #6d1515;
+        }
+
+        .cc-cancel {
+            padding: 8px 18px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .cc-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        /* Sort Submenu */
+        .kebab-item .ki-arrow {
+            margin-left: auto;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .kebab-item.ki-sort {
+            position: relative;
+        }
+
+        .kebab-item.ki-sort:hover {
+            background: #f5f7fa;
+        }
+
+        .sort-submenu {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: -6px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+            min-width: 190px;
+            padding: 6px 0;
+            z-index: 1001;
+        }
+
+        .kebab-item.ki-sort:hover .sort-submenu,
+        .kebab-item:hover>.sort-submenu {
+            display: block;
+        }
+
+        .sort-submenu::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 20px;
+            height: 100%;
+        }
+
+        .sort-sub-item {
+            padding: 9px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .sort-sub-item:hover {
+            background: #f5f7fa;
+        }
+
+        .sort-sub-item.active {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .sort-sub-item .sort-dir {
+            margin-left: auto;
+            font-size: 14px;
+        }
+
+        /* History tab */
+        .history-timeline {
+            padding: 0;
+        }
+
+        .history-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .history-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4285f4;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-text {
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        @media print {
+            #sidebarContainer,
+            .sr-left-panel,
+            .sr-right-header,
+            .sr-action-bar,
+            .sr-tabs,
+            .assoc-record-area,
+            .pdf-print-wrapper,
+            .nav-sidebar,
+            .main-layout > div:first-child,
+            #listView {
+                display: none !important;
+            }
+            body, .main-layout, .content {
+                margin: 0 !important;
+                
+                background: white !important;
+            }
+            .detail-view {
+                display: block !important;
+            }
+            .sr-right-panel {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+            }
+            .sr-detail-scroll {
+                overflow: visible !important;
+            }
+            .sr-document-card {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+            @page { margin: 15mm; }
+        }
+    
+        #clipTextItem, [onclick*="ClipText"], [onclick*="TextMode"], [onclick*="WrapText"] {
+            background: #8B1A1A !important;
+            color: white !important;
+            margin: 0 8px 4px 8px !important;
+            border-radius: 6px !important;
+            width: calc(100% - 16px) !important;
+        }
+
+        #clipTextItem:hover, [onclick*="ClipText"]:hover, [onclick*="TextMode"]:hover, [onclick*="WrapText"]:hover {
+            background: #6d1515 !important;
+            color: white !important;
+        }
+        
+        #clipTextItem *, [onclick*="ClipText"] *, [onclick*="TextMode"] *, [onclick*="WrapText"] * {
+            color: white !important;
+            fill: white !important;
+            stroke: white !important;
+        }
+
+    </style>
+    <link rel="stylesheet" href="/css/list-table.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+
+            <!-- ===== LIST VIEW ===== -->
+            <div id="listView">
+                <div class="page-header">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="sr-filter-wrap">
+                            <button class="sr-filter-btn" onclick="toggleFilter()">
+                                <span id="filterTitle">All Purchase Returns</span>
+                                <span class="sr-filter-arrow" id="filterArrow">▼</span>
+                            </button>
+                            <div class="sr-filter-dropdown" id="filterDropdown">
+                                <div class="sr-filter-option active" onclick="setFilter('all')">All Purchase Returns</div>
+                                <div class="sr-filter-option" onclick="setFilter('draft')">Draft</div>
+                                <div class="sr-filter-option" onclick="setFilter('confirmed')">Confirmed</div>
+                                <div class="sr-filter-option" onclick="setFilter('closed')">Closed</div>
+                                <div class="sr-filter-option" onclick="setFilter('cancelled')">Cancelled</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="global-search-container">
+                        <span class="global-search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="text" class="global-search-input" id="prSearchInput"
+                            placeholder="Search purchase returns..." oninput="searchPurchaseReturns()">
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button class="btn-new-return" onclick="window.location.href='/new-purchase-return.html'">+ New</button>
+                        <div class="kebab-wrapper">
+                            <button class="btn-more" onclick="toggleKebabMenu(event)">⋯</button>
+                            <div class="kebab-dropdown" id="kebabDropdown">
+                                <div class="kebab-item" onclick="exportCSV()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    Export CSV
+                                </div>
+                                <div class="kebab-item" onclick="triggerImportFileDialog()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                    Import Returns
+                                </div>
+                                <div class="kebab-sep"></div>
+                                <div class="kebab-item ki-sort">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 5h10" />
+                                        <path d="M11 9h7" />
+                                        <path d="M11 13h4" />
+                                        <path d="M3 17l3 3 3-3" />
+                                        <path d="M6 18V4" />
+                                    </svg>
+                                    Sort by
+                                    <span class="ki-arrow">›</span>
+                                    <div class="sort-submenu">
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortReturnsBy('date', this)">Date</div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortReturnsBy('prn_number', this)">PRN#
+                                        </div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortReturnsBy('vendor_name', this)">Vendor
+                                            Name</div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortReturnsBy('status', this)">Status
+                                        </div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortReturnsBy('created_at', this)">Created
+                                            Time</div>
+                                    </div>
+                                </div>
+                                <div class="kebab-sep"></div>
+                                <div class="kebab-item" onclick="refreshReturnsList()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10" />
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                                    </svg>
+                                    Refresh List
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions-bar" id="bulkActionsBar">
+                    <span class="bulk-count" id="bulkCount">0 Selected</span>
+                    <button class="bulk-btn" onclick="bulkPrint()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9V2h12v7" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        Print
+                    </button>
+                    <button class="bulk-btn danger" onclick="bulkDelete()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        Delete
+                    </button>
+                    <button class="bulk-btn-deselect" onclick="prDeselectAll()">Deselect All</button>
+                </div>
+
+                <div id="tableContainer">
+                    <table class="returns-table" id="returnsTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="hamburger-wrap">
+                                        <span class="cust-filter-icon" onclick="toggleHamburgerMenu(event)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#8B1A1A">
+                                                <path d="M3 5h2v2H3V5zm4 0h14v2H7V5zm-4 6h2v2H3v-2zm4 0h14v2H7v-2zm-4 6h2v2H3v-2zm4 0h14v2H7v-2z" />
+                                            </svg>
+                                        </span>
+                                        <div class="hamburger-dropdown" id="hamburgerDropdown">
+                                            <button class="hamburger-dropdown-item" onclick="openCustomizeColumns()">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                                Customize Columns
+                                            </button>
+                                            <button class="hamburger-dropdown-item" id="clipTextItem" onclick="toggleClipText()">
+                                                <span id="prtnClipIcon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>
+                                                <span id="clipTextLabel">Clip Text</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th><input type="checkbox" class="row-checkbox" id="selectAllReturns"
+                                        onclick="toggleSelectAllReturns(this)"></th>
+                                <th>DATE</th>
+                                <th>PRN#</th>
+                                <th>PURCHASE ORDER#</th>
+                                <th>VENDOR NAME</th>
+                                <th>STATUS</th>
+                                <th>RETURN</th>
+                                <th>RESOLUTION</th>
+                                <th>CREATED TIME</th>
+                                <th>LAST MODIFIED</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnsTableBody">
+                            <tr>
+                                <td colspan="9" style="text-align:center;padding:40px;color:#999;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div id="retPaginationContainer"></div>
+                </div>
+
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <h2 class="empty-state-title">No Purchase Returns Yet</h2>
+                    <p class="empty-state-subtitle">Create a purchase return to send items back to your vendor and track
+                        the return process.</p>
+                    <button class="btn-new-return" onclick="window.location.href='/new-purchase-return.html'">+ New
+                        Purchase Return</button>
+                </div>
+            </div>
+
+            <!-- ===== DETAIL VIEW (SPLIT LAYOUT) ===== -->
+            <div id="detailView" class="detail-view">
+                <!-- Left Panel -->
+                <div class="sr-left-panel">
+                    <div class="sr-left-header">
+                        <span class="sr-left-title" onclick="backToList()">← All Purchase Returns</span>
+                        <div class="sr-left-actions">
+                            <button class="sr-left-btn primary"
+                                onclick="window.location.href='/new-purchase-return.html'" title="New">+</button>
+                        </div>
+                    </div>
+                    <div class="sr-left-list" id="detailSidebarList"></div>
+                    <div class="sr-left-footer">
+                        <span id="sidebarCount">0 items</span>
+                    </div>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="sr-right-panel">
+                    <!-- Header -->
+                    <div class="sr-right-header">
+                        <div class="sr-right-header-left">
+                            <span class="sr-right-prn" id="detailPRN">PRN-00001</span>
+                        </div>
+                        <div class="sr-right-header-actions">
+                            <button onclick="closeDetail()" title="Close">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar (SO-style) -->
+                    <div class="sr-action-bar">
+                        <button class="sr-action-btn" id="editBtn" onclick="editReturn()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg> Edit
+                        </button>
+                        <div class="pdf-print-wrapper">
+                            <button class="sr-action-btn" onclick="togglePdfPrintMenu(event)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                </svg> PDF/Print ▾
+                            </button>
+                            <div class="pdf-print-menu" id="pdfPrintMenu">
+                                <button class="pdf-print-menu-item" onclick="downloadPDF()"><span><svg width="14"
+                                            height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                            <polyline points="7 10 12 15 17 10" />
+                                            <line x1="12" y1="15" x2="12" y2="3" />
+                                        </svg></span> PDF</button>
+                                <button class="pdf-print-menu-item" onclick="printPRN()"><span><svg width="14"
+                                            height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 6 2 18 2 18 9" />
+                                            <path
+                                                d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                            <rect x="6" y="14" width="12" height="8" />
+                                        </svg></span> Print</button>
+                            </div>
+                        </div>
+                        <div class="sr-action-separator"></div>
+                        <button class="sr-action-btn" id="confirmBtn" style="display:none;" onclick="confirmReturn()">✓
+                            Confirm</button>
+                        <button class="sr-action-btn" id="shipToVendorBtn" style="display:none;"
+                            onclick="shipToVendor()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Ship to Vendor</button>
+                        <button class="sr-action-btn" id="receivedByVendorBtn" style="display:none;"
+                            onclick="receivedByVendor()" style="background:#16a34a;color:white;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Received by
+                            Vendor</button>
+                        <button class="sr-action-btn" id="revertToDraftBtn" style="display:none;"
+                            onclick="revertToDraft()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>Revert to Draft</button>
+                        <button class="sr-action-btn" id="cancelBtn" style="display:none;" onclick="cancelReturn()"
+                            style="color:#dc2626;">✕ Cancel</button>
+                        <button class="sr-action-btn" id="convertCreditBtn" style="display:none;"
+                            onclick="convertToVendorCredit()" style="background:#16a34a;color:white;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Convert to
+                            Vendor Credit</button>
+                        <button class="sr-action-btn" id="markClosedBtn" style="display:none;"
+                            onclick="markAsClosed()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Mark as Closed</button>
+                        <span id="noBillMsg"
+                            style="display:none;font-size:11px;color:#999;font-style:italic;padding:4px 8px;">Items
+                            returned were not billed; no credit applicable.</span>
+                    </div>
+
+                    <!-- Associated Tabs (PO-style) -->
+                    <div class="sr-tabs">
+                        <div class="sr-tab" onclick="switchTab('history', this)">History <span class="sr-tab-count" id="historyTabCount">0</span></div>
+                        <div class="sr-tab" id="vendorCreditsTab" style="display:none;"
+                            onclick="switchTab('vendorCredits', this)">Vendor Credits <span class="sr-tab-count" id="vendorCreditsCount">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Detail Scroll Area -->
+                    <div class="sr-detail-scroll">
+                        <!-- Associated History Area (inline above document, like PO) -->
+                        <div class="assoc-record-area" id="assocHistoryArea" style="display:none;">
+                            <div style="padding:16px;">
+                                <div class="history-timeline" id="historyTimeline">
+                                    <div style="text-align:center;color:#999;padding:20px;">No history available.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Associated Vendor Credits Area (inline above document, like PO) -->
+                        <div class="assoc-record-area" id="assocVendorCreditsArea" style="display:none;">
+                            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left;padding:10px 12px;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e9ecef;background:#f9fafb;">CREDIT#</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e9ecef;background:#f9fafb;">DATE</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e9ecef;background:#f9fafb;">STATUS</th>
+                                        <th style="text-align:right;padding:10px 12px;font-size:11px;color:#888;font-weight:600;text-transform:uppercase;border-bottom:2px solid #e9ecef;background:#f9fafb;">AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vendorCreditsBody">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center;padding:30px;color:#999;">No vendor credits linked.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Document Card (always visible) -->
+                        <div class="sr-document-card" id="documentCard"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/js/pagination.js"></script>
+    <script src="/js/layout.js"></script>
+    <script>
+        let allReturns = [];
+        let currentFilter = 'all';
+        let currentSort = 'date';
+        let currentSortDir = 'desc';
+
+        // Column configuration for Customize Columns modal
+        const prColumns = [
+            { key: 'date',       label: 'Date',              locked: true,  visible: true },
+            { key: 'prn_num',    label: 'Purchase Receive#',  locked: true,  visible: true },
+            { key: 'po_num',     label: 'Purchase Order#',    locked: false, visible: true },
+            { key: 'vendor',     label: 'Vendor Name',        locked: false, visible: true },
+            { key: 'status',     label: 'Status',             locked: true,  visible: true },
+            { key: 'return_col', label: 'Billed',             locked: false, visible: true },
+            { key: 'resolution', label: 'Quantity',           locked: false, visible: true },
+            { key: 'created',    label: 'Created Time',       locked: false, visible: false },
+            { key: 'modified',   label: 'Last Modified Time', locked: false, visible: false }
+        ];
+        // Load saved prefs
+        try { const saved = JSON.parse(localStorage.getItem('prColumnPrefs')); if (saved) prColumns.forEach(c => { const s = saved.find(x => x.key === c.key); if (s && !c.locked) c.visible = s.visible; }); } catch(e){}
+        let currentReturnId = null;
+        let currentReturn = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadReturns();
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (id) {
+                showDetail(parseInt(id));
+            }
+        });
+
+        // ===== DATA LOADING =====
+        async function loadReturns() {
+            try {
+                const res = await fetch('/api/purchase-returns');
+                allReturns = await res.json();
+                renderList();
+            } catch (e) { console.error(e); }
+        }
+
+        let prSelectedIds = new Set();
+
+        function toggleSelectAllReturns(el) {
+            if (el.checked) allReturns.forEach(r => prSelectedIds.add(r.id));
+            else prSelectedIds.clear();
+            document.querySelectorAll('.ret-row-check').forEach(cb => cb.checked = el.checked);
+            updatePrBulkBar();
+        }
+
+        function toggleRetRowCheck(id, el) {
+            if (el.checked) prSelectedIds.add(id); else prSelectedIds.delete(id);
+            updatePrBulkBar();
+            const sa = document.getElementById('selectAllReturns');
+            const t = document.querySelectorAll('.ret-row-check').length;
+            if (sa) sa.checked = prSelectedIds.size > 0 && prSelectedIds.size === t;
+        }
+
+        function updatePrBulkBar() {
+            const bar = document.getElementById('bulkActionsBar');
+            const c = document.getElementById('bulkCount');
+            // ── Header-swap ──
+            const header = document.querySelector('.page-header');
+            if (bar && header && header.parentNode && bar.parentNode === header.parentNode) {
+                header.parentNode.insertBefore(bar, header);
+            }
+            if (prSelectedIds.size > 0) {
+                bar.classList.add('show');
+                c.textContent = prSelectedIds.size + ' Selected';
+                if (header) header.style.display = 'none';
+            } else {
+                bar.classList.remove('show');
+                if (header) header.style.display = '';
+            }
+        }
+
+        function prDeselectAll() {
+            prSelectedIds.clear();
+            document.querySelectorAll('.ret-row-check').forEach(cb => cb.checked = false);
+            document.getElementById('selectAllReturns').checked = false;
+            updatePrBulkBar();
+        }
+
+        async function bulkDelete() {
+            if (prSelectedIds.size === 0) return;
+            if (!confirm('Delete ' + prSelectedIds.size + ' return(s)? This cannot be undone.')) return;
+            let d = 0, f = 0;
+            for (const id of prSelectedIds) { try { const r = await fetch('/api/purchase-returns/' + id, { method: 'DELETE' }); if (r.ok) d++; else f++; } catch (e) { f++; } }
+            prSelectedIds.clear(); updatePrBulkBar(); await loadReturns();
+            showToast(f === 0 ? d + ' return(s) deleted' : 'Deleted:' + d + ', Failed:' + f);
+        }
+
+        function bulkPrint() {
+            if (prSelectedIds.size === 0) return;
+            const sel = allReturns.filter(r => prSelectedIds.has(r.id));
+            const fD = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            const rows = sel.map(r => `<tr><td>${fD(r.return_date)}</td><td>${r.prn_number || '-'}</td><td>${r.vendor_name || '-'}</td><td>${(r.status || 'DRAFT').toUpperCase()}</td><td>${r.return_status || 'Pending'}</td></tr>`).join('');
+            const html = `<!DOCTYPE html><html><head><title>Purchase Returns</title><style>body{font-family:Inter,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th{background:#4285f4;color:#fff;padding:8px 12px;font-size:11px;text-align:left}td{padding:8px 12px;font-size:12px;border-bottom:1px solid #eee}h2{font-size:16px;margin-bottom:12px}
+        #clipTextItem, [onclick*="ClipText"], [onclick*="TextMode"], [onclick*="WrapText"] {
+            background: #8B1A1A !important;
+            color: white !important;
+            margin: 0 8px 4px 8px !important;
+            border-radius: 6px !important;
+            width: calc(100% - 16px) !important;
+        }
+
+        #clipTextItem:hover, [onclick*="ClipText"]:hover, [onclick*="TextMode"]:hover, [onclick*="WrapText"]:hover {
+            background: #6d1515 !important;
+            color: white !important;
+        }
+        
+        #clipTextItem *, [onclick*="ClipText"] *, [onclick*="TextMode"] *, [onclick*="WrapText"] * {
+            color: white !important;
+            fill: white !important;
+            stroke: white !important;
+        }
+
+    </style>    <link rel="stylesheet" href="/css/list-table.css">
+</head><body><h2>Purchase Returns</h2><table><thead><tr><th>Date</th><th>PRN#</th><th>Vendor</th><th>Status</th><th>Return</th></tr></thead><tbody>${rows}</tbody></table>
+</body></html>`;
+
+            // Remove old iframe if exists
+            var oldIframe = document.getElementById('bulkPrintIframe');
+            if (oldIframe) oldIframe.remove();
+
+            // Create hidden iframe
+            var iframe = document.createElement('iframe');
+            iframe.id = 'bulkPrintIframe';
+            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:800px;height:600px;border:none;visibility:hidden;';
+            document.body.appendChild(iframe);
+
+            var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(html);
+            iframeDoc.close();
+
+            // Wait for rendering, then print
+            setTimeout(function () {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 500);
+        }
+
+        // ===== Hamburger =====
+        // Teleport hamburgerDropdown to <body> on first call so it is
+        // never clipped by the sticky <th> stacking context.
+        let _prtnHbTeleported = false;
+        function _teleportPrtnHb() {
+            if (_prtnHbTeleported) return;
+            const dd = document.getElementById('hamburgerDropdown');
+            if (dd) { document.body.appendChild(dd); _prtnHbTeleported = true; }
+        }
+
+        function toggleHamburgerMenu(e) {
+            e.stopPropagation();
+            _teleportPrtnHb();
+            document.getElementById('kebabDropdown').classList.remove('show');
+            const dd = document.getElementById('hamburgerDropdown');
+            const icon = e.currentTarget || e.target.closest('.cust-filter-icon');
+            const isOpen = dd.classList.contains('show');
+            dd.classList.toggle('show', !isOpen);
+            if (!isOpen && icon) {
+                const rect = icon.getBoundingClientRect();
+                dd.style.position = 'fixed';
+                dd.style.top  = (rect.bottom + 8) + 'px';
+                dd.style.left = rect.left + 'px';
+            }
+        }
+
+        let isClipMode = false;
+        function toggleClipText() {
+            const t = document.getElementById('returnsTable');
+            isClipMode = !isClipMode;
+            const clipSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
+            const wrapSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>';
+            const icon = document.getElementById('prtnClipIcon');
+            if (isClipMode) {
+                t.classList.add('clip-text');
+                if (icon) icon.innerHTML = wrapSvg;
+                document.getElementById('clipTextLabel').textContent = 'Wrap Text';
+                showToast('Clip Text enabled');
+            } else {
+                t.classList.remove('clip-text');
+                if (icon) icon.innerHTML = clipSvg;
+                document.getElementById('clipTextLabel').textContent = 'Clip Text';
+                showToast('Wrap Text enabled');
+            }
+            document.getElementById('hamburgerDropdown').classList.remove('show');
+        }
+
+        // ===== Customize Columns =====
+        let ccTempState = [];
+        function openCustomizeColumns() {
+            document.getElementById('hamburgerDropdown').classList.remove('show');
+            ccTempState = prColumns.map(c => ({ ...c }));
+            renderCCList();
+            document.getElementById('ccOverlay').classList.add('show');
+        }
+        function closeCCModal() { document.getElementById('ccOverlay').classList.remove('show'); document.getElementById('ccSearch').value = ''; }
+        function renderCCList(filter) {
+            const list = document.getElementById('ccList');
+            const f = (filter || '').toLowerCase();
+            let html = '';
+            ccTempState.forEach((col, i) => {
+                if (f && !col.label.toLowerCase().includes(f)) return;
+                const alt = i % 2 !== 0 ? ' alt' : '';
+                const lockOrCheck = col.locked
+                    ? `<span class="cc-lock"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a0c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>`
+                    : `<input type="checkbox" class="cc-check" ${col.visible ? 'checked' : ''} onchange="ccToggle('${col.key}', this.checked)">`;
+                html += `<div class="cc-row${alt}" data-key="${col.key}">
+                    <span class="cc-drag">⠿</span>
+                    ${lockOrCheck}
+                    <span class="cc-label">${col.label}</span>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+        function filterCCList(v) { renderCCList(v); }
+        function ccToggle(key, checked) { const c = ccTempState.find(x => x.key === key); if (c) c.visible = checked; }
+        function saveCCColumns() {
+            ccTempState.forEach(t => { const c = prColumns.find(x => x.key === t.key); if (c && !c.locked) c.visible = t.visible; });
+            localStorage.setItem('prColumnPrefs', JSON.stringify(prColumns.map(c => ({ key: c.key, visible: c.visible }))));
+            applyPrColumnVisibility();
+            closeCCModal();
+            showToast('Column preferences saved');
+        }
+        function applyPrColumnVisibility() {
+            // Column indices (0-based): 0=hamburger, 1=checkbox, 2=date, 3=prn#, 4=po#, 5=vendor, 6=status, 7=return, 8=resolution, 9=created, 10=modified
+            const colMap = { 'date': 2, 'prn_num': 3, 'po_num': 4, 'vendor': 5, 'status': 6, 'return_col': 7, 'resolution': 8, 'created': 9, 'modified': 10 };
+            const table = document.getElementById('returnsTable');
+            if (!table) return;
+            const thead = table.querySelector('thead tr');
+            while (thead.children.length < 11) {
+                const th = document.createElement('th');
+                if (thead.children.length === 9) th.textContent = 'CREATED TIME';
+                if (thead.children.length === 10) th.textContent = 'LAST MODIFIED';
+                thead.appendChild(th);
+            }
+            prColumns.forEach(col => {
+                const idx = colMap[col.key];
+                if (idx === undefined) return;
+                const display = col.visible ? '' : 'none';
+                if (thead.children[idx]) thead.children[idx].style.display = display;
+                table.querySelectorAll('tbody tr').forEach(tr => { if (tr.children[idx]) tr.children[idx].style.display = display; });
+            });
+        }
+
+        // ===== Kebab =====
+        function toggleKebabMenu(e) { e.stopPropagation(); document.getElementById('hamburgerDropdown').classList.remove('show'); document.getElementById('kebabDropdown').classList.toggle('show'); }
+        function exportCSV() { document.getElementById('kebabDropdown').classList.remove('show'); if (allReturns.length === 0) { showToast('No returns to export'); return; } const h = ['Date', 'PRN Number', 'PO Number', 'Vendor', 'Status', 'Return Status', 'Resolution']; const rows = [h.join(',')]; allReturns.forEach(r => { rows.push([r.return_date ? new Date(r.return_date).toISOString().split('T')[0] : '', r.prn_number || '', r.purchase_order_number || '', '"' + (r.vendor_name || '').replace(/"/g, '""') + '"', (r.status || 'draft').toUpperCase(), r.return_status || '', r.resolution_type || ''].join(',')); }); const blob = new Blob([rows.join('\n')], { type: 'text/csv' }); const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = 'purchase-returns.csv'; a.click(); URL.revokeObjectURL(u); showToast('CSV exported'); }
+        // ===== Import Returns — file picker =====
+        function triggerImportFileDialog() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            // Create a hidden file input and trigger it
+            let fileInput = document.getElementById('importFileInput');
+            if (!fileInput) {
+                fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.id = 'importFileInput';
+                fileInput.accept = '.csv,.xlsx,.xls';
+                fileInput.style.display = 'none';
+                fileInput.addEventListener('change', function () {
+                    if (this.files && this.files[0]) {
+                        handleImport(this.files[0]);
+                    }
+                    this.value = ''; // Reset so same file can be re-selected
+                });
+                document.body.appendChild(fileInput);
+            }
+            fileInput.click();
+        }
+
+        function handleImport(file) {
+            // Placeholder for backend integration
+            console.log('Import file selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+            showToast('File "' + file.name + '" selected. Import processing will be available soon.', 'info');
+        }
+        function refreshReturnsList() { document.getElementById('kebabDropdown').classList.remove('show'); prSelectedIds.clear(); updatePrBulkBar(); loadReturns(); showToast('List refreshed'); }
+        function openPreferences() { document.getElementById('kebabDropdown').classList.remove('show'); showToast('Preferences coming soon'); }
+
+        // ===== Sort =====
+        function sortReturnsBy(field, el) {
+            if (currentSort === field) { currentSortDir = currentSortDir === 'desc' ? 'asc' : 'desc'; } else { currentSort = field; currentSortDir = 'desc'; }
+            document.querySelectorAll('.sort-sub-item').forEach(i => { i.classList.remove('active'); const a = i.querySelector('.sort-dir'); if (a) a.remove(); });
+            if (el) { el.classList.add('active'); el.innerHTML = el.textContent.trim() + ` <span class="sort-dir">${currentSortDir === 'desc' ? '↓' : '↑'}</span>`; }
+            const fm = { 'date': 'return_date', 'prn_number': 'prn_number', 'vendor_name': 'vendor_name', 'status': 'status', 'created_at': 'created_at' };
+            const sk = fm[field] || field;
+            allReturns.sort((a, b) => {
+                let aV = a[sk], bV = b[sk]; if (aV == null) aV = ''; if (bV == null) bV = '';
+                if (['date', 'created_at'].includes(field)) { return currentSortDir === 'asc' ? new Date(aV || 0).getTime() - new Date(bV || 0).getTime() : new Date(bV || 0).getTime() - new Date(aV || 0).getTime(); }
+                aV = String(aV).toLowerCase(); bV = String(bV).toLowerCase(); return currentSortDir === 'asc' ? aV.localeCompare(bV) : bV.localeCompare(aV);
+            });
+            renderList();
+            let dl; if (['date', 'created_at'].includes(field)) { dl = currentSortDir === 'desc' ? 'newest first' : 'oldest first'; } else { dl = currentSortDir === 'desc' ? 'Z-A' : 'A-Z'; }
+            showToast(`Sorted by ${field.replace(/_/g, ' ')} (${dl})`);
+            document.getElementById('kebabDropdown').classList.remove('show');
+        }
+
+        function renderReturnsPage(pageData) {
+            const tbody = document.getElementById('returnsTableBody');
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            let html = '';
+            pageData.forEach(r => {
+                const statusClass = (r.status || 'draft').toLowerCase();
+                const returnStatusClass = (r.return_status || 'pending').toLowerCase().replace(/ /g, '-');
+                const isReplacement = (r.resolution_type || 'credit') === 'replacement';
+                const isCancelOrder = r.resolution_type === 'cancel_order';
+                const isSurplusOnly = !r.resolution_type || r.resolution_type === 'none';
+                let resolutionDisplay, resolutionStyle;
+                if (isSurplusOnly) {
+                    resolutionDisplay = 'N/A'; resolutionStyle = 'background:#f5f5f5;color:#999;';
+                } else if (isCancelOrder) {
+                    resolutionDisplay = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>Order Adjusted'; resolutionStyle = 'background:#ede9fe;color:#7c3aed;';
+                } else if (isReplacement) {
+                    const replSt = (r.replacement_status || '').toUpperCase();
+                    if (replSt === 'RECEIVED') { resolutionDisplay = 'Received'; resolutionStyle = 'background:#dcfce7;color:#16a34a;'; }
+                    else if (replSt === 'AWAITING') { resolutionDisplay = 'Awaiting'; resolutionStyle = 'background:#fff3e0;color:#e65100;'; }
+                    else { resolutionDisplay = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Replacement'; resolutionStyle = 'background:#fff3e0;color:#e65100;'; }
+                } else {
+                    const credSt = (r.credit_status || 'Pending');
+                    if (credSt === 'Credited') { resolutionDisplay = 'Credited'; resolutionStyle = 'background:#dcfce7;color:#16a34a;'; }
+                    else { resolutionDisplay = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pending'; resolutionStyle = 'background:#e8f0fe;color:#1a73e8;'; }
+                }
+                html += `<tr onclick="showDetail(${r.id})">
+                    <td></td>
+                    <td><input type="checkbox" class="row-checkbox ret-row-check" data-id="${r.id}" ${prSelectedIds.has(r.id) ? 'checked' : ''} onclick="event.stopPropagation(); toggleRetRowCheck(${r.id}, this)"></td>
+                    <td>${fmtDate(r.return_date)}</td>
+                    <td><a class="prn-link" href="#" onclick="event.preventDefault();showDetail(${r.id})">${r.prn_number || '-'}</a></td>
+                    <td>${r.purchase_order_number || '-'}</td>
+                    <td>${r.vendor_name || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${(r.status || 'DRAFT').toUpperCase()}</span></td>
+                    <td><span class="status-badge ${returnStatusClass}">${r.return_status || 'Pending'}</span></td>
+                    <td><span class="status-badge" style="${resolutionStyle}">${resolutionDisplay}</span></td>
+                    <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                    <td>${r.updated_at ? new Date(r.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+            applyPrColumnVisibility();
+        }
+
+        function renderReturnsPaginated(data) {
+            const emptyState = document.getElementById('emptyState');
+            const tableContainer = document.getElementById('tableContainer');
+
+            if (data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'flex';
+                document.getElementById('retPaginationContainer').innerHTML = '';
+                return;
+            }
+
+            tableContainer.style.display = '';
+            emptyState.style.display = 'none';
+
+            window.retPager = Pagination.create({
+                data: data, perPage: 14, containerId: 'retPaginationContainer',
+                onPageChange: function(pageData) { renderReturnsPage(pageData); }
+            });
+        }
+
+        function renderList() {
+            let filtered = allReturns;
+            if (currentFilter !== 'all') {
+                filtered = allReturns.filter(r => (r.status || '').toUpperCase() === currentFilter.toUpperCase());
+            }
+            renderReturnsPaginated(filtered);
+        }
+
+        // ===== FILTER =====
+        function toggleFilter() {
+            document.getElementById('filterDropdown').classList.toggle('open');
+            document.getElementById('filterArrow').classList.toggle('open');
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.sr-filter-option').forEach(o => o.classList.remove('active'));
+            event.target.classList.add('active');
+            const labels = { 'all': 'All Purchase Returns', 'draft': 'Draft', 'confirmed': 'Confirmed', 'closed': 'Closed', 'cancelled': 'Cancelled' };
+            document.getElementById('filterTitle').textContent = labels[filter] || filter;
+            document.getElementById('filterDropdown').classList.remove('open');
+            document.getElementById('filterArrow').classList.remove('open');
+            // Clear search when changing filter
+            document.getElementById('prSearchInput').value = '';
+            renderList();
+        }
+
+        function searchPurchaseReturns() {
+            const query = (document.getElementById('prSearchInput').value || '').toLowerCase().trim();
+            if (!query) { renderList(); return; }
+
+            let filtered = allReturns;
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(r => (r.status || '').toUpperCase() === currentFilter.toUpperCase());
+            }
+
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+            const fmtDateTime = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+            filtered = filtered.filter(r => {
+                return (r.prn_number || '').toLowerCase().includes(query) ||
+                    (r.purchase_order_number || '').toLowerCase().includes(query) ||
+                    (r.vendor_name || '').toLowerCase().includes(query) ||
+                    (r.status || '').toLowerCase().includes(query) ||
+                    (r.return_status || '').toLowerCase().includes(query) ||
+                    (r.resolution_type || '').toLowerCase().includes(query) ||
+                    (r.credit_status || '').toLowerCase().includes(query) ||
+                    (r.replacement_status || '').toLowerCase().includes(query) ||
+                    fmtDate(r.return_date).toLowerCase().includes(query) ||
+                    fmtDateTime(r.created_at).toLowerCase().includes(query) ||
+                    fmtDateTime(r.updated_at).toLowerCase().includes(query);
+            });
+
+            renderReturnsPaginated(filtered);
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.cust-filter-icon') && !e.target.closest('#hamburgerDropdown')) {
+                const hd = document.getElementById('hamburgerDropdown');
+                if (hd && hd.classList.contains('show')) hd.classList.remove('show');
+            }
+            if (!e.target.closest('.kebab-wrapper')) { const kd = document.getElementById('kebabDropdown'); if (kd) kd.classList.remove('show'); }
+            if (!e.target.closest('.sr-filter-wrap')) {
+                document.getElementById('filterDropdown').classList.remove('open');
+                document.getElementById('filterArrow').classList.remove('open');
+            }
+            if (!e.target.closest('.pdf-print-wrapper')) {
+                const menu = document.getElementById('pdfPrintMenu');
+                if (menu) menu.classList.remove('show');
+            }
+        });
+
+        // ===== DETAIL VIEW =====
+        async function showDetail(id) {
+            currentReturnId = id;
+
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('detailView').classList.add('active');
+
+            // Reset tabs
+            activeAssocTab = null;
+            document.querySelectorAll('.sr-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('assocHistoryArea').style.display = 'none';
+            document.getElementById('assocVendorCreditsArea').style.display = 'none';
+
+            // Load sidebar
+            renderSidebar(id);
+
+            // Load detail
+            try {
+                const res = await fetch('/api/purchase-returns/' + id);
+                if (!res.ok) { alert('Purchase return not found'); return; }
+                currentReturn = await res.json();
+                renderDetail(currentReturn);
+            } catch (e) { console.error(e); }
+
+            history.replaceState(null, '', '/purchase-returns.html?id=' + id);
+        }
+
+        function renderSidebar(activeId) {
+            const container = document.getElementById('detailSidebarList');
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            let html = '';
+            allReturns.forEach(r => {
+                const isActive = r.id == activeId;
+                const statusClass = (r.status || 'draft').toLowerCase();
+                html += `<div class="sr-left-item ${isActive ? 'active' : ''}" onclick="showDetail(${r.id})">
+                    <div class="sr-left-item-top">
+                        <span class="sr-left-item-name">${r.vendor_name || 'Unknown'}</span>
+                    </div>
+                    <div class="sr-left-item-bottom">
+                        <span>${r.prn_number || '-'}</span>
+                        <span>•</span>
+                        <span>${fmtDate(r.return_date)}</span>
+                    </div>
+                    <div class="sr-left-item-status ${statusClass}" style="margin-top:4px;">${(r.status || 'DRAFT').toUpperCase()}</div>
+                </div>`;
+            });
+            container.innerHTML = html;
+            document.getElementById('sidebarCount').textContent = allReturns.length + ' items';
+        }
+
+        async function renderDetail(r) {
+            document.getElementById('detailPRN').textContent = r.prn_number || 'PRN-' + r.id;
+
+            const status = (r.status || 'DRAFT').toUpperCase();
+            const returnStatus = (r.return_status || 'Pending');
+            const returnStatusLower = returnStatus.toLowerCase();
+            const isReplacement = (r.resolution_type || 'credit') === 'replacement';
+            const isCancelOrder = r.resolution_type === 'cancel_order';
+            const isSurplusOnly = !r.resolution_type || r.resolution_type === 'none';
+            const creditStatus = isReplacement ? 'N/A' : (isSurplusOnly || isCancelOrder ? 'N/A' : (r.credit_status || 'Pending'));
+
+            // Resolve warehouse_location ID to name
+            let warehouseName = r.warehouse_location || 'Head Office';
+            let allLocs = [];
+            try {
+                const locRes = await fetch('/api/locations');
+                if (locRes.ok) {
+                    allLocs = await locRes.json();
+                    const whId = parseInt(r.warehouse_location);
+                    if (!isNaN(whId)) {
+                        const match = allLocs.find(l => l.id === whId);
+                        if (match) warehouseName = match.name;
+                    }
+                }
+            } catch (e) { }
+            r._resolvedWarehouseName = warehouseName;
+
+            // ── Compute effective rates from linked bill ──
+            // The bill's total_amount has ALL discounts baked in (line + total).
+            // We distribute it proportionally to show the true cost per unit.
+            let effectiveRateMap = {}; // item_id → { effective_rate, original_rate }
+            let detailCurrencySymbol = '';
+            let detailCurrencyCode = 'PHP';
+            let detailExchangeRate = 1;
+            if (r.purchase_order_id) {
+                try {
+                    // Get PO currency
+                    const poRes = await fetch('/api/purchases/' + r.purchase_order_id);
+                    if (poRes.ok) {
+                        const poData = await poRes.json();
+                        const cc = poData.currency_code || 'PHP';
+                        detailCurrencyCode = cc;
+                        detailExchangeRate = parseFloat(poData.exchange_rate) || 1;
+                        const symbolMap = { 'CNY': '¥', 'RMB': '¥', 'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'PHP': '₱' };
+                        detailCurrencySymbol = symbolMap[cc] || cc + ' ';
+                    }
+                    // Find linked bill
+                    const billsRes = await fetch('/api/bills');
+                    if (billsRes.ok) {
+                        const allBillsList = await billsRes.json();
+                        const poBills = allBillsList.filter(b => b.purchase_order_id == r.purchase_order_id && (b.status || '').toUpperCase() !== 'DRAFT')
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                        if (poBills.length > 0) {
+                            const bRes = await fetch('/api/bills/' + poBills[0].id);
+                            if (bRes.ok) {
+                                const bDet = await bRes.json();
+                                const billItems = bDet.items || [];
+                                const billTotal = parseFloat(bDet.total_amount) || 0;
+                                // Compute line contributions (after line discount)
+                                const contribs = billItems.map(bi => {
+                                    const biQty = parseFloat(bi.quantity) || 1;
+                                    const biRate = parseFloat(bi.rate) || parseFloat(bi.unit_price) || 0;
+                                    const biLineDisc = parseFloat(bi.discount_percent) || 0;
+                                    const biDiscType = (bi.discount_type || '%').trim();
+                                    let lineNet;
+                                    if (biLineDisc > 0) {
+                                        lineNet = biDiscType === '%' ? biQty * biRate * (1 - biLineDisc / 100) : biQty * biRate - biLineDisc;
+                                    } else {
+                                        lineNet = biQty * biRate;
+                                    }
+                                    return { bi, lineNet, biQty, biRate };
+                                });
+                                const effSub = contribs.reduce((s, c) => s + c.lineNet, 0);
+                                contribs.forEach(({ bi, lineNet, biQty, biRate }) => {
+                                    const key = bi.item_id || ('name:' + (bi.item_name || ''));
+                                    const lineShare = effSub > 0 ? (lineNet / effSub) * billTotal : billTotal / billItems.length;
+                                    effectiveRateMap[key] = { effective_rate: lineShare / biQty, original_rate: biRate };
+                                });
+                            }
+                        }
+                    }
+                } catch (e) { console.error('Error computing effective rates:', e); }
+            }
+
+            // ===== BUTTON VISIBILITY (Three-Pillar Logic) =====
+            // Confirm: only when DRAFT
+            document.getElementById('confirmBtn').style.display = status === 'DRAFT' ? '' : 'none';
+            // Ship to Vendor: CONFIRMED + Pending return status
+            document.getElementById('shipToVendorBtn').style.display = (status === 'CONFIRMED' && returnStatusLower === 'pending') ? '' : 'none';
+            // Received by Vendor: CONFIRMED + Shipped return status
+            document.getElementById('receivedByVendorBtn').style.display = (status === 'CONFIRMED' && returnStatusLower === 'shipped') ? '' : 'none';
+            // Revert to Draft: available unless CLOSED or CANCELLED
+            document.getElementById('revertToDraftBtn').style.display = (status !== 'CANCELLED' && status !== 'CLOSED' && status !== 'DRAFT') ? '' : 'none';
+            // Cancel: available unless CLOSED or CANCELLED
+            document.getElementById('cancelBtn').style.display = (status !== 'CANCELLED' && status !== 'CLOSED') ? '' : 'none';
+            // Mark as Closed: when resolution is complete (credit issued / replacement received), OR surplus/cancel_order returns (no resolution needed)
+            const resolutionComplete = isSurplusOnly || isCancelOrder || (isReplacement && (r.replacement_status || '').toUpperCase() === 'RECEIVED') || (!isReplacement && creditStatus === 'Credited');
+            document.getElementById('markClosedBtn').style.display = (status === 'CONFIRMED' && resolutionComplete) ? '' : 'none';
+
+            // Convert to Vendor Credit: only when return_status is Received by Vendor, credit path, credit pending, not cancel_order
+            const convertCreditBtn = document.getElementById('convertCreditBtn');
+            const noBillMsg = document.getElementById('noBillMsg');
+            convertCreditBtn.style.display = 'none';
+            noBillMsg.style.display = 'none';
+            if (returnStatusLower === 'received by vendor' && !isReplacement && !isCancelOrder && !isSurplusOnly && creditStatus === 'Pending') {
+                // Credit path: check if returned items were actually billed
+                let billedByItem = {};
+                if (r.purchase_order_id) {
+                    try {
+                        const billsRes = await fetch('/api/bills');
+                        if (billsRes.ok) {
+                            const allBills = await billsRes.json();
+                            const poBills = allBills.filter(b => b.purchase_order_id == r.purchase_order_id && (b.status || '').toUpperCase() !== 'DRAFT');
+                            for (const bill of poBills) {
+                                try {
+                                    const bRes = await fetch('/api/bills/' + bill.id);
+                                    if (bRes.ok) {
+                                        const bDet = await bRes.json();
+                                        (bDet.items || []).forEach(bi => {
+                                            const key = bi.item_id || ('name:' + (bi.item_name || ''));
+                                            billedByItem[key] = (billedByItem[key] || 0) + (parseFloat(bi.quantity) || 0);
+                                        });
+                                    }
+                                } catch (e) { }
+                            }
+                        }
+                    } catch (e) { console.error(e); }
+                }
+
+                let hasCreditableItems = false;
+                if (r.items) {
+                    r.items.forEach(item => {
+                        const reason = (item.return_reason || '').toLowerCase();
+                        if (reason.includes('over-shipment') || reason.includes('over shipment') || reason.includes('surplus')) {
+                            return;
+                        }
+                        const itemKey = item.item_id || ('name:' + (item.item_name || ''));
+                        const billedQty = billedByItem[itemKey] || 0;
+                        if (billedQty > 0 && (parseFloat(item.return_quantity) || 0) > 0) {
+                            hasCreditableItems = true;
+                        }
+                    });
+                }
+
+                if (hasCreditableItems) {
+                    convertCreditBtn.style.display = '';
+                } else {
+                    noBillMsg.style.display = '';
+                }
+            }
+
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+            // ===== THREE-PILLAR STATUS DISPLAY =====
+            const statusColors = { 'DRAFT': '#555', 'CONFIRMED': '#1a73e8', 'CLOSED': '#16a34a', 'CANCELLED': '#dc2626' };
+            const returnStatusColors = { 'pending': '#888', 'shipped': '#d97706', 'received by vendor': '#16a34a' };
+
+            // Resolution display
+            let resolutionHtml = '';
+            if (isSurplusOnly) {
+                resolutionHtml = `<span style="background:#f5f5f5;color:#999;padding:2px 10px;border-radius:12px;font-size:12px;">Surplus Only — No Credit</span>`;
+            } else if (isCancelOrder) {
+                resolutionHtml = `<span style="background:#ede9fe;color:#7c3aed;padding:2px 10px;border-radius:12px;font-size:12px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>Order Adjusted — No Credit Required</span>`;
+            } else if (isReplacement) {
+                const replStatus = r.replacement_status || (returnStatusLower === 'received by vendor' ? 'AWAITING' : '—');
+                const replColor = replStatus === 'RECEIVED' ? '#16a34a' : replStatus === 'AWAITING' ? '#d97706' : '#888';
+                resolutionHtml = `<span style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-size:12px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Replacement</span>
+                    ${replStatus !== '—' ? '<span style="margin-left:8px;font-weight:500;color:' + replColor + ';">' + replStatus + '</span>' : ''}`;
+            } else {
+                const credColor = creditStatus === 'Credited' ? '#16a34a' : '#d97706';
+                resolutionHtml = `<span style="background:#e8f0fe;color:#1a73e8;padding:2px 10px;border-radius:12px;font-size:12px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Vendor Credit</span>
+                    <span style="margin-left:8px;font-weight:500;color:${credColor};">${creditStatus}</span>`;
+            }
+
+            // Items table — resolve from_location_id to names
+            let itemsHtml = '';
+            if (r.items && r.items.length > 0) {
+                r.items.forEach((item, i) => {
+                    const reasonBadge = item.return_reason ? (() => {
+                        const colors = { 'Over-shipment': 'background:#fff3e0;color:#e65100;', 'Damaged': 'background:#fef2f2;color:#dc2626;', 'Defective': 'background:#fef2f2;color:#dc2626;', 'Incorrect Item': 'background:#e8f0fe;color:#1a73e8;' };
+                        return `<span style="${colors[item.return_reason] || 'background:#f0f0f0;color:#666;'}padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;">${item.return_reason}</span>`;
+                    })() : '<span style="color:#999;font-size:11px;">—</span>';
+
+                    // Resolve from_location_id to a human-readable path
+                    let fromLocDisplay = '<span style="color:#999;font-size:11px;">—</span>';
+                    if (item.from_location_id && allLocs.length > 0) {
+                        const loc = allLocs.find(l => l.id === item.from_location_id);
+                        if (loc) {
+                            const parent = loc.parent_id ? allLocs.find(l => l.id === loc.parent_id) : null;
+                            fromLocDisplay = '<span style="font-size:12px;">' + (parent ? parent.name + ' › ' : '') + loc.name + '</span>';
+                        }
+                    }
+
+                    itemsHtml += `<tr>
+                        <td>${i + 1}</td>
+                        <td><span class="sr-item-img"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> <strong>${item.item_name || '-'}</strong></td>
+                        <td>${fromLocDisplay}</td>
+                        <td>
+                            <div class="sr-qty-returned">${item.return_quantity || 0}</div>
+                            <div class="sr-qty-received">Received: ${item.received_quantity || 0}</div>
+                        </td>
+                        <td>${reasonBadge}</td>
+                        <td style="text-align:right;">${(() => {
+                            const ik = item.item_id || ('name:' + (item.item_name || ''));
+                            const eff = effectiveRateMap[ik];
+                            const rawRate = parseFloat(item.rate || 0);
+                            const isFC = detailCurrencyCode !== 'PHP' && detailExchangeRate > 0;
+                            if (eff && eff.effective_rate !== eff.original_rate) {
+                                const er = eff.effective_rate;
+                                let html = '<div>' + er.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + '</div>';
+                                html += '<div style="font-size:10px;color:#999;"><s>' + rawRate.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '</s> w/ disc</div>';
+                                if (isFC) html += '<div style="font-size:10px;color:#888;">₱' + (er * detailExchangeRate).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '</div>';
+                                return html;
+                            }
+                            let html = rawRate.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+                            if (isFC) html += '<div style="font-size:10px;color:#888;">₱' + (rawRate * detailExchangeRate).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '</div>';
+                            return html;
+                        })()}</td>
+                        <td style="text-align:right;">${(() => {
+                            const ik = item.item_id || ('name:' + (item.item_name || ''));
+                            const eff = effectiveRateMap[ik];
+                            const qty = parseFloat(item.return_quantity) || 0;
+                            const isFC = detailCurrencyCode !== 'PHP' && detailExchangeRate > 0;
+                            if (eff) {
+                                const amt = eff.effective_rate * qty;
+                                let html = amt.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+                                if (isFC) html += '<div style="font-size:10px;color:#888;">₱' + (amt * detailExchangeRate).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '</div>';
+                                return html;
+                            }
+                            const rawAmt = parseFloat(item.amount || 0);
+                            let html = rawAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+                            if (isFC) html += '<div style="font-size:10px;color:#888;">₱' + (rawAmt * detailExchangeRate).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '</div>';
+                            return html;
+                        })()}</td>
+                    </tr>`;
+                });
+            }
+
+            document.getElementById('documentCard').innerHTML = `
+                <div class="sr-doc-top">
+                    <div>
+                        <h2 class="sr-doc-title">PURCHASE RETURN</h2>
+                        <p class="sr-doc-subtitle">Purchase Return# <strong>${r.prn_number || ''}</strong></p>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="sr-bill-to-label">VENDOR</div>
+                        <div class="sr-bill-to-name">${r.vendor_name || '-'}</div>
+                    </div>
+                </div>
+
+                <div class="sr-status-section">
+                    <div>
+                        <div class="sr-status-row" style="margin-bottom:8px;">
+                            <span class="sr-status-label">Status</span>
+                            <span class="sr-status-value" style="color:${statusColors[status] || '#555'};font-weight:600;">${status}</span>
+                        </div>
+                        <div class="sr-status-row" style="margin-bottom:8px;">
+                            <span class="sr-status-label">Return</span>
+                            <span class="sr-status-value" style="color:${returnStatusColors[returnStatusLower] || '#888'};font-weight:500;">${returnStatus}</span>
+                        </div>
+                        <div class="sr-status-row">
+                            <span class="sr-status-label">Resolution</span>
+                            <span class="sr-status-value" style="font-weight:500;">${resolutionHtml}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sr-date-row">
+                    <span class="sr-date-label">RETURN DATE</span>
+                    <span class="sr-date-value">${fmtDate(r.return_date)}</span>
+                </div>
+                ${r.purchase_order_number ? `<div class="sr-date-row" style="border-top:none;padding-top:0;margin-bottom:16px;">
+                    <span class="sr-date-label">PO#</span>
+                    <span class="sr-date-value" style="color:#4285f4;font-weight:500;">${r.purchase_order_number}</span>
+                </div>` : ''}
+                <div class="sr-date-row" style="border-top:none;padding-top:0;">
+                    <span class="sr-date-label">WAREHOUSE</span>
+                    <span class="sr-date-value">${warehouseName}</span>
+                </div>
+
+                <table class="sr-doc-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ITEMS & DESCRIPTION</th>
+                            <th>FROM LOCATION</th>
+                            <th>RETURN QTY</th>
+                            <th>REASON</th>
+                            <th>RATE</th>
+                            <th>AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemsHtml || '<tr><td colspan="7" style="text-align:center;padding:30px;color:#999;">No items</td></tr>'}</tbody>
+                </table>
+
+                ${r.reason ? `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #f0f0f0;">
+                    <div style="font-size:12px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:6px;">REASON</div>
+                    <div style="font-size:13px;color:#333;line-height:1.6;">${r.reason}</div>
+                </div>` : ''}
+            `;
+
+            // History tab
+            renderHistory(r);
+
+            // Load vendor credits tab
+            loadAssocVendorCredits(r);
+
+            // Reset to default (no tab active)
+            activeAssocTab = null;
+            document.querySelectorAll('.sr-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('assocHistoryArea').style.display = 'none';
+            document.getElementById('assocVendorCreditsArea').style.display = 'none';
+        }
+
+        function renderHistory(r) {
+            const fmtDateTime = d => d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+            let events = [];
+            events.push({ text: `Purchase return <strong>${r.prn_number}</strong> was created with status <strong>${r.status || 'DRAFT'}</strong>`, time: r.created_at, color: '#4285f4' });
+            if (r.updated_at && r.updated_at !== r.created_at) {
+                events.push({ text: 'Purchase return was last updated', time: r.updated_at, color: '#f59e0b' });
+            }
+            let html = '';
+            events.forEach(ev => {
+                html += `<div class="history-item">
+                    <div class="history-dot" style="background:${ev.color};"></div>
+                    <div class="history-content">
+                        <div class="history-text">${ev.text}</div>
+                        <div class="history-time">${fmtDateTime(ev.time)}</div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('historyTimeline').innerHTML = html;
+            document.getElementById('historyTabCount').textContent = events.length;
+        }
+
+        // ===== TABS =====
+        let activeAssocTab = null;
+
+        function switchTab(tab, el) {
+            // Hide all associated areas
+            document.getElementById('assocHistoryArea').style.display = 'none';
+            document.getElementById('assocVendorCreditsArea').style.display = 'none';
+
+            // If clicking already active tab, deselect it (collapse)
+            if (activeAssocTab === tab) {
+                el.classList.remove('active');
+                activeAssocTab = null;
+                return;
+            }
+
+            // Deactivate all tabs, then activate selected
+            document.querySelectorAll('.sr-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            activeAssocTab = tab;
+
+            if (tab === 'history') {
+                document.getElementById('assocHistoryArea').style.display = '';
+            } else if (tab === 'vendorCredits') {
+                document.getElementById('assocVendorCreditsArea').style.display = '';
+            }
+        }
+
+        // ===== ACTIONS =====
+        function backToList() {
+            document.getElementById('listView').style.display = '';
+            document.getElementById('detailView').classList.remove('active');
+            history.replaceState(null, '', '/purchase-returns.html');
+            loadReturns();
+        }
+
+        function closeDetail() { backToList(); }
+
+        function editReturn() {
+            if (currentReturnId) window.location.href = '/new-purchase-return.html?id=' + currentReturnId;
+        }
+
+        function convertToVendorCredit() {
+            if (currentReturnId) window.location.href = '/new-vendor-credit.html?from_prn=' + currentReturnId;
+        }
+
+        async function loadAssocVendorCredits(r) {
+            const tab = document.getElementById('vendorCreditsTab');
+            const tbody = document.getElementById('vendorCreditsBody');
+            const countEl = document.getElementById('vendorCreditsCount');
+
+            try {
+                const res = await fetch('/api/vendor-credits');
+                if (!res.ok) return;
+                const allCredits = await res.json();
+                const prnNumber = r.prn_number || '';
+                // Find credits linked to this PRN (by reason containing the PRN number)
+                const linked = allCredits.filter(c => {
+                    const reason = (c.reason || '').toLowerCase();
+                    return reason.includes(prnNumber.toLowerCase()) || reason.includes('prn-' + r.id);
+                });
+
+                countEl.textContent = linked.length;
+                if (linked.length > 0) {
+                    tab.style.display = '';
+                    const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                    let html = '';
+                    linked.forEach(c => {
+                        const st = (c.status || 'draft').toUpperCase();
+                        const stColor = st === 'OPEN' ? '#16a34a' : st === 'DRAFT' ? '#888' : '#1a73e8';
+                        html += `<tr onclick="window.location.href='/vendor-credit-detail.html?id=${c.id}'" style="cursor:pointer;">
+                            <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;"><a href="/vendor-credit-detail.html?id=${c.id}" style="color:#1a73e8;font-weight:500;text-decoration:none;">${c.credit_number || 'VC-' + c.id}</a></td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;">${fmtDate(c.credit_date)}</td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;"><span style="color:${stColor};font-weight:500;">${st}</span></td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:500;">PHP ${parseFloat(c.total_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tab.style.display = 'none';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#999;">No vendor credits linked.</td></tr>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function confirmReturn() {
+            if (!currentReturnId) return;
+            try {
+                await fetch('/api/purchase-returns/' + currentReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'CONFIRMED' })
+                });
+                await loadReturns();
+                showDetail(currentReturnId);
+            } catch (e) { console.error(e); }
+        }
+
+        async function shipToVendor() {
+            if (!currentReturnId) return;
+            try {
+                const res = await fetch('/api/purchase-returns/' + currentReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ return_status: 'Shipped', status: 'CONFIRMED' })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to ship.');
+                    return;
+                }
+                await loadReturns();
+                showDetail(currentReturnId);
+            } catch (e) { console.error(e); }
+        }
+
+        async function receivedByVendor() {
+            if (!currentReturnId) return;
+            if (!confirm('Mark this return as received by the vendor? This will trigger the resolution workflow.')) return;
+            try {
+                const res = await fetch('/api/purchase-returns/' + currentReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ return_status: 'Received by Vendor' })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to update.');
+                    return;
+                }
+                await loadReturns();
+                showDetail(currentReturnId);
+            } catch (e) { console.error(e); }
+        }
+
+        async function markAsClosed() {
+            if (!currentReturnId) return;
+            if (!confirm('Close this purchase return? This means the resolution is complete.')) return;
+            try {
+                await fetch('/api/purchase-returns/' + currentReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'CLOSED' })
+                });
+                await loadReturns();
+                showDetail(currentReturnId);
+            } catch (e) { console.error(e); }
+        }
+
+        async function revertToDraft() {
+            if (!currentReturnId) return;
+            if (!confirm('Revert this purchase return to Draft? Stock adjustments will be reversed if items were shipped.')) return;
+            try {
+                const res = await fetch('/api/purchase-returns/' + currentReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ return_status: 'Pending', status: 'DRAFT' })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to revert.');
+                    return;
+                }
+                await loadReturns();
+                showDetail(currentReturnId);
+            } catch (e) { console.error(e); }
+        }
+
+        async function cancelReturn() {
+            if (!currentReturnId) return;
+            if (!confirm('Cancel this purchase return? Stock adjustments will be reversed if items were shipped.')) return;
+            try {
+                const res = await fetch('/api/purchase-returns/' + currentReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ return_status: 'Pending', status: 'CANCELLED' })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to cancel.');
+                    return;
+                }
+                await loadReturns();
+                showDetail(currentReturnId);
+            } catch (e) { console.error(e); }
+        }
+
+        // ===== PDF/Print =====
+        function togglePdfPrintMenu(e) {
+            e.stopPropagation();
+            document.getElementById('pdfPrintMenu').classList.toggle('show');
+        }
+
+        function generatePRNDocument() {
+            if (!currentReturn) return '';
+            const r = currentReturn;
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            let itemsRows = '';
+            if (r.items && r.items.length > 0) {
+                r.items.forEach((item, i) => {
+                    itemsRows += `<tr>
+                        <td style="padding:10px;text-align:center;border-bottom:1px solid #eee;">${i + 1}</td>
+                        <td style="padding:10px;border-bottom:1px solid #eee;"><strong>${item.item_name || '-'}</strong></td>
+                        <td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">${item.return_quantity || 0}</td>
+                        <td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">${parseFloat(item.rate || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                        <td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">${parseFloat(item.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                    </tr>`;
+                });
+            }
+            return `<div style="font-family:'Inter',Arial,sans-serif;max-width:750px;margin:0 auto;padding:40px;color:#333;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:30px;">
+                    <div><div style="font-size:20px;font-weight:800;">GIHON</div><div style="font-size:12px;color:#888;">Philippines</div></div>
+                    <div style="text-align:right;"><div style="font-size:24px;font-weight:800;">PURCHASE RETURN</div><div style="font-size:13px;color:#555;"># ${r.prn_number}</div></div>
+                </div>
+                <div style="margin-bottom:20px;"><strong>Vendor:</strong> ${r.vendor_name || '-'}</div>
+                <div style="margin-bottom:20px;display:flex;gap:40px;">
+                    <div><strong>Date:</strong> ${fmtDate(r.return_date)}</div>
+                    <div><strong>PO#:</strong> ${r.purchase_order_number || '-'}</div>
+                    <div><strong>Warehouse:</strong> ${r._resolvedWarehouseName || r.warehouse_location || '-'}</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead><tr style="background:#f8f0e8;">
+                        <th style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#8b5e34;">#</th>
+                        <th style="padding:10px;text-align:left;font-size:12px;font-weight:600;color:#8b5e34;">Item</th>
+                        <th style="padding:10px;text-align:right;font-size:12px;font-weight:600;color:#8b5e34;">Return Qty</th>
+                        <th style="padding:10px;text-align:right;font-size:12px;font-weight:600;color:#8b5e34;">Rate</th>
+                        <th style="padding:10px;text-align:right;font-size:12px;font-weight:600;color:#8b5e34;">Amount</th>
+                    </tr></thead>
+                    <tbody>${itemsRows}</tbody>
+                </table>
+                ${r.reason ? '<div style="margin-top:20px;"><strong>Reason:</strong> ' + r.reason + '</div>' : ''}
+            </div>`;
+        }
+
+        async function downloadPDF() {
+            document.getElementById('pdfPrintMenu').classList.remove('show');
+            if (!currentReturn) return;
+            const card = document.getElementById('documentCard');
+            if (!card) return;
+            const prnNumber = currentReturn.prn_number || 'PRN';
+            html2pdf().set({
+                margin: [10, 10, 10, 10],
+                filename: prnNumber + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(card).save();
+        }
+
+        function printPRN() {
+            document.getElementById('pdfPrintMenu').classList.remove('show');
+            window.print();
+        }
+
+    </script>
+
+
+    <!-- Customize Columns Modal -->
+    <div class="cc-overlay" id="ccOverlay" onclick="if(event.target===this)closeCCModal()">
+        <div class="cc-panel">
+            <div class="cc-search">
+                <input type="text" id="ccSearch" placeholder="Search" oninput="filterCCList(this.value)">
+            </div>
+            <div class="cc-list" id="ccList"></div>
+            <div class="cc-footer">
+                <button class="cc-save" onclick="saveCCColumns()">Save</button>
+                <button class="cc-cancel" onclick="closeCCModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

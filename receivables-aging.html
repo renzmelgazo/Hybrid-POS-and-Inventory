@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receivables Aging - Reports</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: #fff;
+        }
+
+        /* ===== TOP HEADER BAR ===== */
+        .report-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 44px;
+        }
+
+        .report-top-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #555;
+            padding: 4px 8px;
+        }
+
+        .breadcrumb-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb-category {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .breadcrumb-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-bar-actions button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .top-bar-actions button:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-export {
+            font-size: 12px !important;
+            font-weight: 500;
+        }
+
+        .btn-close-report {
+            color: #e53935 !important;
+            font-weight: bold;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filter-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .filter-dropdown select {
+            border: none;
+            outline: none;
+            font-size: 12px;
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .btn-run-report {
+            background: #e53935;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 7px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .btn-run-report:hover {
+            background: #c62828;
+        }
+
+        /* ===== REPORT BODY ===== */
+        .report-body {
+            padding: 30px 20px 60px;
+            overflow-x: auto;
+        }
+
+        .report-header-section {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .report-main-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .report-date-range {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* ===== REPORT TABLE ===== */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 1200px;
+        }
+
+        .report-table thead th {
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 10px 10px;
+            border-bottom: 2px solid #ddd;
+            background: #fafafa;
+            white-space: nowrap;
+        }
+
+        .report-table tbody td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .report-table tfoot td {
+            padding: 12px 10px;
+            font-weight: 700;
+            border-top: 2px solid #ddd;
+            background: #fafafa;
+            color: #222;
+        }
+
+        .align-right {
+            text-align: right !important;
+        }
+
+        .aging-bucket {
+            width: 100px;
+        }
+
+        .total-row {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+
+            <!-- TOP HEADER BAR -->
+            <div class="report-top-bar">
+                <div class="report-top-left">
+                    <button class="hamburger-btn" onclick="window.location.href='/reports.html'">☰</button>
+                    <div class="breadcrumb-area">
+                        <span class="breadcrumb-category">Financial Health</span>
+                        <span class="breadcrumb-title">Receivables Aging</span>
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <button class="btn-export">Export ▾</button>
+                    <button class="btn-close-report" onclick="window.location.href='/reports.html'">✕</button>
+                </div>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+                <span class="filter-label">As of Date:</span>
+                <div class="filter-dropdown">
+                    <input type="date" id="asOfDate" style="border:none; outline:none; font-size:12px; color:#2563eb;">
+                </div>
+                <button class="btn-run-report" onclick="runReport()">Run Report</button>
+            </div>
+
+            <!-- REPORT BODY -->
+            <div class="report-body">
+                <div class="report-header-section">
+                    <div class="report-main-title">Receivables Aging Summary</div>
+                    <div class="report-date-range">As of <span id="asOfDisplay">-</span></div>
+                </div>
+
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>CUSTOMER NAME</th>
+                            <th class="align-right aging-bucket">CURRENT</th>
+                            <th class="align-right aging-bucket">1 - 30 DAYS</th>
+                            <th class="align-right aging-bucket">31 - 60 DAYS</th>
+                            <th class="align-right aging-bucket">61 - 90 DAYS</th>
+                            <th class="align-right aging-bucket">> 90 DAYS</th>
+                            <th class="align-right">TOTAL BALANCE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding: 40px; color: #888;">
+                                Click "Run Report" to generate data
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot id="reportTableFoot" style="display:none;">
+                        <tr>
+                            <td>Total</td>
+                            <td class="align-right" id="totCurrent">0.00</td>
+                            <td class="align-right" id="tot1to30">0.00</td>
+                            <td class="align-right" id="tot31to60">0.00</td>
+                            <td class="align-right" id="tot61to90">0.00</td>
+                            <td class="align-right" id="totOver90">0.00</td>
+                            <td class="align-right" id="totGrandTotal">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        document.getElementById('asOfDate').valueAsDate = new Date();
+
+        async function runReport() {
+            const tbody = document.getElementById('reportTableBody');
+            const asOf = document.getElementById('asOfDate').value;
+            document.getElementById('asOfDisplay').textContent = asOf;
+
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Generating aging blocks...</td></tr>';
+
+            // Simulation of data for now, real implementation would call a grouped API
+            setTimeout(() => {
+                tbody.innerHTML = `
+                    <tr>
+                        <td>General Customer A</td>
+                        <td class="align-right">PHP 25,000.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 25,000.00</td>
+                    </tr>
+                    <tr>
+                        <td>Corporate Account B</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 12,450.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 0.00</td>
+                        <td class="align-right">PHP 12,450.00</td>
+                    </tr>
+                `;
+                document.getElementById('reportTableFoot').style.display = 'table-footer-group';
+            }, 500);
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

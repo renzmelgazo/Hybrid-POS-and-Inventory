@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Summary - Reports</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: #fff;
+        }
+
+        /* ===== TOP HEADER BAR ===== */
+        .report-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 44px;
+        }
+
+        .report-top-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #555;
+            padding: 4px 8px;
+        }
+
+        .breadcrumb-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb-category {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .breadcrumb-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .breadcrumb-date {
+            font-size: 11px;
+            color: #999;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-bar-actions button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .top-bar-actions button:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-export {
+            font-size: 12px !important;
+            font-weight: 500;
+        }
+
+        .btn-close-report {
+            color: #e53935 !important;
+            font-weight: bold;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filter-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .filter-dropdown select {
+            border: none;
+            outline: none;
+            font-size: 12px;
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .filter-more {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px 12px;
+            font-size: 12px;
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-run-report {
+            background: #e53935;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 7px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-run-report:hover {
+            background: #c62828;
+        }
+
+        /* ===== OPTIONS BAR ===== */
+        .options-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 20px;
+            padding: 8px 20px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .option-bold {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .option-icon {
+            font-size: 14px;
+        }
+
+        .customize-count {
+            background: #2563eb;
+            color: #fff;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        /* ===== REPORT BODY ===== */
+        .report-body {
+            padding: 30px 40px 60px;
+        }
+
+        .report-header-section {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .company-name {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .report-main-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .report-date-range {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .date-highlight {
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        /* ===== REPORT TABLE ===== */
+        .report-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .report-table thead th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 10px 12px;
+            border-bottom: 2px solid #ddd;
+            background: #fafafa;
+            white-space: nowrap;
+        }
+
+        .report-table tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .report-table tfoot td {
+            padding: 10px 12px;
+            font-weight: 700;
+            border-top: 2px solid #ddd;
+            background: #fafafa;
+            color: #222;
+        }
+
+        .report-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        .align-right {
+            text-align: right !important;
+        }
+
+        .align-center {
+            text-align: center !important;
+        }
+
+        .item-link {
+            color: #2563eb;
+            cursor: pointer;
+        }
+
+        .item-link:hover {
+            text-decoration: underline;
+        }
+
+        .sort-icon {
+            font-size: 10px;
+            color: #bbb;
+            margin-left: 4px;
+        }
+
+        .currency-amount {
+            color: #e67e22;
+        }
+
+        /* ===== FOOTER BAR ===== */
+        .report-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            margin-top: 16px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .total-count {
+            font-weight: 500;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagination button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .pagination button:hover {
+            background: #f5f5f5;
+        }
+
+        .pagination .page-info {
+            font-size: 12px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ===== CHART SECTION ===== */
+        .chart-section {
+            padding: 24px 40px 0;
+        }
+
+        .chart-container {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 10px;
+            padding: 20px 24px;
+            position: relative;
+            height: 280px;
+            margin-bottom: 8px;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+
+            <!-- TOP HEADER BAR -->
+            <div class="report-top-bar">
+                <div class="report-top-left">
+                    <button class="hamburger-btn" onclick="window.location.href='/reports.html'">☰</button>
+                    <div class="breadcrumb-area">
+                        <span class="breadcrumb-category" id="breadcrumbCategory">Sales</span>
+                        <span class="breadcrumb-title">
+                            <span id="breadcrumbTitleText">Sales Summary</span>
+                            <span class="breadcrumb-date" id="breadcrumbDate">•</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <button title="Schedule"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span></button>
+                    <button title="Refresh" onclick="runReport()"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span></button>
+                    <button title="Share"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span></button>
+                    <button class="btn-export" title="Export">Export ▾</button>
+                    <button title="Print" onclick="window.print()"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span></button>
+                    <button class="btn-close-report" title="Close"
+                        onclick="window.location.href='/reports.html'">✕</button>
+                </div>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+                <span class="filter-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filters :</span>
+
+                <div class="filter-dropdown">
+                    <span>Date Range :</span>
+                    <select id="dateRangeSelect" onchange="handleDateRangeChange()" title="Date Range Filter">
+                        <option value="this-month" selected>This Month</option>
+                        <option value="last-month">Last Month</option>
+                        <option value="this-quarter">This Quarter</option>
+                        <option value="this-year">This Year</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+
+                <button class="filter-more">⊕ More Filters</button>
+
+                <button class="btn-run-report" onclick="runReport()">Run Report</button>
+            </div>
+
+            <!-- OPTIONS BAR -->
+            <div class="options-bar">
+                <div class="option-item">
+                    <span class="option-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+                    Group By : <span class="option-bold">None</span> ▾
+                </div>
+                <div class="option-item">
+                    <span class="option-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                    Customize Report Columns
+                    <span class="customize-count">5</span>
+                </div>
+            </div>
+
+            <!-- REPORT BODY -->
+            <div class="report-body">
+                <div class="report-header-section">
+                    <div class="company-name">SOLO</div>
+                    <div class="report-main-title" id="reportMainTitle">Sales Summary</div>
+                    <div class="report-date-range" id="reportDateRange">
+                        From <span class="date-highlight" id="fromDateDisplay">-</span> To <span class="date-highlight"
+                            id="toDateDisplay">-</span>
+                    </div>
+                </div>
+
+                <!-- CHART -->
+                <div class="chart-section">
+                    <div class="chart-title">Sales Overview</div>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="report-table-wrapper">
+                    <table class="report-table">
+                        <thead id="reportTableHead">
+                            <tr>
+                                <th>DATE <span class="sort-icon">⇅</span></th>
+                                <th class="align-center">INVOICE COUNT</th>
+                                <th class="align-right">TOTAL SALES</th>
+                                <th class="align-right">TOTAL SALES WITH TAX</th>
+                                <th class="align-right">TOTAL TAX AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <tr>
+                                <td colspan="5" class="align-center" style="padding:40px; color:#999;">Loading...</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="reportTableFoot" style="display:none;">
+                            <tr>
+                                <td>Total</td>
+                                <td class="align-center" id="totalInvoiceCount"></td>
+                                <td class="align-right" id="totalSales"></td>
+                                <td class="align-right" id="totalSalesWithTax"></td>
+                                <td class="align-right" id="totalTaxAmount"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="report-footer">
+                    <div class="total-count" id="totalCountLabel"></div>
+                    <div class="pagination">
+                        <span class="page-info" id="pageInfo"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script src="/js/report-export.js"></script>
+    <script>
+        let currentFrom = '';
+        let currentTo = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setThisMonth();
+            runReport();
+        });
+
+        function setThisMonth() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth();
+            currentFrom = new Date(y, m, 1).toISOString().split('T')[0];
+            currentTo = new Date(y, m + 1, 0).toISOString().split('T')[0];
+            updateDateDisplays();
+        }
+
+        function handleDateRangeChange() {
+            const v = document.getElementById('dateRangeSelect').value;
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth();
+
+            switch (v) {
+                case 'this-month':
+                    currentFrom = new Date(y, m, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, m + 1, 0).toISOString().split('T')[0];
+                    break;
+                case 'last-month':
+                    currentFrom = new Date(y, m - 1, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, m, 0).toISOString().split('T')[0];
+                    break;
+                case 'this-quarter':
+                    const qStart = Math.floor(m / 3) * 3;
+                    currentFrom = new Date(y, qStart, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, qStart + 3, 0).toISOString().split('T')[0];
+                    break;
+                case 'this-year':
+                    currentFrom = new Date(y, 0, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, 11, 31).toISOString().split('T')[0];
+                    break;
+                case 'custom':
+                    break;
+            }
+            updateDateDisplays();
+            runReport();
+        }
+
+        function updateDateDisplays() {
+            const fmt = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const fromStr = currentFrom ? fmt(currentFrom) : '-';
+            const toStr = currentTo ? fmt(currentTo) : '-';
+
+            document.getElementById('fromDateDisplay').textContent = fromStr;
+            document.getElementById('toDateDisplay').textContent = toStr;
+            document.getElementById('breadcrumbDate').textContent = `• From ${fromStr} To ${toStr}`;
+        }
+
+        function fmtCurrency(val) {
+            const num = parseFloat(val);
+            const prefix = num < 0 ? 'PHP-' : 'PHP';
+            return prefix + Math.abs(num).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function fmtDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        // ===== MAIN REPORT =====
+        async function runReport() {
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="align-center" style="padding:40px;color:#999;">Loading...</td></tr>';
+            document.getElementById('reportTableFoot').style.display = 'none';
+            document.getElementById('totalCountLabel').textContent = '';
+            document.getElementById('pageInfo').textContent = '';
+
+            try {
+                let url = '/api/sales/reports/sales-summary';
+                if (currentFrom && currentTo) {
+                    url += `?from=${currentFrom}&to=${currentTo}`;
+                }
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="align-center" style="padding:60px;color:#999;font-size:14px;">No sales data found for the selected period.</td></tr>';
+                    return;
+                }
+
+                let tInvCount = 0, tSales = 0, tSalesTax = 0, tTaxAmount = 0;
+
+                tbody.innerHTML = data.map(item => {
+                    const invCount = item.invoice_count || 0;
+                    const totalSales = parseFloat(item.total_sales) || 0;
+                    const totalSalesWithTax = parseFloat(item.total_sales_with_tax) || 0;
+                    const taxAmount = parseFloat(item.total_tax_amount) || 0;
+
+                    tInvCount += invCount;
+                    tSales += totalSales;
+                    tSalesTax += totalSalesWithTax;
+                    tTaxAmount += taxAmount;
+
+                    return `
+                        <tr>
+                            <td class="item-link">${fmtDate(item.date)}</td>
+                            <td class="align-center">${invCount}</td>
+                            <td class="align-right currency-amount">${fmtCurrency(totalSales)}</td>
+                            <td class="align-right currency-amount">${fmtCurrency(totalSalesWithTax)}</td>
+                            <td class="align-right currency-amount">${fmtCurrency(taxAmount)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Update totals
+                document.getElementById('totalInvoiceCount').textContent = tInvCount;
+                document.getElementById('totalSales').textContent = fmtCurrency(tSales);
+                document.getElementById('totalSalesWithTax').textContent = fmtCurrency(tSalesTax);
+                document.getElementById('totalTaxAmount').textContent = fmtCurrency(tTaxAmount);
+                document.getElementById('reportTableFoot').style.display = '';
+
+                // Footer info
+                document.getElementById('totalCountLabel').textContent = `Total Count: ${data.length}`;
+                document.getElementById('pageInfo').textContent = `1 - ${data.length}`;
+
+                // Render Chart
+                renderChart(data);
+
+            } catch (e) {
+                console.error('Error:', e);
+                tbody.innerHTML = '<tr><td colspan="5" class="align-center" style="padding:40px;color:#e53935;">Error loading report data.</td></tr>';
+            }
+        }
+
+        // ===== CHART =====
+        let salesChartInstance = null;
+
+        function renderChart(data) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            if (salesChartInstance) {
+                salesChartInstance.destroy();
+            }
+
+            const labels = data.map(item => fmtDate(item.date));
+            const salesData = data.map(item => parseFloat(item.total_sales) || 0);
+            const invoiceCounts = data.map(item => item.invoice_count || 0);
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Sales (PHP)',
+                            data: salesData,
+                            backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                            borderColor: 'rgba(37, 99, 235, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            label: 'Invoice Count',
+                            data: invoiceCounts,
+                            type: 'line',
+                            borderColor: '#e53935',
+                            backgroundColor: 'rgba(229, 57, 53, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#e53935',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { family: 'Inter', size: 12 },
+                                usePointStyle: true,
+                                padding: 16
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1f3a',
+                            titleFont: { family: 'Inter', size: 12 },
+                            bodyFont: { family: 'Inter', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.yAxisID === 'y') {
+                                        return 'Sales: PHP ' + context.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                                    }
+                                    return 'Invoices: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Sales (PHP)',
+                                font: { family: 'Inter', size: 11, weight: 600 },
+                                color: '#2563eb'
+                            },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                callback: val => 'PHP ' + val.toLocaleString()
+                            },
+                            grid: { color: '#f0f0f0' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Invoice Count',
+                                font: { family: 'Inter', size: 11, weight: 600 },
+                                color: '#e53935'
+                            },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                stepSize: 1
+                            },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Credit Detail - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            background: #fff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== LEFT PANEL ===== */
+        .left-panel {
+            width: 210px;
+            min-width: 210px;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #fff;
+        }
+
+        .left-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .left-panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .left-panel-title:hover {
+            color: #4285f4;
+        }
+
+        .vc-filter-wrap {
+            position: relative;
+        }
+
+        .vc-sidebar-filter-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            width: 220px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .vc-sidebar-filter-dropdown.open {
+            display: block;
+        }
+
+        .vc-filter-list {
+            padding: 6px 0;
+        }
+
+        .vc-filter-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+            transition: background 0.1s ease;
+        }
+
+        .vc-filter-item:hover {
+            background: #f5f8ff;
+        }
+
+        .vc-filter-item.active {
+            background: #4285f4;
+            color: white;
+        }
+
+        .vc-filter-item.active .vc-filter-star {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .vc-filter-star {
+            font-size: 16px;
+            color: #ccc;
+            line-height: 1;
+        }
+
+        .left-panel-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .left-panel-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            padding: 2px;
+        }
+
+        .btn-add-new {
+            background: linear-gradient(135deg, #a52222 0%, #800000 100%) !important;
+            color: white !important;
+            border-radius: 4px;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px !important;
+            transition: background 0.15s;
+        }
+
+        .btn-add-new:hover {
+            background: linear-gradient(135deg, #b52828 0%, #8e0000 100%) !important;
+        }
+
+        .left-panel-search {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .left-panel-search input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .left-panel-search input:focus {
+            border-color: #4285f4;
+        }
+
+        .left-panel-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .credit-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .credit-item:hover {
+            background: #f5f8ff;
+        }
+
+        .credit-item.active {
+            background: #e8f0fe;
+            border-left: 3px solid #4285f4;
+        }
+
+        .credit-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .credit-item-vendor {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+
+        .credit-item-amount {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .credit-item-meta {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .credit-item-status {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+        .credit-status-open {
+            color: #1e40af;
+        }
+
+        .credit-status-draft {
+            color: #92400e;
+        }
+
+        .credit-status-closed {
+            color: #059669;
+        }
+
+        /* ===== RIGHT PANEL ===== */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            min-width: 0;
+        }
+
+        /* Top Header */
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 48px;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-location {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .header-credit-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-right button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .header-right button:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-close-x {
+            color: #e53935 !important;
+            font-weight: bold;
+            font-size: 18px !important;
+            border: none !important;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #fff;
+        }
+
+        .toolbar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            background: none;
+            border: none;
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .toolbar-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .toolbar-sep {
+            width: 1px;
+            height: 20px;
+            background: #e0e0e0;
+            margin: 0 4px;
+        }
+
+        /* Detail Body */
+        .detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 40px 60px;
+            background: #f5f6fa;
+        }
+
+        .document-card {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Status Ribbon */
+        .ribbon {
+            position: absolute;
+            top: 18px;
+            left: -36px;
+            width: 140px;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            transform: rotate(-45deg);
+            z-index: 10;
+        }
+
+        .ribbon-open {
+            background: #2196F3;
+        }
+
+        .ribbon-draft {
+            background: #ff9800;
+        }
+
+        .ribbon-closed {
+            background: #4caf50;
+        }
+
+        /* Customize Button */
+        .customize-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .customize-btn:hover {
+            background: #3367d6;
+        }
+
+        /* Card Content */
+        .card-inner {
+            padding: 50px 40px 30px;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .company-info {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .company-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .doc-type-section {
+            text-align: right;
+        }
+
+        .doc-type-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 1px;
+        }
+
+        .doc-credit-number {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .doc-credit-number span {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .credits-remaining-top {
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .credits-remaining-label {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .credits-remaining-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* Vendor / Date Row */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 30px 0 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .info-left .info-label {
+            font-size: 11px;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .vendor-name-link {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a73e8;
+            text-decoration: none;
+            margin-top: 2px;
+            display: inline-block;
+        }
+
+        .vendor-name-link:hover {
+            text-decoration: underline;
+        }
+
+        .info-right {
+            text-align: right;
+        }
+
+        .info-right .info-label {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .info-right .info-value {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Item Table */
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .item-table thead th {
+            background: #3d4f5f;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .item-table thead th.right {
+            text-align: right;
+        }
+
+        .item-table tbody td {
+            padding: 12px 12px;
+            font-size: 12px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+
+        .item-table tbody td.right {
+            text-align: right;
+        }
+
+        .item-desc {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .item-unit {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Totals */
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 16px;
+            padding-top: 12px;
+        }
+
+        .totals-box {
+            width: 280px;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .totals-row.total {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 6px;
+        }
+
+        .totals-row.total .totals-label,
+        .totals-row.total .totals-value {
+            font-weight: 700;
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* Credits Remaining Bar */
+        .credits-remaining-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff8e1;
+            padding: 10px 16px;
+            border-radius: 4px;
+            margin-top: 16px;
+        }
+
+        .credits-remaining-bar .cr-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .credits-remaining-bar .cr-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* Empty detail */
+        .empty-detail {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Kebab Dropdown */
+        .kebab-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .kebab-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            min-width: 160px;
+            z-index: 100;
+            padding: 4px 0;
+        }
+
+        .kebab-dropdown.show {
+            display: block;
+        }
+
+        .kebab-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .kebab-dropdown-item:hover {
+            background: #f5f8ff;
+        }
+
+        .kebab-dropdown-item.danger {
+            color: #e53935;
+        }
+
+        .kebab-dropdown-item.danger:hover {
+            background: #fef2f2;
+        }
+
+        /* Convert to Open Button */
+        .btn-convert-open {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            background: #4285f4;
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .btn-convert-open:hover {
+            background: #3367d6;
+        }
+
+        /* PDF/Print Dropdown */
+        .pdf-print-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .pdf-print-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 140px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .pdf-print-menu.show {
+            display: block;
+        }
+
+        .pdf-print-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 14px;
+            background: none;
+            border: none;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .pdf-print-menu-item:hover {
+            background: #f5f8ff;
+        }
+
+        @media print {
+            .detail-header,
+            .toolbar,
+            #sidebarContainer,
+            .left-panel,
+            .nav-sidebar,
+            .customize-btn,
+            .kebab-wrap {
+                display: none !important;
+            }
+            body, .main-layout, .content {
+                margin: 0 !important;
+                
+                background: white !important;
+            }
+            .content {
+                display: block !important;
+            }
+            .right-panel {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+            }
+            .detail-body {
+                
+                background: white !important;
+            }
+            .document-card {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+            }
+            @page { margin: 15mm; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content">
+            <!-- LEFT PANEL: Credits List -->
+            <div class="left-panel">
+                <div class="left-panel-header">
+                    <div class="vc-filter-wrap">
+                        <span class="left-panel-title" onclick="toggleVcSidebarFilter()"><span id="vcSidebarFilterLabel">All Vendor Credits</span> ▾</span>
+                        <div class="vc-sidebar-filter-dropdown" id="vcSidebarFilterDropdown">
+                            <div class="vc-filter-list">
+                                <div class="vc-filter-item active" data-filter="all" onclick="selectVcSidebarFilter('all', 'All Vendor Credits')">
+                                    <span>All Vendor Credits</span><span class="vc-filter-star">☆</span>
+                                </div>
+                                <div class="vc-filter-item" data-filter="draft" onclick="selectVcSidebarFilter('draft', 'Draft')">
+                                    <span>Draft</span><span class="vc-filter-star">☆</span>
+                                </div>
+                                <div class="vc-filter-item" data-filter="open" onclick="selectVcSidebarFilter('open', 'Open')">
+                                    <span>Open</span><span class="vc-filter-star">☆</span>
+                                </div>
+                                <div class="vc-filter-item" data-filter="closed" onclick="selectVcSidebarFilter('closed', 'Closed')">
+                                    <span>Closed</span><span class="vc-filter-star">☆</span>
+                                </div>
+                                <div class="vc-filter-item" data-filter="void" onclick="selectVcSidebarFilter('void', 'Void')">
+                                    <span>Void</span><span class="vc-filter-star">☆</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="left-panel-actions">
+                        <button class="btn-add-new" onclick="window.location.href='/new-vendor-credit.html'"
+                            title="New Vendor Credit">+</button>
+                    </div>
+                </div>
+                <div class="left-panel-search">
+                    <input type="text" id="searchCredits" placeholder="Search in Vendor Credits"
+                        oninput="filterCredits()">
+                </div>
+                <div class="left-panel-list" id="creditsList">
+                    <div style="padding:30px;text-align:center;color:#999;">Loading...</div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Detail View -->
+            <div class="right-panel" id="rightPanel">
+                <!-- Header -->
+                <div class="detail-header">
+                    <div class="header-left">
+                        <span class="header-location">Location: Head Office</span>
+                        <span class="header-credit-number" id="headerCreditNumber">—</span>
+                    </div>
+                    <div class="header-right">
+                        <button title="Info">ℹ</button>
+                        <button title="Chat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg></button>
+                        <button class="btn-close-x" title="Close" onclick="goBack()">✕</button>
+                    </div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <button class="toolbar-btn" onclick="editCredit()"><svg width="14" height="14" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg> Edit</button>
+                    <div class="toolbar-sep"></div>
+                    <div class="pdf-print-wrap">
+                        <button class="toolbar-btn" onclick="togglePdfPrintMenu(event)"><svg width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                            </svg> PDF/Print ▾</button>
+                        <div class="pdf-print-menu" id="pdfPrintMenu">
+                            <button class="pdf-print-menu-item" onclick="downloadCreditPDF()">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                PDF
+                            </button>
+                            <button class="pdf-print-menu-item" onclick="printCredit()">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                Print
+                            </button>
+                        </div>
+                    </div>
+                    <div class="toolbar-sep"></div>
+                    <button class="toolbar-btn" id="btnApplyBills"><svg width="14" height="14" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg> Apply to Bills</button>
+                    <div class="toolbar-sep" id="applyBillsSep"></div>
+                    <div class="toolbar-sep" id="convertSep" style="display:none;"></div>
+                    <button class="btn-convert-open" id="btnConvertOpen" style="display:none;"
+                        onclick="convertToOpen()">Convert to Open</button>
+                    <div class="toolbar-sep"></div>
+                    <div class="kebab-wrap">
+                        <button class="toolbar-btn" onclick="toggleKebabMenu(event)">⋯</button>
+                        <div class="kebab-dropdown" id="kebabDropdown">
+                            <button class="kebab-dropdown-item" onclick="handleRefund()"><svg width="14" height="14"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="vertical-align:middle;margin-right:3px;">
+                                    <line x1="12" y1="1" x2="12" y2="23" />
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                </svg> Refund</button>
+                            <button class="kebab-dropdown-item" onclick="handleVoid()"><svg width="14" height="14"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="vertical-align:middle;margin-right:3px;">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                </svg> Void</button>
+                            <button class="kebab-dropdown-item danger" onclick="handleDelete()"><svg width="14"
+                                    height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="vertical-align:middle;margin-right:3px;">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg> Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Body -->
+                <div class="detail-body" id="detailBody">
+                    <div id="refundHistorySection" style="max-width:800px;margin:0 auto 16px;"></div>
+                    <div class="document-card" id="documentCard">
+                        <div class="ribbon ribbon-draft" id="statusRibbon">Draft</div>
+                        <button class="customize-btn">⚙ Customize</button>
+
+                        <div class="card-inner">
+                            <div class="card-top">
+                                <div class="company-info">
+                                    <div class="company-name">SOLO</div>
+                                    <div>Philippines</div>
+                                    <div>projectfinal357@gmail.com</div>
+                                </div>
+                                <div class="doc-type-section">
+                                    <div class="doc-type-title">VENDOR CREDITS</div>
+                                    <div class="doc-credit-number">CreditNote# <span id="docCreditNumber">—</span></div>
+                                    <div class="credits-remaining-top">
+                                        <div class="credits-remaining-label">Credits Remaining</div>
+                                        <div class="credits-remaining-amount" id="docCreditsRemaining">PHP0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-left">
+                                    <div class="info-label">Vendor Address</div>
+                                    <a class="vendor-name-link" id="vendorNameLink" href="#">—</a>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div class="info-label">Processing Branch</div>
+                                    <div class="info-value" id="branchName" style="font-weight:600;color:#1a73e8;">—</div>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div class="info-label">Authorized By</div>
+                                    <div class="info-value" id="authorizedByName" style="font-weight:600;color:#333;">—</div>
+                                </div>
+                                <div class="info-right">
+                                    <div class="info-label">Date :</div>
+                                    <div class="info-value" id="creditDate">—</div>
+                                </div>
+                            </div>
+
+                            <table class="item-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:36px;">#</th>
+                                        <th>Item & Description</th>
+                                        <th style="width:110px;">Location</th>
+                                        <th class="right" style="width:70px;">Qty</th>
+                                        <th class="right" style="width:80px;">Rate</th>
+                                        <th class="right" style="width:90px;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center;padding:30px;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="totals-section">
+                                <div class="totals-box">
+                                    <div class="totals-row">
+                                        <span class="totals-label">Sub Total</span>
+                                        <span class="totals-value" id="subTotal">0.00</span>
+                                    </div>
+                                    <div class="totals-row total">
+                                        <span class="totals-label">Total</span>
+                                        <span class="totals-value" id="totalAmount">PHP0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="credits-remaining-bar">
+                                <span class="cr-label">Credits Remaining</span>
+                                <span class="cr-value" id="creditsRemainingBar">PHP0.00</span>
+                            </div>
+                            <div id="closureReasonBanner"
+                                style="display:none;margin-top:12px;padding:10px 16px;border-radius:6px;background:#f0fdf4;border:1px solid #bbf7d0;">
+                                <span style="font-size:12px;font-weight:600;color:#16a34a;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Closed — </span>
+                                <span id="closureReasonText" style="font-size:12px;color:#15803d;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/js/layout.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentId = urlParams.get('id');
+        let allCredits = [];
+        let creditData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCreditsList();
+            if (currentId) {
+                highlightActive();
+                await loadCreditDetail(currentId);
+            }
+        });
+
+        // ===== LEFT PANEL =====
+        async function loadCreditsList() {
+            try {
+                const res = await fetch('/api/vendor-credits');
+                if (!res.ok) return;
+                allCredits = await res.json();
+                renderCreditsList(allCredits);
+
+                // If no id specified, select first
+                if (!currentId && allCredits.length > 0) {
+                    currentId = allCredits[0].id;
+                    window.history.replaceState(null, '', '?id=' + currentId);
+                    highlightActive();
+                    await loadCreditDetail(currentId);
+                }
+            } catch (e) {
+                console.error('Error loading credits:', e);
+            }
+        }
+
+        function renderCreditsList(credits) {
+            const container = document.getElementById('creditsList');
+            if (credits.length === 0) {
+                container.innerHTML = '<div style="padding:30px;text-align:center;color:#999;">No vendor credits found.</div>';
+                return;
+            }
+
+            container.innerHTML = credits.map(c => {
+                const amount = parseFloat(c.total_amount || 0);
+                const cc = c.currency_code || 'PHP';
+                const fmtAmt = cc + amount.toLocaleString('en-PH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                const cDate = c.credit_date ? new Date(c.credit_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                const status = (c.status || 'draft').toLowerCase();
+                let statusClass = 'credit-status-draft';
+                let statusLabel = 'DRAFT';
+                if (status === 'open') { statusClass = 'credit-status-open'; statusLabel = 'OPEN'; }
+                else if (status === 'closed') { statusClass = 'credit-status-closed'; statusLabel = 'CLOSED'; }
+
+                return `<div class="credit-item ${c.id == currentId ? 'active' : ''}" data-id="${c.id}" onclick="selectCredit(${c.id})">
+                    <div class="credit-item-top">
+                        <span class="credit-item-vendor">${c.supplier_name || '—'}</span>
+                        <span class="credit-item-amount">${fmtAmt}</span>
+                    </div>
+                    <div class="credit-item-meta">${c.credit_number || ''} · ${cDate} · ${c.reference || ''}</div>
+                    <div class="credit-item-status ${statusClass}">${statusLabel}</div>
+                </div>`;
+            }).join('');
+        }
+
+        let currentVcSidebarFilter = 'all';
+
+        function getFilteredSidebarCredits() {
+            if (currentVcSidebarFilter === 'all') return allCredits;
+            return allCredits.filter(c => {
+                const status = (c.status || 'draft').toLowerCase();
+                switch (currentVcSidebarFilter) {
+                    case 'draft': return status === 'draft';
+                    case 'open': return status === 'open';
+                    case 'closed': return status === 'closed';
+                    case 'void': return status === 'void';
+                    default: return true;
+                }
+            });
+        }
+
+        function toggleVcSidebarFilter() {
+            document.getElementById('vcSidebarFilterDropdown').classList.toggle('open');
+        }
+
+        function selectVcSidebarFilter(filter, label) {
+            currentVcSidebarFilter = filter;
+            document.getElementById('vcSidebarFilterLabel').textContent = filter === 'all' ? 'All Vendor Credits' : label;
+            document.querySelectorAll('.vc-filter-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-filter') === filter);
+            });
+            document.getElementById('vcSidebarFilterDropdown').classList.remove('open');
+            const searchInput = document.getElementById('searchCredits');
+            if (searchInput) searchInput.value = '';
+            renderCreditsList(getFilteredSidebarCredits());
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.vc-filter-wrap')) {
+                const dd = document.getElementById('vcSidebarFilterDropdown');
+                if (dd) dd.classList.remove('open');
+            }
+        });
+
+        function filterCredits() {
+            const q = document.getElementById('searchCredits').value.toLowerCase();
+            let filtered = getFilteredSidebarCredits();
+            if (q) {
+                filtered = filtered.filter(c =>
+                    (c.supplier_name || '').toLowerCase().includes(q) ||
+                    (c.credit_number || '').toLowerCase().includes(q) ||
+                    (c.reference || '').toLowerCase().includes(q)
+                );
+            }
+            renderCreditsList(filtered);
+        }
+
+        function selectCredit(id) {
+            currentId = id;
+            window.history.pushState(null, '', '?id=' + id);
+            highlightActive();
+            loadCreditDetail(id);
+        }
+
+        function highlightActive() {
+            document.querySelectorAll('.credit-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.id == currentId);
+            });
+        }
+
+        // ===== RIGHT PANEL =====
+        async function loadCreditDetail(id) {
+            try {
+                const res = await fetch('/api/vendor-credits/' + id);
+                if (!res.ok) return;
+                creditData = await res.json();
+
+                // Header
+                document.getElementById('headerCreditNumber').textContent = creditData.credit_number || 'VC-' + creditData.id;
+
+                // Ribbon
+                const ribbon = document.getElementById('statusRibbon');
+                const status = (creditData.status || 'draft').toLowerCase();
+                ribbon.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                ribbon.className = 'ribbon';
+                if (status === 'open') ribbon.classList.add('ribbon-open');
+                else if (status === 'closed') ribbon.classList.add('ribbon-closed');
+                else ribbon.classList.add('ribbon-draft');
+
+                // Show/hide Convert to Open button
+                const btnConvert = document.getElementById('btnConvertOpen');
+                const convertSep = document.getElementById('convertSep');
+                if (status === 'draft') {
+                    btnConvert.style.display = 'inline-flex';
+                    convertSep.style.display = '';
+                } else {
+                    btnConvert.style.display = 'none';
+                    convertSep.style.display = 'none';
+                }
+
+                // Show/hide Refund button based on status and remaining balance
+                const refundBtn = document.querySelector('.kebab-dropdown-item[onclick="handleRefund()"]');
+                if (refundBtn) {
+                    const refundedAmt2 = parseFloat(creditData.refunded_amount || 0);
+                    const totalAmt2 = parseFloat(creditData.total_amount || 0);
+                    const hasRemaining = (totalAmt2 - refundedAmt2) > 0.001;
+                    if (status === 'open' && hasRemaining) {
+                        refundBtn.style.display = '';
+                    } else {
+                        refundBtn.style.display = 'none';
+                    }
+                }
+
+                // ===== CLOSED / DRAFT STATE GUARDS =====
+                // Hide "Apply to Bills" button when CLOSED or DRAFT (only available for OPEN)
+                const applyBillsBtn = document.getElementById('btnApplyBills');
+                const applyBillsSep = document.getElementById('applyBillsSep');
+                if (status === 'closed' || status === 'draft') {
+                    if (applyBillsBtn) applyBillsBtn.style.display = 'none';
+                    if (applyBillsSep) applyBillsSep.style.display = 'none';
+                    if (refundBtn) refundBtn.style.display = 'none';
+                } else {
+                    if (applyBillsBtn) applyBillsBtn.style.display = '';
+                    if (applyBillsSep) applyBillsSep.style.display = '';
+                }
+
+                // ===== CLOSURE REASON DISPLAY =====
+                const closureBanner = document.getElementById('closureReasonBanner');
+                const closureText = document.getElementById('closureReasonText');
+                if (status === 'closed' && closureBanner && closureText) {
+                    const refAmt = parseFloat(creditData.refunded_amount || 0);
+                    const totAmt = parseFloat(creditData.total_amount || 0);
+                    const appliedAmt = totAmt - refAmt; // amount used for bill applications
+
+                    let reason = '';
+                    if (refAmt > 0.001 && appliedAmt > 0.001) {
+                        reason = 'Applied to Bills & Refunded';
+                    } else if (refAmt > 0.001) {
+                        reason = 'Fully Refunded';
+                    } else {
+                        reason = 'Applied to Bills';
+                    }
+                    closureText.textContent = reason;
+                    closureBanner.style.display = 'block';
+                } else if (closureBanner) {
+                    closureBanner.style.display = 'none';
+                }
+
+                // Credit Number
+                document.getElementById('docCreditNumber').textContent = creditData.credit_number || 'VC-' + creditData.id;
+
+                // Amount — use stored currency
+                const total = parseFloat(creditData.total_amount || 0);
+                const refundedAmt = parseFloat(creditData.refunded_amount || 0);
+                const remaining = total - refundedAmt;
+                const cc = creditData.currency_code || 'PHP';
+                const exRate = parseFloat(creditData.exchange_rate) || 1;
+                const symbolMap = { 'CNY': '¥', 'RMB': '¥', 'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'PHP': '₱' };
+                const ccSymbol = symbolMap[cc] || cc + ' ';
+                const isFC = cc !== 'PHP' && exRate > 0;
+                const fmtTotal = cc + total.toLocaleString('en-PH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                const fmtRemaining = cc + remaining.toLocaleString('en-PH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                const phpEquiv = isFC ? '<div style="font-size:11px;color:#888;">₱' + (total * exRate).toFixed(3) + '</div>' : '';
+                const phpRemaining = isFC ? '<div style="font-size:11px;color:#888;">₱' + (remaining * exRate).toFixed(3) + '</div>' : '';
+                document.getElementById('docCreditsRemaining').innerHTML = fmtRemaining + phpRemaining;
+                document.getElementById('creditsRemainingBar').innerHTML = fmtRemaining + phpRemaining;
+                document.getElementById('totalAmount').innerHTML = fmtTotal + phpEquiv;
+
+                // Sub total
+                const items = creditData.items || [];
+                let sub = 0;
+                items.forEach(item => {
+                    sub += (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0);
+                });
+                const subStr = sub.toLocaleString('en-PH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                const phpSubEquiv = isFC ? '<div style="font-size:11px;color:#888;">₱' + (sub * exRate).toFixed(3) + '</div>' : '';
+                document.getElementById('subTotal').innerHTML = subStr + phpSubEquiv;
+
+                // Vendor
+                const vendorLink = document.getElementById('vendorNameLink');
+                vendorLink.textContent = creditData.supplier_name || '—';
+                vendorLink.href = creditData.supplier_id ? '/vendors.html?id=' + creditData.supplier_id : '#';
+
+                // Branch
+                document.getElementById('branchName').textContent = creditData.branch_name || '—';
+
+                // Authorized By
+                document.getElementById('authorizedByName').textContent = creditData.authorized_by || '—';
+
+                // Date
+                if (creditData.credit_date) {
+                    const d = new Date(creditData.credit_date);
+                    document.getElementById('creditDate').textContent = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                } else {
+                    document.getElementById('creditDate').textContent = '—';
+                }
+
+                // Items
+                const tbody = document.getElementById('itemTableBody');
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#999;">No items</td></tr>';
+                } else {
+                    tbody.innerHTML = items.map((item, i) => {
+                        const qty = parseFloat(item.quantity) || 0;
+                        const rate = parseFloat(item.rate) || 0;
+                        const amount = qty * rate;
+                        const unit = item.unit || 'pcs';
+                        const phpRateNote = isFC ? '<div style="font-size:10px;color:#888;">₱' + (rate * exRate).toFixed(3) + '</div>' : '';
+                        const phpAmtNote = isFC ? '<div style="font-size:10px;color:#888;">₱' + (amount * exRate).toFixed(3) + '</div>' : '';
+                        return `<tr>
+                            <td>${i + 1}</td>
+                            <td>
+                                <div>${item.item_name || '—'}</div>
+                                ${item.description ? '<div class="item-desc">' + item.description + '</div>' : ''}
+                            </td>
+                            <td style="font-size:12px;color:#555;">${item.location_name || '—'}</td>
+                            <td class="right">${qty.toFixed(3)}<div class="item-unit">${unit}</div></td>
+                            <td class="right">${ccSymbol}${rate.toFixed(3)}${phpRateNote}</td>
+                            <td class="right">${ccSymbol}${amount.toFixed(3)}${phpAmtNote}</td>
+                        </tr>`;
+                    }).join('');
+                }
+
+                // Load refund history
+                await loadRefundHistory(id, ccSymbol, isFC, exRate);
+
+                // Refresh left panel list to show updated statuses
+                await loadCreditsList();
+                highlightActive();
+
+            } catch (e) {
+                console.error('Error loading vendor credit:', e);
+            }
+        }
+
+        async function loadRefundHistory(creditId, ccSymbol, isFC, exRate) {
+            try {
+                const res = await fetch('/api/vendor-refunds/by-credit/' + creditId);
+                if (!res.ok) return;
+                const refunds = await res.json();
+                const container = document.getElementById('refundHistorySection');
+                if (refunds.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+                container.innerHTML = `
+                    <div style="background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,0.06);padding:20px 24px;">
+                        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px;">Refund History</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead>
+                                <tr style="background:#f5f6fa;">
+                                    <th style="padding:8px 10px;text-align:left;font-weight:600;color:#555;">Refund #</th>
+                                    <th style="padding:8px 10px;text-align:left;font-weight:600;color:#555;">Date</th>
+                                    <th style="padding:8px 10px;text-align:left;font-weight:600;color:#555;">Mode</th>
+                                    <th style="padding:8px 10px;text-align:left;font-weight:600;color:#555;">Deposit To</th>
+                                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#555;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${refunds.map(r => {
+                    const amt = parseFloat(r.refund_amount) || 0;
+                    const d = r.refund_date ? new Date(r.refund_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                    const phpAmt = isFC ? '<div style="font-size:10px;color:#888;">₱' + (amt * exRate).toLocaleString('en-PH', { minimumFractionDigits: 3 }) + '</div>' : '';
+                    return `<tr style="border-bottom:1px solid #f0f0f0;">
+                                        <td style="padding:8px 10px;color:#1a73e8;font-weight:500;">${r.refund_number || '—'}</td>
+                                        <td style="padding:8px 10px;">${d}</td>
+                                        <td style="padding:8px 10px;">${r.payment_mode || '—'}</td>
+                                        <td style="padding:8px 10px;">${r.deposit_to || '—'}</td>
+                                        <td style="padding:8px 10px;text-align:right;font-weight:600;">${ccSymbol}${amt.toLocaleString('en-PH', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}${phpAmt}</td>
+                                    </tr>`;
+                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (e) { console.error('Error loading refund history:', e); }
+        }
+
+        function editCredit() {
+            if (creditData && creditData.bill_id) {
+                window.location.href = '/new-vendor-credit.html?billId=' + creditData.bill_id;
+            } else {
+                window.location.href = '/new-vendor-credit.html?editId=' + currentId;
+            }
+        }
+
+        function printCredit() {
+            const m = document.getElementById('pdfPrintMenu');
+            if (m) m.classList.remove('show');
+            window.print();
+        }
+
+        function downloadCreditPDF() {
+            const m = document.getElementById('pdfPrintMenu');
+            if (m) m.classList.remove('show');
+            const card = document.getElementById('documentCard');
+            if (!card) return;
+            const creditNum = (creditData && creditData.credit_number) || 'VendorCredit';
+            html2pdf().set({
+                margin: [10, 10, 10, 10],
+                filename: creditNum + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(card).save();
+        }
+
+        function togglePdfPrintMenu(e) {
+            e.stopPropagation();
+            document.getElementById('pdfPrintMenu').classList.toggle('show');
+        }
+
+        function goBack() { window.location.href = '/vendor-credits.html'; }
+
+        // ===== KEBAB MENU =====
+        function toggleKebabMenu(e) {
+            e.stopPropagation();
+            document.getElementById('kebabDropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', (e) => {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            if (!e.target.closest('.pdf-print-wrap')) {
+                const m = document.getElementById('pdfPrintMenu');
+                if (m) m.classList.remove('show');
+            }
+        });
+
+        // ===== CONVERT TO OPEN =====
+        async function convertToOpen() {
+            if (!currentId) return;
+            if (!confirm('Convert this vendor credit to Open?')) return;
+            try {
+                const res = await fetch('/api/vendor-credits/' + currentId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'open' })
+                });
+                if (res.ok) {
+                    alert('Vendor credit converted to Open.');
+                    await loadCreditsList();
+                    await loadCreditDetail(currentId);
+                } else {
+                    alert('Failed to convert.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error converting vendor credit.');
+            }
+        }
+
+        // ===== REFUND =====
+        function handleRefund() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            if (!currentId) return;
+            // Only allow refund on open credits with remaining balance
+            if (creditData) {
+                const status = (creditData.status || '').toLowerCase();
+                if (status !== 'open') {
+                    alert('Only open vendor credits can be refunded. Current status: ' + status.toUpperCase());
+                    return;
+                }
+                const remaining = (parseFloat(creditData.total_amount) || 0) - (parseFloat(creditData.refunded_amount) || 0);
+                if (remaining <= 0) {
+                    alert('This vendor credit has no remaining balance to refund.');
+                    return;
+                }
+            }
+            window.location.href = '/new-vendor-refund.html?creditId=' + currentId;
+        }
+
+        // ===== VOID =====
+        async function handleVoid() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            if (!currentId) return;
+            if (!confirm('Are you sure you want to void this vendor credit?')) return;
+            try {
+                const res = await fetch('/api/vendor-credits/' + currentId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'void' })
+                });
+                if (res.ok) {
+                    alert('Vendor credit voided.');
+                    await loadCreditsList();
+                    await loadCreditDetail(currentId);
+                } else {
+                    alert('Failed to void.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error voiding vendor credit.');
+            }
+        }
+
+        // ===== DELETE =====
+        async function handleDelete() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            if (!currentId) return;
+            if (!confirm('Are you sure you want to delete this vendor credit? This cannot be undone.')) return;
+            try {
+                const res = await fetch('/api/vendor-credits/' + currentId, { method: 'DELETE' });
+                if (res.ok) {
+                    alert('Vendor credit deleted.');
+                    currentId = null;
+                    await loadCreditsList();
+                    if (allCredits.length > 0) {
+                        currentId = allCredits[0].id;
+                        window.history.replaceState(null, '', '?id=' + currentId);
+                        highlightActive();
+                        await loadCreditDetail(currentId);
+                    } else {
+                        window.location.href = '/vendor-credits.html';
+                    }
+                } else {
+                    alert('Failed to delete.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error deleting vendor credit.');
+            }
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

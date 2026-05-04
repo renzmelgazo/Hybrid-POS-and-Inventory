@@ -1,0 +1,3099 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Vendor Detail - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <!-- global.css removed — its body overflow:auto !important breaks panel-level scrolling -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+            overflow: hidden !important;
+            /* Override global.css — this page uses panel-level scroll */
+            height: 100vh !important;
+        }
+
+        .main-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            background: #f5f6fa;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Header Bar */
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .detail-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .vendor-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .detail-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-edit {
+            padding: 8px 18px;
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-edit:hover {
+            background: #f9fafb;
+        }
+
+        .btn-info {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .btn-new-transaction {
+            padding: 8px 16px;
+            background: #e85d26;
+            color: white;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-new-transaction:hover {
+            background: #d04f1c;
+        }
+
+        .btn-new-transaction-dropdown {
+            padding: 8px 10px;
+            background: #d04f1c;
+            color: white;
+            border: none;
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .btn-more-detail {
+            padding: 8px 16px;
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-radius: 4px 0 0 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-more-detail:hover {
+            background: #f9fafb;
+        }
+
+        .btn-more-dropdown {
+            padding: 8px 10px;
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .btn-close-detail {
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .btn-close-detail:hover {
+            color: #333;
+        }
+
+        /* Tabs */
+        .detail-tabs {
+            display: flex;
+            padding: 0 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .detail-tab {
+            padding: 12px 20px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .detail-tab:hover {
+            color: #333;
+        }
+
+        .detail-tab.active {
+            color: #333;
+            font-weight: 500;
+            border-bottom-color: #4285f4;
+        }
+
+        /* Main Content Area — fills remaining space via flex */
+        .detail-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Left Panel */
+        .detail-left {
+            width: 480px;
+            min-width: 480px;
+            background: white;
+            border-right: 1px solid #e9ecef;
+            overflow-y: scroll;
+            padding: 0;
+            height: 100%;
+            /* Override global scrollbar hiding from main.css */
+            scrollbar-width: thin;
+        }
+
+        .detail-left::-webkit-scrollbar {
+            display: block;
+            width: 6px;
+        }
+
+        .detail-left::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        .detail-left::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .detail-left {
+            overscroll-behavior: contain;
+        }
+
+        .vendor-info-card {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .vendor-info-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        .vendor-contact-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .vendor-avatar {
+            width: 44px;
+            height: 44px;
+            background: #e8eaed;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .vendor-contact-details {
+            flex: 1;
+        }
+
+        .vendor-contact-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .vendor-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 3px;
+        }
+
+        .vendor-contact-item .icon {
+            width: 14px;
+            text-align: center;
+            color: #888;
+        }
+
+        .vendor-settings-icon {
+            color: #999;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .vendor-settings-icon:hover {
+            color: #333;
+        }
+
+        /* Collapsible Sections */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            cursor: pointer;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-header:hover {
+            background: #fafbfc;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-toggle {
+            font-size: 10px;
+            color: #999;
+            transition: transform 0.2s;
+        }
+
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 14px 24px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .detail-row {
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #333;
+        }
+
+        .detail-value.link {
+            color: #4285f4;
+            cursor: pointer;
+        }
+
+        .detail-value.link:hover {
+            text-decoration: underline;
+        }
+
+        /* Contact Persons Section */
+        .contacts-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            cursor: pointer;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .contacts-header:hover {
+            background: #fafbfc;
+        }
+
+        .contacts-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-contact-icon {
+            width: 24px;
+            height: 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .add-contact-icon:hover {
+            background: #3367d6;
+        }
+
+        .contacts-content {
+            padding: 14px 24px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .no-contacts {
+            font-size: 13px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .contact-person-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .contact-person-item:last-child {
+            border-bottom: none;
+        }
+
+        .contact-person-avatar {
+            width: 32px;
+            height: 32px;
+            background: #e8eaed;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .contact-person-info {
+            flex: 1;
+        }
+
+        .contact-person-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .contact-person-detail {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Right Panel — scrollable */
+        .detail-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .detail-right::-webkit-scrollbar {
+            display: block;
+            width: 6px;
+        }
+
+        .detail-right::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        .detail-right::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+
+        /* What's Next Card */
+        .whats-next-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+
+        .whats-next-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .whats-next-icon {
+            color: #f59e0b;
+            font-size: 16px;
+        }
+
+        .whats-next-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .whats-next-text {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 14px;
+        }
+
+        .whats-next-text a {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .whats-next-text a:hover {
+            text-decoration: underline;
+        }
+
+        .whats-next-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-wn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-wn-primary {
+            background: #4285f4;
+            color: white;
+            border: none;
+        }
+
+        .btn-wn-primary:hover {
+            background: #3367d6;
+        }
+
+        .btn-wn-outline {
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-wn-outline:hover {
+            background: #f9fafb;
+        }
+
+        .btn-wn-more {
+            width: 28px;
+            height: 28px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Payment Info */
+        .payment-info {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+
+        .payment-row {
+            margin-bottom: 14px;
+        }
+
+        .payment-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .payment-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Payables Table */
+        .payables-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .payables-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        .payables-table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e9ecef;
+            background: #f9fafb;
+        }
+
+        .payables-table td {
+            padding: 12px;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Items Summary */
+        .items-summary {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            padding: 12px 0;
+        }
+
+        .items-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .items-summary-label {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .items-summary-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e85d26;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #4285f4;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .timeline-date {
+            position: absolute;
+            left: -40px;
+            top: 0;
+            width: 40px;
+            text-align: right;
+            padding-right: 20px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -27px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid #4285f4;
+            border-radius: 2px;
+        }
+
+        .timeline-date-text {
+            font-size: 11px;
+            color: #888;
+            white-space: nowrap;
+            position: absolute;
+            right: 32px;
+            top: 0;
+        }
+
+        .timeline-time-text {
+            font-size: 10px;
+            color: #aaa;
+            white-space: nowrap;
+            position: absolute;
+            right: 32px;
+            top: 16px;
+        }
+
+        .timeline-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-left: 20px;
+        }
+
+        .timeline-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .timeline-card-desc {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .timeline-card-user {
+            font-size: 12px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        /* Tab content areas */
+        .tab-content-area {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content-area.active {
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        /* Scrollable tab containers — pointer-events ensured, no max-height clipping */
+        #tab-overview,
+        #tab-transactions,
+        #tab-comments {
+            pointer-events: all !important;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Draft badge */
+        .draft-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #b45309;
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+            vertical-align: baseline;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .timeline-card-desc {
+            line-height: 1.8;
+            word-break: break-word;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        /* ========== COMMENTS TAB ========== */
+        .comment-editor-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+
+        .comment-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .comment-toolbar-btn {
+            width: 30px;
+            height: 28px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comment-toolbar-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .comment-toolbar-btn.bold {
+            font-weight: 700;
+        }
+
+        .comment-toolbar-btn.italic {
+            font-style: italic;
+        }
+
+        .comment-toolbar-btn.underline {
+            text-decoration: underline;
+        }
+
+        .comment-input {
+            width: 100%;
+            min-height: 60px;
+            border: none;
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #555;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .comment-input::placeholder {
+            color: #aaa;
+        }
+
+        .all-comments-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 16px;
+        }
+
+        .no-comments-msg {
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            padding: 40px 0;
+        }
+
+        .comment-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+
+        .comment-meta {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .comment-text {
+            font-size: 13px;
+            color: #333;
+        }
+
+        .comment-add-btn {
+            margin-top: 8px;
+            padding: 6px 16px;
+            background: #f0f0f0;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            color: #555;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .comment-add-btn:hover {
+            background: #e8e8e8;
+        }
+
+        .comment-input:empty::before {
+            content: 'Write a comment...';
+            color: #aaa;
+        }
+
+        /* ========== TRANSACTIONS TAB ========== */
+        .txn-section {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .txn-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            background: #f9fafb;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .txn-section-header:hover {
+            background: #f0f2f5;
+        }
+
+        .txn-section-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .txn-section-toggle {
+            font-size: 10px;
+            color: #888;
+            transition: transform 0.2s;
+        }
+
+        .txn-section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .txn-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .txn-section-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .txn-filter-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            color: #4285f4;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .txn-filter-btn:hover {
+            text-decoration: underline;
+        }
+
+        .txn-new-btn {
+            padding: 4px 12px;
+            font-size: 11px;
+            color: #e85d26;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .txn-new-btn:hover {
+            text-decoration: underline;
+        }
+
+        .txn-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .txn-table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+        }
+
+        .txn-table td {
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .txn-empty {
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .txn-empty a {
+            color: #e85d26;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .txn-empty a:hover {
+            text-decoration: underline;
+        }
+
+        .txn-section-body.collapsed {
+            display: none;
+        }
+
+        /* ========== MAILS TAB ========== */
+        .mails-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .mails-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .mails-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .link-email-btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #4285f4;
+            background: none;
+            border: 1px solid #4285f4;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .link-email-btn:hover {
+            background: #f0f6ff;
+        }
+
+        .mails-empty {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .mails-empty .warn-icon {
+            color: #e8a735;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        /* ========== STATEMENT TAB ========== */
+        .statement-header-info {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .statement-header-info h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 4px 0;
+        }
+
+        .statement-header-info .date-range {
+            font-size: 13px;
+            color: #e85d26;
+        }
+
+        .statement-document {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            height: auto;
+            overflow: visible;
+        }
+
+        .stmt-company-info {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+
+        .stmt-company-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stmt-company-detail {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .stmt-to-section {
+            margin-bottom: 20px;
+        }
+
+        .stmt-to-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .stmt-to-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4285f4;
+        }
+
+        .stmt-title-section {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .stmt-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stmt-title-underline {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #e85d26);
+            margin: 4px 0 4px auto;
+            width: 280px;
+        }
+
+        .stmt-date-range {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .stmt-summary-box {
+            border: 1px solid #e0e0e0;
+            margin-bottom: 24px;
+            width: 280px;
+            margin-left: auto;
+        }
+
+        .stmt-summary-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            padding: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #fafafa;
+        }
+
+        .stmt-summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stmt-summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .stmt-summary-label {
+            color: #555;
+        }
+
+        .stmt-summary-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .stmt-summary-value.orange {
+            color: #e85d26;
+        }
+
+        .stmt-transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .stmt-transactions-table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #333;
+            border-bottom: 2px solid #333;
+            background: white;
+        }
+
+        .stmt-transactions-table td {
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #333;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stmt-transactions-table td.bold {
+            font-weight: 600;
+        }
+
+        .stmt-balance-due {
+            display: flex;
+            justify-content: flex-end;
+            gap: 40px;
+            padding: 12px 0;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .stmt-balance-due .label {
+            color: #333;
+        }
+
+        .stmt-balance-due .value {
+            color: #333;
+        }
+
+        /* ========== ADDRESS MODAL ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 60px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 6px;
+            width: 440px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: none;
+            font-size: 18px;
+            color: #888;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-field {
+            margin-bottom: 16px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .modal-field input,
+        .modal-field select,
+        .modal-field textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            color: #333;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .modal-field input:focus,
+        .modal-field select:focus,
+        .modal-field textarea:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+        }
+
+        .modal-field textarea {
+            resize: vertical;
+            min-height: 50px;
+        }
+
+        .modal-field-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-field-row .modal-field {
+            flex: 1;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 14px 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .modal-btn {
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .modal-btn-cancel {
+            background: white;
+            border: 1px solid #d1d5db;
+            color: #333;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #f9fafb;
+        }
+
+        .modal-btn-save {
+            background: #4285f4;
+            border: none;
+            color: white;
+        }
+
+        .modal-btn-save:hover {
+            background: #3367d6;
+        }
+
+        /* ========== NEW TRANSACTION DROPDOWN ========== */
+        .txn-dropdown-wrapper {
+            position: relative;
+            display: flex;
+        }
+
+        .txn-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            z-index: 100;
+            padding: 6px 0;
+            margin-top: 4px;
+        }
+
+        .txn-dropdown-menu.open {
+            display: block;
+        }
+
+        .txn-dropdown-category {
+            font-size: 11px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 16px 4px;
+        }
+
+        .txn-dropdown-item {
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .txn-dropdown-item:hover {
+            background: #4285f4;
+            color: white;
+        }
+
+        /* ========== PDF/Print Buttons ========== */
+        .pdf-print-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stmt-pdf-btn,
+        .stmt-print-btn {
+            padding: 8px 20px;
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .stmt-pdf-btn:hover,
+        .stmt-print-btn:hover {
+            background: #f9fafb;
+            border-color: #b0b0b0;
+        }
+
+        .stmt-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 0 20px 0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* ========== Print Styles ========== */
+        @media print {
+            #sidebarContainer,
+            .detail-header,
+            .detail-tabs,
+            .detail-left,
+            .pdf-print-wrapper,
+            .stmt-actions-row,
+            .stmt-pdf-btn,
+            .stmt-print-btn {
+                display: none !important;
+            }
+
+            body,
+            .main-layout,
+            .content {
+                margin: 0 !important;
+                
+                background: white !important;
+                overflow: visible !important;
+                height: auto !important;
+            }
+
+            .content {
+                margin-left: 0 !important;
+            }
+
+            .detail-body {
+                display: block !important;
+                overflow: visible !important;
+            }
+
+            .detail-right {
+                width: 100% !important;
+                overflow: visible !important;
+            }
+
+            .tab-content-area {
+                display: none !important;
+            }
+
+            #tab-statement {
+                display: block !important;
+                
+            }
+
+            .statement-header-info {
+                display: none !important;
+            }
+
+            .statement-document {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                max-width: 100% !important;
+            }
+
+            @page {
+                margin: 15mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Container -->
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- Top Header Bar -->
+            <div class="detail-header">
+                <div class="detail-header-left">
+                    <h1 class="vendor-title" id="vendorTitle">Loading...</h1>
+                </div>
+                <div class="detail-header-actions">
+                    <button class="btn-edit" onclick="editVendor()" title="Edit this vendor's information">Edit</button>
+                    <div class="pdf-print-wrapper">
+                        <button class="stmt-pdf-btn" onclick="downloadPDF()" title="Save vendor statement as PDF">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg> Download PDF
+                        </button>
+                        <button class="stmt-print-btn" onclick="printVendor()" title="Open print preview for vendor statement">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 6 2 18 2 18 9" />
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                <rect x="6" y="14" width="12" height="8" />
+                            </svg> Print
+                        </button>
+                    </div>
+                    <button class="btn-info" title="View vendor information">ⓘ</button>
+                    <div class="txn-dropdown-wrapper">
+                        <button class="btn-new-transaction" onclick="toggleTxnDropdown(event)" title="Create a new transaction for this vendor">New Transaction</button>
+                        <button class="btn-new-transaction-dropdown" onclick="toggleTxnDropdown(event)" title="Show transaction options">▼</button>
+                        <div class="txn-dropdown-menu" id="txnDropdownMenu">
+                            <div class="txn-dropdown-category">PURCHASES</div>
+                            <div class="txn-dropdown-item" onclick="handleTxnAction('bill')">Bill</div>
+                            <div class="txn-dropdown-item" onclick="handleTxnAction('bill-payment')">Bill Payment</div>
+                            <div class="txn-dropdown-item" onclick="handleTxnAction('purchase-order')">Purchase Order
+                            </div>
+                            <div class="txn-dropdown-item" onclick="handleTxnAction('purchase-receive')">Purchase
+                                Receive</div>
+                            <div class="txn-dropdown-item" onclick="handleTxnAction('vendor-credit')">Vendor Credit
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex;">
+                        <button class="btn-more-detail" title="More actions">More</button>
+                        <button class="btn-more-dropdown" title="Show more options">▼</button>
+                    </div>
+                    <button class="btn-close-detail" onclick="goBack()" title="Go back to vendors list">×</button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="detail-tabs">
+                <div class="detail-tab active" data-tab="overview" onclick="switchTab('overview', this)" title="View vendor overview, payables, and timeline">Overview</div>
+                <div class="detail-tab" data-tab="comments" onclick="switchTab('comments', this)" title="View and add comments for this vendor">Comments</div>
+                <div class="detail-tab" data-tab="transactions" onclick="switchTab('transactions', this)" title="View all transactions with this vendor">Transactions
+                </div>
+
+                <div class="detail-tab" data-tab="statement" onclick="switchTab('statement', this)" title="View vendor's statement of accounts">Statement</div>
+            </div>
+
+            <!-- Main Content body -->
+            <div class="detail-body">
+                <!-- LEFT PANEL -->
+                <div class="detail-left">
+                    <!-- Vendor Info Card -->
+                    <div class="vendor-info-card">
+                        <div class="vendor-info-label" id="vendorInfoLabel"></div>
+                        <div class="vendor-contact-row">
+                            <div class="vendor-avatar" id="vendorAvatar"><svg width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg></div>
+                            <div class="vendor-contact-details" id="vendorContactDetails">
+                                <!-- Filled dynamically -->
+                            </div>
+                            <span class="vendor-settings-icon" title="Vendor settings">⚙</span>
+                        </div>
+                    </div>
+
+                    <!-- ADDRESS Section -->
+                    <div class="section-header" onclick="toggleSection('address')" title="Click to expand/collapse address section">
+                        <span class="section-title">ADDRESS</span>
+                        <span class="section-toggle" id="addressToggle">▲</span>
+                    </div>
+                    <div class="section-content" id="addressContent">
+                        <div class="detail-row">
+                            <div class="detail-label">Billing Address</div>
+                            <div class="detail-value" id="billingAddressDisplay">No Billing Address</div>
+                            <div class="detail-value link" style="font-size: 12px; margin-top: 4px;"
+                                onclick="openAddressModal('billing')" title="Add or edit billing address">+ New Address</div>
+                        </div>
+                        <div class="detail-row" style="margin-top: 14px;">
+                            <div class="detail-label">Shipping Address</div>
+                            <div class="detail-value" id="shippingAddressDisplay">No Shipping Address</div>
+                            <div class="detail-value link" style="font-size: 12px; margin-top: 4px;"
+                                onclick="openAddressModal('shipping')" title="Add or edit shipping address">+ New Address</div>
+                        </div>
+                    </div>
+
+                    <!-- OTHER DETAILS Section -->
+                    <div class="section-header" onclick="toggleSection('otherDetails')" title="Click to expand/collapse other details">
+                        <span class="section-title">OTHER DETAILS</span>
+                        <span class="section-toggle" id="otherDetailsToggle">▲</span>
+                    </div>
+                    <div class="section-content" id="otherDetailsContent">
+                        <div class="detail-row">
+                            <div class="detail-label">Default Currency</div>
+                            <div class="detail-value" id="currencyDisplay">PHP</div>
+                        </div>
+                    </div>
+
+                    <!-- CONTACT PERSONS Section -->
+                    <div class="contacts-header" onclick="toggleSection('contacts')" title="Click to expand/collapse contact persons">
+                        <span class="section-title">CONTACT PERSONS</span>
+                        <div class="contacts-actions">
+                            <button class="add-contact-icon" onclick="event.stopPropagation(); addContactPerson()"
+                                title="Add Contact Person">+</button>
+                            <span class="section-toggle" id="contactsToggle">▲</span>
+                        </div>
+                    </div>
+                    <div class="contacts-content" id="contactsContent">
+                        <div class="no-contacts" id="noContactsMessage">No contact persons found.</div>
+                        <div id="contactPersonsList"></div>
+                    </div>
+
+                    <!-- RECORD INFO Section -->
+                    <div class="section-header" onclick="toggleSection('recordInfo')" title="Click to expand/collapse record info">
+                        <span class="section-title">RECORD INFO</span>
+                        <span class="section-toggle" id="recordInfoToggle">▼</span>
+                    </div>
+                    <div class="section-content collapsed" id="recordInfoContent">
+                        <div class="detail-row">
+                            <div class="detail-label">Created</div>
+                            <div class="detail-value" id="createdAtDisplay">-</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Last Modified</div>
+                            <div class="detail-value" id="updatedAtDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL -->
+                <div class="detail-right">
+                    <!-- Overview Tab Content -->
+                    <div class="tab-content-area active" id="tab-overview">
+                        <!-- What's Next Card -->
+                        <div class="whats-next-card">
+                            <div class="whats-next-header">
+                                <span class="whats-next-icon">✦</span>
+                                <span class="whats-next-title">WHAT'S NEXT?</span>
+                            </div>
+                            <div class="whats-next-text">
+                                Create a <a href="#">purchase order</a> or record a <a href="#">bill</a> for your
+                                vendor
+                                purchases.
+                            </div>
+                            <div class="whats-next-actions">
+                                <button class="btn-wn btn-wn-primary" title="Create a new bill for this vendor">New Bill</button>
+                                <button class="btn-wn btn-wn-outline" title="Create a new purchase order for this vendor">New Purchase Order</button>
+                                <button class="btn-wn-more" title="More actions">⋮</button>
+                            </div>
+                        </div>
+
+                        <!-- Payment Info -->
+                        <div class="payment-info">
+                            <div class="payment-row">
+                                <div class="payment-label" title="Vendor's default payment terms">Payment due period</div>
+                                <div class="payment-value" id="paymentTermsDisplay">Due on Receipt</div>
+                            </div>
+
+                            <div class="payables-title">Payables</div>
+                            <table class="payables-table">
+                                <thead>
+                                    <tr>
+                                        <th>CURRENCY</th>
+                                        <th>OUTSTANDING PAYABLES</th>
+                                        <th>UNUSED CREDITS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="payableCurrency">PHP- Philippine Peso</td>
+                                        <td id="payableOutstanding">PHP0.00</td>
+                                        <td id="payableCredits">PHP0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="items-summary">
+                                <div class="items-summary-item">
+                                    <span class="items-summary-label" title="Number of items pending delivery from this vendor">Items to be received:</span>
+                                    <span class="items-summary-value" id="itemsToReceive">0</span>
+                                </div>
+                                <div class="items-summary-item">
+                                    <span class="items-summary-label" title="Total items ordered from this vendor across all purchase orders">Total items ordered:</span>
+                                    <span class="items-summary-value" id="totalItemsOrdered">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div id="timelineContainer"></div>
+                    </div>
+
+                    <!-- Comments Tab Content -->
+                    <div class="tab-content-area" id="tab-comments">
+                        <!-- Comment Editor -->
+                        <div class="comment-editor-card">
+                            <div class="comment-toolbar">
+                                <button class="comment-toolbar-btn bold" title="Bold" onclick="execFormat('bold')"
+                                    style="font-weight:700;">B</button>
+                                <button class="comment-toolbar-btn italic" title="Italic" onclick="execFormat('italic')"
+                                    style="font-style:italic;">I</button>
+                                <button class="comment-toolbar-btn underline" title="Underline"
+                                    onclick="execFormat('underline')" style="text-decoration:underline;">U</button>
+                            </div>
+                            <div class="comment-input" id="commentEditor" contenteditable="true"></div>
+                            <button class="comment-add-btn" onclick="addVendorComment()" title="Post this comment">Add Comment</button>
+                        </div>
+
+                        <!-- All Comments Section -->
+                        <div class="all-comments-header">ALL COMMENTS</div>
+                        <div id="commentsListContainer">
+                            <div class="no-comments-msg" id="noCommentsMsg">No comments yet.</div>
+                        </div>
+                        <div id="commentsList"></div>
+                    </div>
+
+                    <!-- Transactions Tab Content -->
+                    <div class="tab-content-area" id="tab-transactions">
+                        <!-- Bills Section -->
+                        <div class="txn-section">
+                            <div class="txn-section-header" onclick="toggleTxnSection('bills')">
+                                <div class="txn-section-left">
+                                    <span class="txn-section-toggle" id="billsToggle">▼</span>
+                                    <span class="txn-section-title">Bills</span>
+                                </div>
+                                <div class="txn-section-actions">
+                                    <button class="txn-filter-btn">▼ Status: All ▾</button>
+                                    <button class="txn-new-btn">+ New</button>
+                                </div>
+                            </div>
+                            <div class="txn-section-body" id="billsBody">
+                                <table class="txn-table">
+                                    <thead>
+                                        <tr>
+                                            <th>DATE ⇅</th>
+                                            <th>BILL#</th>
+                                            <th>ORDER NUMBER</th>
+                                            <th>VENDOR NAME</th>
+                                            <th>AMOUNT</th>
+                                            <th>BALANCE DUE</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <div class="txn-empty">There are no Bills -<a href="#">Add New</a></div>
+                            </div>
+                        </div>
+
+                        <!-- Bill Payments Section -->
+                        <div class="txn-section">
+                            <div class="txn-section-header" onclick="toggleTxnSection('billPayments')">
+                                <div class="txn-section-left">
+                                    <span class="txn-section-toggle" id="billPaymentsToggle">▼</span>
+                                    <span class="txn-section-title">Bill Payments</span>
+                                </div>
+                                <div class="txn-section-actions">
+                                    <button class="txn-new-btn">+ New</button>
+                                </div>
+                            </div>
+                            <div class="txn-section-body" id="billPaymentsBody">
+                                <table class="txn-table">
+                                    <thead>
+                                        <tr>
+                                            <th>DATE ⇅</th>
+                                            <th>PAYMENT NUMBER</th>
+                                            <th>REFERENCE NUMBER</th>
+                                            <th>PAYMENT MODE</th>
+                                            <th>AMOUNT PAID</th>
+                                            <th>UNUSED AMOUNT</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <div class="txn-empty">No Payments Made yet. -<a href="#">Add New</a></div>
+                            </div>
+                        </div>
+
+                        <!-- Purchase Orders Section -->
+                        <div class="txn-section">
+                            <div class="txn-section-header" onclick="toggleTxnSection('purchaseOrders')">
+                                <div class="txn-section-left">
+                                    <span class="txn-section-toggle" id="purchaseOrdersToggle">▼</span>
+                                    <span class="txn-section-title">Purchase Orders</span>
+                                </div>
+                                <div class="txn-section-actions">
+                                    <button class="txn-filter-btn">▼ Status: All ▾</button>
+                                    <button class="txn-new-btn">+ New</button>
+                                </div>
+                            </div>
+                            <div class="txn-section-body" id="purchaseOrdersBody">
+                                <table class="txn-table">
+                                    <thead>
+                                        <tr>
+                                            <th>PURCHASE ORDER#</th>
+                                            <th>REFERENCE NUMBER</th>
+                                            <th>DATE</th>
+                                            <th>DELIVERY DATE ⇅</th>
+                                            <th>AMOUNT</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <div class="txn-empty">There are no Purchase Orders -<a href="#">Add New</a></div>
+                            </div>
+                        </div>
+
+                        <!-- Purchase Receives Section -->
+                        <div class="txn-section">
+                            <div class="txn-section-header" onclick="toggleTxnSection('purchaseReceives')">
+                                <div class="txn-section-left">
+                                    <span class="txn-section-toggle" id="purchaseReceivesToggle">▼</span>
+                                    <span class="txn-section-title">Purchase Receives</span>
+                                </div>
+                                <div class="txn-section-actions">
+                                    <button class="txn-filter-btn">▼ Status: All ▾</button>
+                                    <button class="txn-new-btn">+ New</button>
+                                </div>
+                            </div>
+                            <div class="txn-section-body" id="purchaseReceivesBody">
+                                <table class="txn-table">
+                                    <thead>
+                                        <tr>
+                                            <th>PURCHASE RECEIVE#</th>
+                                            <th>DATE</th>
+                                            <th>PURCHASE ORDER#</th>
+                                            <th>QUANTITY</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <div class="txn-empty">There are no Purchase Receives -<a href="#">Add New</a></div>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Credits Section -->
+                        <div class="txn-section">
+                            <div class="txn-section-header" onclick="toggleTxnSection('vendorCredits')">
+                                <div class="txn-section-left">
+                                    <span class="txn-section-toggle" id="vendorCreditsToggle">▼</span>
+                                    <span class="txn-section-title">Vendor Credits</span>
+                                </div>
+                                <div class="txn-section-actions">
+                                    <button class="txn-filter-btn">▼ Status: All ▾</button>
+                                    <button class="txn-new-btn">+ New</button>
+                                </div>
+                            </div>
+                            <div class="txn-section-body" id="vendorCreditsBody">
+                                <table class="txn-table">
+                                    <thead>
+                                        <tr>
+                                            <th>DATE ⇅</th>
+                                            <th>CREDIT NOTE NUMBER</th>
+                                            <th>ORDER NUMBER</th>
+                                            <th>BALANCE</th>
+                                            <th>AMOUNT</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                                <div class="txn-empty">No data to display -<a href="#">Add New</a></div>
+                            </div>
+                        </div>
+
+                        <!-- Purchase Returns Section -->
+                        <div class="txn-section">
+                            <div class="txn-section-header" onclick="toggleTxnSection('purchaseReturns')">
+                                <div class="txn-section-left">
+                                    <span class="txn-section-toggle" id="purchaseReturnsToggle">▼</span>
+                                    <span class="txn-section-title">Purchase Returns</span>
+                                </div>
+                                <div class="txn-section-actions">
+                                    <button class="txn-new-btn"
+                                        onclick="event.stopPropagation(); window.location.href='/new-purchase-return.html'">+
+                                        New</button>
+                                </div>
+                            </div>
+                            <div class="txn-section-body" id="purchaseReturnsBody">
+                                <table class="txn-table">
+                                    <thead>
+                                        <tr>
+                                            <th>DATE ⇅</th>
+                                            <th>RETURN#</th>
+                                            <th>PURCHASE ORDER#</th>
+                                            <th>REASON</th>
+                                            <th>RESOLUTION</th>
+                                            <th>STATUS</th>
+                                            <th>AMOUNT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="purchaseReturnsTbody"></tbody>
+                                </table>
+                                <div class="txn-empty" id="purchaseReturnsEmpty">There are no Purchase Returns -<a
+                                        href="/new-purchase-return.html">Add New</a></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Statement Tab Content -->
+                    <div class="tab-content-area" id="tab-statement">
+                        <div class="statement-header-info">
+                            <h2 id="stmtTitle">Vendor Statement</h2>
+                            <div class="date-range" id="stmtDateRange"></div>
+                        </div>
+
+                        <!-- PDF / Print Buttons -->
+                        <div class="stmt-actions-row">
+                            <button class="stmt-pdf-btn" onclick="downloadPDF()" title="Save vendor statement as PDF">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg> Download PDF
+                            </button>
+                            <button class="stmt-print-btn" onclick="printVendor()" title="Print vendor statement">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 6 2 18 2 18 9" />
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                    <rect x="6" y="14" width="12" height="8" />
+                                </svg> Print
+                            </button>
+                        </div>
+
+                        <div class="statement-document">
+                            <!-- Company Info (top right) -->
+                            <div class="stmt-company-info">
+                                <div class="stmt-company-name">GIHON</div>
+                                <div class="stmt-company-detail">Philippines</div>
+                                <div class="stmt-company-detail">bitembling413@gmail.com</div>
+                            </div>
+
+                            <!-- To Section -->
+                            <div class="stmt-to-section">
+                                <div class="stmt-to-label">To</div>
+                                <div class="stmt-to-name" id="stmtToName"></div>
+                            </div>
+
+                            <!-- Statement of Accounts Title -->
+                            <div class="stmt-title-section">
+                                <div class="stmt-title">Statement of Accounts</div>
+                                <div class="stmt-title-underline"></div>
+                                <div class="stmt-date-range" id="stmtAccountDateRange"></div>
+                            </div>
+
+                            <!-- Account Summary -->
+                            <div class="stmt-summary-box">
+                                <div class="stmt-summary-title">Account Summary</div>
+                                <div class="stmt-summary-row">
+                                    <span class="stmt-summary-label">Opening Balance</span>
+                                    <span class="stmt-summary-value" id="stmtOpeningBalance">PHP 0.00</span>
+                                </div>
+                                <div class="stmt-summary-row">
+                                    <span class="stmt-summary-label">Billed Amount</span>
+                                    <span class="stmt-summary-value orange" id="stmtBilledAmount">PHP 0.00</span>
+                                </div>
+                                <div class="stmt-summary-row">
+                                    <span class="stmt-summary-label">Amount Paid</span>
+                                    <span class="stmt-summary-value" id="stmtAmountPaid">PHP 0.00</span>
+                                </div>
+                                <div class="stmt-summary-row">
+                                    <span class="stmt-summary-label">Credits Applied</span>
+                                    <span class="stmt-summary-value" id="stmtCreditsApplied">PHP 0.00</span>
+                                </div>
+                                <div class="stmt-summary-row">
+                                    <span class="stmt-summary-label">Balance Due</span>
+                                    <span class="stmt-summary-value" id="stmtBalanceDue">PHP 0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Transactions Table -->
+                            <table class="stmt-transactions-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Transactions</th>
+                                        <th>Details</th>
+                                        <th>Amount</th>
+                                        <th>Payments</th>
+                                        <th>Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stmtTransactionsBody">
+                                    <tr>
+                                        <td id="stmtOpeningDate"></td>
+                                        <td class="bold">***Opening Balance***</td>
+                                        <td></td>
+                                        <td>0.00</td>
+                                        <td></td>
+                                        <td>0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Balance Due Footer -->
+                            <div class="stmt-balance-due"
+                                style="margin-top:16px;border-top:2px solid #333;padding-top:12px;">
+                                <span class="label" style="font-size:14px;">Balance Due</span>
+                                <span class="value" id="stmtFinalBalance" style="font-size:14px;">PHP 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Modal -->
+    <div class="modal-overlay" id="addressModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-title" id="addressModalTitle">Billing Address</span>
+                <button class="modal-close" onclick="closeAddressModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="addressType" value="billing">
+                <div class="modal-field">
+                    <label for="addrAttention">Attention</label>
+                    <input type="text" id="addrAttention" placeholder="">
+                </div>
+                <div class="modal-field">
+                    <label for="addrCountry">Country/Region</label>
+                    <select id="addrCountry" title="Country/Region">
+                        <option value="">Select or type to add</option>
+                        <option value="Philippines">Philippines</option>
+                        <option value="United States">United States</option>
+                        <option value="Japan">Japan</option>
+                        <option value="China">China</option>
+                        <option value="South Korea">South Korea</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="Australia">Australia</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="Canada">Canada</option>
+                        <option value="India">India</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label for="addrStreet1">Address</label>
+                    <textarea id="addrStreet1" placeholder="Street 1" rows="2"></textarea>
+                </div>
+                <div class="modal-field">
+                    <textarea id="addrStreet2" placeholder="Street 2" rows="2"></textarea>
+                </div>
+                <div class="modal-field">
+                    <label for="addrCity">City</label>
+                    <input type="text" id="addrCity" placeholder="">
+                </div>
+                <div class="modal-field-row">
+                    <div class="modal-field">
+                        <label for="addrState">State</label>
+                        <select id="addrState" title="State">
+                            <option value="">Select or type to add</option>
+                        </select>
+                    </div>
+                    <div class="modal-field">
+                        <label for="addrZip">ZIP Code</label>
+                        <input type="text" id="addrZip" placeholder="">
+                    </div>
+                </div>
+                <div class="modal-field-row">
+                    <div class="modal-field">
+                        <label for="addrPhone">Phone</label>
+                        <input type="text" id="addrPhone" placeholder="">
+                    </div>
+                    <div class="modal-field">
+                        <label for="addrFax">Fax Number</label>
+                        <input type="text" id="addrFax" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeAddressModal()">Cancel</button>
+                <button class="modal-btn modal-btn-save" onclick="saveAddress()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Script -->
+    <script src="/js/layout.js"></script>
+    <script>
+        let vendorData = null;
+        // Support both clean URL (/vendors/:id) and query parameter (?id=...)
+        const vendorId = (function () {
+            const pathMatch = window.location.pathname.match(/\/vendors\/(\d+)/);
+            if (pathMatch) return pathMatch[1];
+            return new URLSearchParams(window.location.search).get('id');
+        })();
+
+        // Load vendor detail on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!vendorId) {
+                alert('No vendor ID provided');
+                window.location.href = '/vendors.html';
+                return;
+            }
+            loadVendorDetail();
+            loadVendorComments();
+
+            // Push clean URL so hard-refresh stays on this page
+            if (vendorId && !window.location.pathname.match(/\/vendors\/\d+/)) {
+                window.history.replaceState({ vendorId: vendorId }, '', '/vendors/' + vendorId);
+            }
+
+            // Layout is ready
+            console.log('[Vendor Detail] Layout initialized');
+
+            // ===== TEMPORARY DIAGNOSTIC - will be removed once scrolling is fixed =====
+            setTimeout(() => {
+                const content = document.querySelector('.content');
+                const detailBody = document.querySelector('.detail-body');
+                const detailRight = document.querySelector('.detail-right');
+                const activeTab = document.querySelector('.tab-content-area.active');
+
+                const info = [];
+                if (content) info.push(`content: h=${content.clientHeight} overflow=${getComputedStyle(content).overflow} display=${getComputedStyle(content).display} flexDir=${getComputedStyle(content).flexDirection}`);
+                if (detailBody) info.push(`detail-body: h=${detailBody.clientHeight} overflow=${getComputedStyle(detailBody).overflow} display=${getComputedStyle(detailBody).display} flex=${getComputedStyle(detailBody).flex}`);
+                if (detailRight) info.push(`detail-right: h=${detailRight.clientHeight} scrollH=${detailRight.scrollHeight} overflow=${getComputedStyle(detailRight).overflow} display=${getComputedStyle(detailRight).display} flexDir=${getComputedStyle(detailRight).flexDirection}`);
+                if (activeTab) info.push(`activeTab(${activeTab.id}): h=${activeTab.clientHeight} scrollH=${activeTab.scrollHeight} overflowY=${getComputedStyle(activeTab).overflowY} display=${getComputedStyle(activeTab).display} flex=${getComputedStyle(activeTab).flex}`);
+                info.push(`body: overflow=${getComputedStyle(document.body).overflow} h=${document.body.clientHeight} windowH=${window.innerHeight}`);
+
+                const banner = document.createElement('div');
+                banner.style.cssText = 'position:fixed;top:0;left:260px;right:0;background:red;color:white;padding:8px;font-size:11px;z-index:99999;font-family:monospace;white-space:pre-wrap;cursor:pointer;';
+                banner.textContent = 'SCROLL DEBUG (click to dismiss):\\n' + info.join('\\n');
+                banner.onclick = () => banner.remove();
+                document.body.appendChild(banner);
+                console.log('[Scroll Debug]', info.join(' | '));
+            }, 1500);
+        });
+
+        async function loadVendorDetail() {
+            try {
+                const response = await fetch(`/api/suppliers/${vendorId}`);
+                if (!response.ok) {
+                    alert('Vendor not found');
+                    window.location.href = '/vendors.html';
+                    return;
+                }
+                vendorData = await response.json();
+                renderVendorDetail();
+            } catch (error) {
+                console.error('Error loading vendor:', error);
+                alert('Error loading vendor');
+            }
+        }
+
+        function renderVendorDetail() {
+            const v = vendorData;
+
+            // Title
+            document.getElementById('vendorTitle').textContent = v.display_name || v.name || 'Unnamed Vendor';
+            document.title = (v.display_name || v.name) + ' - Vendor Detail';
+
+            // Info label
+            document.getElementById('vendorInfoLabel').textContent = v.display_name || v.name || '';
+
+            // Contact details
+            const salutation = v.salutation ? (v.salutation.charAt(0).toUpperCase() + v.salutation.slice(1)) : '';
+            const fullName = [salutation ? salutation + '.' : '', v.first_name || '', v.last_name || ''].filter(Boolean).join(' ');
+            const workPhone = v.work_phone || v.phone || '';
+            const mobile = v.mobile || '';
+
+            let contactHtml = '';
+            if (fullName.trim()) {
+                contactHtml += `<div class="vendor-contact-name">${fullName}</div>`;
+            }
+            if (workPhone) {
+                contactHtml += `<div class="vendor-contact-item"><span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span> ${workPhone}</div>`;
+            }
+            if (mobile) {
+                contactHtml += `<div class="vendor-contact-item"><span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span> ${mobile}</div>`;
+            }
+            if (v.email) {
+                contactHtml += `<div class="vendor-contact-item"><span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span> ${v.email}</div>`;
+            }
+            document.getElementById('vendorContactDetails').innerHTML = contactHtml || '<div class="vendor-contact-name">No contact information</div>';
+
+            // Address
+            const billingParts = [v.billing_address, v.billing_city, v.billing_state, v.billing_zip, v.billing_country].filter(Boolean);
+            document.getElementById('billingAddressDisplay').textContent = billingParts.length > 0 ? billingParts.join(', ') : 'No Billing Address';
+
+            const shippingParts = [v.shipping_address, v.shipping_city, v.shipping_state, v.shipping_zip, v.shipping_country].filter(Boolean);
+            document.getElementById('shippingAddressDisplay').textContent = shippingParts.length > 0 ? shippingParts.join(', ') : 'No Shipping Address';
+
+            // Other Details
+            const currencyMap = {
+                'php': 'PHP',
+                'usd': 'USD',
+                'PHP': 'PHP',
+                'USD': 'USD'
+            };
+            document.getElementById('currencyDisplay').textContent = currencyMap[v.currency] || v.currency || 'PHP';
+
+            // Payment Terms
+            const termsMap = {
+                'due-on-receipt': 'Due on Receipt',
+                'net-15': 'Net 15',
+                'net-30': 'Net 30',
+                'net-45': 'Net 45',
+                'net-60': 'Net 60'
+            };
+            document.getElementById('paymentTermsDisplay').textContent = termsMap[v.payment_terms] || v.payment_terms || 'Due on Receipt';
+
+            // Payables
+            const currencyLabel = v.currency === 'usd' || v.currency === 'USD' ? 'USD- US Dollar' : 'PHP- Philippine Peso';
+            const currencyPrefix = v.currency === 'usd' || v.currency === 'USD' ? 'USD' : 'PHP';
+            document.getElementById('payableCurrency').textContent = currencyLabel;
+            document.getElementById('payableOutstanding').textContent = currencyPrefix + parseFloat(v.outstanding_payables || 0).toFixed(3);
+            document.getElementById('payableCredits').textContent = currencyPrefix + parseFloat(v.unused_credits || 0).toFixed(3);
+
+            // Items
+            document.getElementById('itemsToReceive').textContent = v.total_quantity || 0;
+            document.getElementById('totalItemsOrdered').textContent = v.total_quantity || 0;
+
+            // Contact Persons
+            renderContactPersons();
+
+            // Record Info
+            document.getElementById('createdAtDisplay').textContent = v.created_at ? formatDateTime(v.created_at) : '-';
+            document.getElementById('updatedAtDisplay').textContent = v.updated_at ? formatDateTime(v.updated_at) : '-';
+
+            // Timeline
+            renderTimeline();
+
+            // Statement
+            renderStatement();
+
+            // Load Purchase Returns for Transactions tab
+            loadPurchaseReturns();
+        }
+
+        function renderContactPersons() {
+            const contacts = vendorData.contact_persons || [];
+            const noContactsMsg = document.getElementById('noContactsMessage');
+            const contactsList = document.getElementById('contactPersonsList');
+
+            if (contacts.length === 0) {
+                noContactsMsg.style.display = 'block';
+                contactsList.innerHTML = '';
+                return;
+            }
+
+            noContactsMsg.style.display = 'none';
+            contactsList.innerHTML = contacts.map(cp => {
+                const name = [cp.salutation ? cp.salutation + '.' : '', cp.first_name || '', cp.last_name || ''].filter(Boolean).join(' ') || 'Unnamed';
+                const detail = cp.email || cp.phone || '';
+                const initials = ((cp.first_name || '')[0] || '') + ((cp.last_name || '')[0] || '');
+                return `
+                    <div class="contact-person-item">
+                        <div class="contact-person-avatar">${initials.toUpperCase() || '?'}</div>
+                        <div class="contact-person-info">
+                            <div class="contact-person-name">${name}</div>
+                            ${detail ? `<div class="contact-person-detail">${detail}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            const createdAt = vendorData.created_at ? new Date(vendorData.created_at) : new Date();
+            const vendorName = vendorData.display_name || vendorData.name || 'vendor';
+            const currencyPrefix = vendorData.currency === 'usd' || vendorData.currency === 'USD' ? 'USD' : 'PHP';
+
+            // Build timeline events
+            const events = [];
+
+            // Bill events (from all_bills, includes drafts)
+            if (vendorData.all_bills && vendorData.all_bills.length > 0) {
+                vendorData.all_bills.forEach(b => {
+                    const billDate = b.bill_date ? new Date(b.bill_date) : new Date();
+                    const amount = parseFloat(b.total_amount || 0).toFixed(3);
+                    const isDraft = (b.status || '').toUpperCase() === 'DRAFT';
+                    const draftTag = isDraft ? ' <span class="draft-badge">DRAFT</span>' : '';
+                    events.push({
+                        date: billDate,
+                        title: `Bill Created — ${b.bill_number || 'N/A'}`,
+                        desc: `Amount: ${currencyPrefix} ${amount}${draftTag}`,
+                        user: 'by System'
+                    });
+                });
+            }
+
+            // Purchase Return events
+            try {
+                const retRes = await fetch('/api/purchase-returns');
+                if (retRes.ok) {
+                    const allReturns = await retRes.json();
+                    const vName = (vendorData.display_name || vendorData.name || '').trim().toLowerCase();
+                    const vendorReturns = allReturns.filter(r => (r.vendor_name || '').trim().toLowerCase() === vName);
+                    vendorReturns.forEach(r => {
+                        const retDate = r.return_date ? new Date(r.return_date) : (r.created_at ? new Date(r.created_at) : new Date());
+                        const status = (r.status || 'DRAFT').toUpperCase();
+                        const resolution = r.resolution_type === 'replacement' ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Replacement' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Vendor Credit';
+                        const qty = parseInt(r.total_return_qty) || 0;
+                        const statusBadge = status === 'CLOSED'
+                            ? '<span style="color:#16a34a;font-weight:600;">CLOSED</span>'
+                            : status === 'CANCELLED'
+                                ? '<span style="color:#dc2626;font-weight:600;">CANCELLED</span>'
+                                : `<span style="color:#1a73e8;font-weight:600;">${status}</span>`;
+                        events.push({
+                            date: retDate,
+                            title: `Purchase Return — ${r.prn_number || 'PRN-' + r.id}`,
+                            desc: `${resolution} · ${qty} unit${qty !== 1 ? 's' : ''} · ${statusBadge}`,
+                            user: r.purchase_order_number ? `PO: ${r.purchase_order_number}` : 'by System'
+                        });
+                    });
+                }
+            } catch (e) { console.error('Error loading returns for timeline:', e); }
+
+            // Contact persons added events
+            if (vendorData.contact_persons && vendorData.contact_persons.length > 0) {
+                vendorData.contact_persons.forEach(cp => {
+                    const cpName = [cp.first_name || '', cp.last_name || ''].filter(Boolean).join(' ') || 'contact';
+                    const cpDate = cp.created_at ? new Date(cp.created_at) : createdAt;
+                    events.push({
+                        date: cpDate,
+                        title: 'Contact person added',
+                        desc: `Contact person ${cpName} has been created`,
+                        user: 'by System'
+                    });
+                });
+            }
+
+            // Vendor created event
+            events.push({
+                date: createdAt,
+                title: 'Contact added',
+                desc: `Contact created`,
+                user: 'by System'
+            });
+
+            // Sort events by date descending
+            events.sort((a, b) => b.date - a.date);
+
+            let html = '<div class="timeline">';
+            events.forEach(ev => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date-text">${formatDate(ev.date)}</div>
+                        <div class="timeline-time-text">${formatTime(ev.date)}</div>
+                        <div class="timeline-card">
+                            <div class="timeline-card-title">${ev.title}</div>
+                            <div class="timeline-card-desc">${ev.desc}</div>
+                            <div class="timeline-card-user">${ev.user}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function formatDateTime(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        // Section toggling
+        function toggleSection(sectionName) {
+            const toggleMap = {
+                'address': { content: 'addressContent', toggle: 'addressToggle' },
+                'otherDetails': { content: 'otherDetailsContent', toggle: 'otherDetailsToggle' },
+                'contacts': { content: 'contactsContent', toggle: 'contactsToggle' },
+                'recordInfo': { content: 'recordInfoContent', toggle: 'recordInfoToggle' }
+            };
+
+            const section = toggleMap[sectionName];
+            if (!section) return;
+
+            const content = document.getElementById(section.content);
+            const toggle = document.getElementById(section.toggle);
+
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                toggle.textContent = '▲';
+                toggle.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                toggle.textContent = '▼';
+                toggle.classList.add('collapsed');
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName, tabEl) {
+            document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content-area').forEach(c => c.classList.remove('active'));
+
+            tabEl.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // Navigation
+        function goBack() {
+            window.location.href = '/vendors.html';
+        }
+
+        function editVendor() {
+            alert('Edit vendor coming soon!');
+        }
+
+        // ====== New Transaction Dropdown ======
+        function toggleTxnDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('txnDropdownMenu');
+            menu.classList.toggle('open');
+        }
+
+        function handleTxnAction(type) {
+            document.getElementById('txnDropdownMenu').classList.remove('open');
+            if (type === 'purchase-order') {
+                window.location.href = `/new-purchase-order.html?vendorId=${vendorId}`;
+            } else {
+                alert(type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' - Coming soon!');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const menu = document.getElementById('txnDropdownMenu');
+            if (menu && !e.target.closest('.txn-dropdown-wrapper')) {
+                menu.classList.remove('open');
+            }
+        });
+
+        // ====== Address Modal ======
+        function openAddressModal(type) {
+            document.getElementById('addressType').value = type;
+            document.getElementById('addressModalTitle').textContent =
+                type === 'billing' ? 'Billing Address' : 'Shipping Address';
+
+            // Pre-fill if data exists
+            const v = vendorData || {};
+            const prefix = type === 'billing' ? 'billing' : 'shipping';
+            document.getElementById('addrAttention').value = v[prefix + '_attention'] || '';
+            document.getElementById('addrCountry').value = v[prefix + '_country'] || '';
+            document.getElementById('addrStreet1').value = v[prefix + '_address'] || '';
+            document.getElementById('addrStreet2').value = v[prefix + '_street2'] || '';
+            document.getElementById('addrCity').value = v[prefix + '_city'] || '';
+            document.getElementById('addrState').value = v[prefix + '_state'] || '';
+            document.getElementById('addrZip').value = v[prefix + '_zip'] || '';
+            document.getElementById('addrPhone').value = v[prefix + '_phone'] || '';
+            document.getElementById('addrFax').value = v[prefix + '_fax'] || '';
+
+            document.getElementById('addressModal').classList.add('active');
+        }
+
+        function closeAddressModal() {
+            document.getElementById('addressModal').classList.remove('active');
+        }
+
+        async function saveAddress() {
+            const type = document.getElementById('addressType').value;
+            const prefix = type === 'billing' ? 'billing' : 'shipping';
+
+            const updateData = {};
+            updateData[prefix + '_address'] = document.getElementById('addrStreet1').value;
+            updateData[prefix + '_city'] = document.getElementById('addrCity').value;
+            updateData[prefix + '_state'] = document.getElementById('addrState').value;
+            updateData[prefix + '_zip'] = document.getElementById('addrZip').value;
+            updateData[prefix + '_country'] = document.getElementById('addrCountry').value;
+
+            try {
+                const response = await fetch(`/api/suppliers/${vendorId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    closeAddressModal();
+                    await loadVendorDetail();
+                } else {
+                    alert('Failed to save address');
+                }
+            } catch (error) {
+                console.error('Error saving address:', error);
+                alert('Error saving address');
+            }
+        }
+
+        async function addContactPerson() {
+            const firstName = prompt('First Name:');
+            if (!firstName) return;
+            const lastName = prompt('Last Name:') || '';
+            const email = prompt('Email:') || '';
+            const phone = prompt('Phone:') || '';
+
+            try {
+                const response = await fetch(`/api/suppliers/${vendorId}/contacts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ first_name: firstName, last_name: lastName, email, phone })
+                });
+
+                if (response.ok) {
+                    // Reload vendor data to get updated contacts
+                    await loadVendorDetail();
+                } else {
+                    alert('Failed to add contact person');
+                }
+            } catch (error) {
+                console.error('Error adding contact:', error);
+                alert('Error adding contact person');
+            }
+        }
+
+        // ====== Transaction Section Toggle ======
+        function toggleTxnSection(sectionId) {
+            const bodyMap = {
+                'bills': 'billsBody',
+                'billPayments': 'billPaymentsBody',
+                'purchaseOrders': 'purchaseOrdersBody',
+                'purchaseReceives': 'purchaseReceivesBody',
+                'vendorCredits': 'vendorCreditsBody',
+                'purchaseReturns': 'purchaseReturnsBody'
+            };
+            const toggleMap = {
+                'bills': 'billsToggle',
+                'billPayments': 'billPaymentsToggle',
+                'purchaseOrders': 'purchaseOrdersToggle',
+                'purchaseReceives': 'purchaseReceivesToggle',
+                'vendorCredits': 'vendorCreditsToggle',
+                'purchaseReturns': 'purchaseReturnsToggle'
+            };
+
+            const body = document.getElementById(bodyMap[sectionId]);
+            const toggle = document.getElementById(toggleMap[sectionId]);
+            if (!body || !toggle) return;
+
+            if (body.classList.contains('collapsed')) {
+                body.classList.remove('collapsed');
+                toggle.textContent = '▼';
+                toggle.classList.remove('collapsed');
+            } else {
+                body.classList.add('collapsed');
+                toggle.textContent = '▶';
+                toggle.classList.add('collapsed');
+            }
+        }
+
+        // ====== Comment Formatting (Rich Text) ======
+        function execFormat(command) {
+            document.getElementById('commentEditor').focus();
+            document.execCommand(command, false, null);
+        }
+
+        // ====== Add Vendor Comment ======
+        async function addVendorComment() {
+            if (!vendorId) return;
+            const editor = document.getElementById('commentEditor');
+            const html = editor.innerHTML.trim();
+            if (!html || html === '<br>' || html === '<div><br></div>') {
+                alert('Please write a comment before adding.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/suppliers/' + vendorId + '/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment_html: html })
+                });
+                if (res.ok) {
+                    editor.innerHTML = '';
+                    loadVendorComments();
+                } else {
+                    alert('Failed to add comment.');
+                }
+            } catch (err) {
+                console.error('Error adding comment:', err);
+                alert('Failed to add comment.');
+            }
+        }
+
+        // ====== Load Vendor Comments ======
+        async function loadVendorComments() {
+            if (!vendorId) return;
+            const container = document.getElementById('commentsListContainer');
+            const noMsg = document.getElementById('noCommentsMsg');
+            const listDiv = document.getElementById('commentsList');
+            try {
+                const res = await fetch('/api/suppliers/' + vendorId + '/comments');
+                if (!res.ok) return;
+                const comments = await res.json();
+                if (comments.length === 0) {
+                    noMsg.style.display = 'block';
+                    listDiv.innerHTML = '';
+                    return;
+                }
+                noMsg.style.display = 'none';
+                listDiv.innerHTML = comments.map(c => {
+                    const d = new Date(c.created_at);
+                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    return `<div class="comment-item">
+                        <div class="comment-text">${c.comment_html}</div>
+                        <div class="comment-meta" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span>${dateStr}</span>
+                            <span style="cursor:pointer;color:#999;font-size:16px;" onclick="deleteVendorComment(${c.id})" title="Delete">×</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                console.error('Error loading comments:', err);
+            }
+        }
+
+        // ====== Delete Vendor Comment ======
+        async function deleteVendorComment(commentId) {
+            if (!vendorId) return;
+            try {
+                await fetch('/api/suppliers/' + vendorId + '/comments/' + commentId, { method: 'DELETE' });
+                loadVendorComments();
+            } catch (err) {
+                console.error('Error deleting comment:', err);
+            }
+        }
+
+        // ====== Load Purchase Returns for Transactions Tab ======
+        async function loadPurchaseReturns() {
+            if (!vendorData) return;
+            const tbody = document.getElementById('purchaseReturnsTbody');
+            const emptyMsg = document.getElementById('purchaseReturnsEmpty');
+            const vendorName = (vendorData.display_name || vendorData.name || '').trim().toLowerCase();
+
+            try {
+                const res = await fetch('/api/purchase-returns');
+                if (!res.ok) return;
+                const allReturns = await res.json();
+
+                // Filter by vendor name match
+                const vendorReturns = allReturns.filter(r => {
+                    const rName = (r.vendor_name || '').trim().toLowerCase();
+                    return rName === vendorName;
+                });
+
+                if (vendorReturns.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyMsg.style.display = '';
+                    return;
+                }
+
+                emptyMsg.style.display = 'none';
+
+                const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+                const statusColors = {
+                    'SHIPPED': 'color:#0d6efd;background:#cfe2ff',
+                    'DRAFT': 'color:#856404;background:#fff3cd',
+                    'RECEIVED': 'color:#0a3622;background:#d1e7dd',
+                    'CANCELLED': 'color:#842029;background:#f8d7da'
+                };
+
+                tbody.innerHTML = vendorReturns.map(r => {
+                    const date = fmtDate(r.return_date);
+                    const status = (r.status || 'DRAFT').toUpperCase();
+                    const stColor = statusColors[status] || 'color:#666;background:#f0f0f0';
+                    const resolution = r.resolution_type === 'replacement' ? 'Replacement' : 'Vendor Credit';
+                    const resBadge = r.resolution_type === 'replacement'
+                        ? '<span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#7c3aed;background:#ede9fe;">Replacement</span>'
+                        : '<span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#0369a1;background:#e0f2fe;">Vendor Credit</span>';
+                    const qty = parseInt(r.total_return_qty) || 0;
+                    const reasonShort = (r.reason || '-').length > 30 ? (r.reason || '').substring(0, 30) + '...' : (r.reason || '-');
+
+                    return `<tr style="cursor:pointer;" onclick="window.location.href='/purchase-returns.html?id=${r.id}'">
+                        <td>${date}</td>
+                        <td style="color:#4285f4;font-weight:500;">${r.prn_number || '-'}</td>
+                        <td><a href="/purchase-order-detail.html?id=${r.purchase_order_id}" style="color:#1a73e8;text-decoration:none;font-weight:500;" onclick="event.stopPropagation()">${r.purchase_order_number || '-'}</a></td>
+                        <td style="font-size:12px;color:#555;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(r.reason || '').replace(/"/g, '&quot;')}">${reasonShort}</td>
+                        <td>${resBadge}</td>
+                        <td><span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;${stColor}">${status}</span></td>
+                        <td style="font-weight:500;">${qty} unit${qty !== 1 ? 's' : ''}</td>
+                    </tr>`;
+                }).join('');
+
+                // Add total count row
+                const countRow = document.createElement('div');
+                countRow.style.cssText = 'padding:8px 16px;font-size:11px;color:#888;border-top:1px solid #f0f0f0;';
+                countRow.textContent = `Total Count: ${vendorReturns.length}`;
+                const sectionBody = document.getElementById('purchaseReturnsBody');
+                // Remove old count row if exists
+                const oldCount = sectionBody.querySelector('.txn-count-row');
+                if (oldCount) oldCount.remove();
+                countRow.className = 'txn-count-row';
+                sectionBody.appendChild(countRow);
+
+            } catch (err) {
+                console.error('Error loading purchase returns:', err);
+            }
+        }
+
+        // ====== Statement Rendering ======
+        async function renderStatement() {
+            if (!vendorData) return;
+            const v = vendorData;
+            const vendorName = v.display_name || v.name || 'Vendor';
+            const currencyPrefix = v.currency === 'usd' || v.currency === 'USD' ? 'USD' : 'PHP';
+
+            // Date range: first of current month to last of current month
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            const fmtDate = (d) => d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            document.getElementById('stmtTitle').textContent = `Vendor Statement For ${vendorName}`;
+            document.getElementById('stmtDateRange').textContent = `From ${fmtDate(firstDay)} To ${fmtDate(lastDay)}`;
+            document.getElementById('stmtToName').textContent = vendorName;
+            document.getElementById('stmtAccountDateRange').textContent = `${fmtDate(firstDay)} To ${fmtDate(lastDay)}`;
+            document.getElementById('stmtOpeningDate').textContent = fmtDate(firstDay);
+
+            // Build combined transactions from bills (HARD RULE: only Open, Overdue, Partially Paid)
+            // Explicitly skip ANY bill with Draft status regardless of casing/spacing
+            const allowedStatuses = ['open', 'overdue', 'partially paid'];
+            const bills = (v.bills || []).filter(b => {
+                const status = (b.status || '').toLowerCase().trim();
+                if (status === 'draft') return false;  // HARD FILTER: Draft bills never enter SOA
+                return allowedStatuses.includes(status);
+            });
+
+            // Only include payments that reference non-draft bills
+            const openBillIds = new Set(bills.map(b => b.id));
+            const payments = (v.payments_made || []).filter(p => {
+                // If payment has a bill_id, only include if that bill is open
+                if (p.bill_id) return openBillIds.has(p.bill_id);
+                return true; // keep payments without bill linkage
+            });
+
+            // Only include applied credits (which reference non-draft bills)
+            const credits = (v.vendor_credits || []).filter(c => {
+                // If credit references a bill, only include if bill is open
+                if (c.bill_id) return openBillIds.has(c.bill_id);
+                // Exclude credits that have no matching open bill
+                // (they are unused credits, shown separately)
+                return false;
+            });
+            const transactions = [];
+
+            bills.forEach(b => {
+                transactions.push({
+                    date: b.bill_date ? new Date(b.bill_date) : new Date(),
+                    type: 'Bill',
+                    ref: b.bill_number || '',
+                    amount: parseFloat(b.total_amount || 0),
+                    payment: 0,
+                    credit: 0
+                });
+            });
+
+            payments.forEach(p => {
+                const detail = p.bill_number ? 'Payment for ' + p.bill_number : (p.payment_mode === 'Credit Applied' ? 'Credit Applied' : 'Payment');
+                transactions.push({
+                    date: p.payment_date ? new Date(p.payment_date) : new Date(),
+                    type: detail,
+                    ref: p.payment_number || '',
+                    amount: 0,
+                    payment: parseFloat(p.amount_paid || 0),
+                    credit: 0
+                });
+            });
+
+            credits.forEach(cr => {
+                transactions.push({
+                    date: cr.credit_date ? new Date(cr.credit_date) : new Date(),
+                    type: 'Vendor Credit',
+                    ref: cr.credit_number || '',
+                    amount: 0,
+                    payment: 0,
+                    credit: parseFloat(cr.total_amount || 0)
+                });
+            });
+
+            // Fetch vendor refunds — display-only, no balance impact
+            // A refund converts unused credit → cash; it doesn't change what we owe
+            try {
+                const rfRes = await fetch('/api/vendor-refunds');
+                if (rfRes.ok) {
+                    const allRefunds = await rfRes.json();
+                    const vendorName = (v.display_name || v.name || '').trim().toLowerCase();
+                    allRefunds
+                        .filter(r => r.supplier_id == vendorId || (r.supplier_name || '').trim().toLowerCase() === vendorName)
+                        .forEach(r => {
+                            const rfAmt = parseFloat(r.refund_amount || 0);
+                            transactions.push({
+                                date: r.refund_date ? new Date(r.refund_date) : new Date(),
+                                type: 'Cash Refund from ' + (r.credit_number || 'Vendor Credit'),
+                                ref: r.refund_number || '',
+                                amount: 0,
+                                payment: 0,
+                                credit: 0,
+                                isRefund: true,
+                                refundAmount: rfAmt
+                            });
+                        });
+                }
+            } catch (e) { console.error('Error loading refunds for SOA:', e); }
+
+            // Sort by date
+            transactions.sort((a, b) => a.date - b.date);
+
+            const tbody = document.getElementById('stmtTransactionsBody');
+            let runningBalance = 0;
+            let totalBilled = 0;
+            let totalPayments = 0;
+            let totalCredits = 0;
+
+            let rowsHtml = `<tr>
+                <td>${fmtDate(firstDay)}</td>
+                <td class="bold">***Opening Balance***</td>
+                <td></td>
+                <td>0.00</td>
+                <td></td>
+                <td>0.00</td>
+            </tr>`;
+
+            transactions.forEach(txn => {
+                if (!txn.isRefund) {
+                    const deduction = txn.payment + txn.credit;
+                    runningBalance += txn.amount - deduction;
+                    totalBilled += txn.amount;
+                    totalPayments += txn.payment;
+                    totalCredits += txn.credit;
+                }
+                const deduction = txn.isRefund ? 0 : (txn.payment + txn.credit);
+                const payCell = txn.isRefund
+                    ? `<span style="color:#888;font-style:italic;">${txn.refundAmount.toFixed(3)}</span>`
+                    : (deduction > 0 ? deduction.toFixed(3) : '');
+
+                rowsHtml += `<tr${txn.isRefund ? ' style="background:#f9fafb;"' : ''}>
+                    <td>${fmtDate(txn.date)}</td>
+                    <td>${txn.ref}</td>
+                    <td>${txn.type}</td>
+                    <td>${txn.amount > 0 ? txn.amount.toFixed(3) : ''}</td>
+                    <td style="color:#2e7d32;">${payCell}</td>
+                    <td>${runningBalance.toFixed(3)}</td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = rowsHtml;
+
+            // Update account summary
+            document.getElementById('stmtOpeningBalance').textContent = `${currencyPrefix} 0.00`;
+            document.getElementById('stmtBilledAmount').textContent = `${currencyPrefix} ${totalBilled.toFixed(3)}`;
+            document.getElementById('stmtAmountPaid').textContent = `${currencyPrefix} ${totalPayments.toFixed(3)}`;
+            document.getElementById('stmtCreditsApplied').textContent = `${currencyPrefix} ${totalCredits.toFixed(3)}`;
+            document.getElementById('stmtBalanceDue').textContent = `${currencyPrefix} ${runningBalance.toFixed(3)}`;
+            document.getElementById('stmtFinalBalance').textContent = `${currencyPrefix} ${runningBalance.toFixed(3)}`;
+        }
+
+        // ====== Generate Vendor Statement Document HTML ======
+        function generateVendorStatementDocument() {
+            if (!vendorData) return '';
+            const v = vendorData;
+            const vendorName = v.display_name || v.name || 'Vendor';
+            const currencyPrefix = v.currency === 'usd' || v.currency === 'USD' ? 'USD' : 'PHP';
+
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const fmtDate = (d) => d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // Build transactions from bills (excluding drafts)
+            const allowedStatuses = ['open', 'overdue', 'partially paid'];
+            const bills = (v.bills || []).filter(b => {
+                const status = (b.status || '').toLowerCase().trim();
+                if (status === 'draft') return false;
+                return allowedStatuses.includes(status);
+            });
+            const openBillIds = new Set(bills.map(b => b.id));
+            const payments = (v.payments_made || []).filter(p => {
+                if (p.bill_id) return openBillIds.has(p.bill_id);
+                return true;
+            });
+
+            const transactions = [];
+            bills.forEach(b => {
+                transactions.push({
+                    date: b.bill_date ? new Date(b.bill_date) : new Date(),
+                    type: 'Bill', ref: b.bill_number || '',
+                    amount: parseFloat(b.total_amount || 0), payment: 0
+                });
+            });
+            payments.forEach(p => {
+                const detail = p.bill_number ? 'Payment for ' + p.bill_number : 'Payment';
+                transactions.push({
+                    date: p.payment_date ? new Date(p.payment_date) : new Date(),
+                    type: detail, ref: p.payment_number || '',
+                    amount: 0, payment: parseFloat(p.amount_paid || 0)
+                });
+            });
+            transactions.sort((a, b) => a.date - b.date);
+
+            let runningBalance = 0, totalBilled = 0, totalPayments = 0;
+            let txnRows = `<tr><td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">${fmtDate(firstDay)}</td><td style="padding:10px 12px;font-size:12px;font-weight:600;border-bottom:1px solid #e0e0e0;">***Opening Balance***</td><td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;"></td><td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">0.00</td><td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;"></td><td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">0.00</td></tr>`;
+
+            transactions.forEach(txn => {
+                runningBalance += txn.amount - txn.payment;
+                totalBilled += txn.amount;
+                totalPayments += txn.payment;
+                txnRows += `<tr>
+                    <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">${fmtDate(txn.date)}</td>
+                    <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">${txn.ref}</td>
+                    <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">${txn.type}</td>
+                    <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">${txn.amount > 0 ? txn.amount.toFixed(3) : ''}</td>
+                    <td style="padding:10px 12px;font-size:12px;color:#2e7d32;border-bottom:1px solid #e0e0e0;">${txn.payment > 0 ? txn.payment.toFixed(3) : ''}</td>
+                    <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #e0e0e0;">${runningBalance.toFixed(3)}</td>
+                </tr>`;
+            });
+
+            return `<div style="font-family:'Inter','Helvetica Neue',Arial,sans-serif;max-width:750px;margin:0 auto;padding:40px;color:#333;background:white;">
+                <div style="text-align:right;margin-bottom:30px;">
+                    <div style="font-size:15px;font-weight:700;color:#333;">GIHON</div>
+                    <div style="font-size:12px;color:#555;">Philippines</div>
+                    <div style="font-size:12px;color:#555;">bitembling413@gmail.com</div>
+                </div>
+                <div style="margin-bottom:20px;">
+                    <div style="font-size:11px;color:#888;margin-bottom:2px;">To</div>
+                    <div style="font-size:14px;font-weight:600;color:#4285f4;">${vendorName}</div>
+                </div>
+                <div style="text-align:right;margin-bottom:20px;">
+                    <div style="font-size:18px;font-weight:700;color:#333;">Statement of Accounts</div>
+                    <div style="height:3px;background:linear-gradient(90deg,transparent,#e85d26);margin:4px 0 4px auto;width:280px;"></div>
+                    <div style="font-size:11px;color:#888;">${fmtDate(firstDay)} To ${fmtDate(lastDay)}</div>
+                </div>
+                <div style="border:1px solid #e0e0e0;margin-bottom:24px;width:280px;margin-left:auto;">
+                    <div style="font-size:12px;font-weight:700;color:#333;text-align:center;padding:8px;border-bottom:1px solid #e0e0e0;background:#fafafa;">Account Summary</div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 12px;font-size:12px;border-bottom:1px solid #f0f0f0;"><span style="color:#555;">Opening Balance</span><span style="color:#333;font-weight:500;">${currencyPrefix} 0.00</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 12px;font-size:12px;border-bottom:1px solid #f0f0f0;"><span style="color:#555;">Billed Amount</span><span style="color:#e85d26;font-weight:500;">${currencyPrefix} ${totalBilled.toFixed(3)}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 12px;font-size:12px;border-bottom:1px solid #f0f0f0;"><span style="color:#555;">Amount Paid</span><span style="color:#333;font-weight:500;">${currencyPrefix} ${totalPayments.toFixed(3)}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 12px;font-size:12px;"><span style="color:#555;">Balance Due</span><span style="color:#333;font-weight:500;">${currencyPrefix} ${runningBalance.toFixed(3)}</span></div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+                    <thead><tr>
+                        <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#333;border-bottom:2px solid #333;">Date</th>
+                        <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#333;border-bottom:2px solid #333;">Transactions</th>
+                        <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#333;border-bottom:2px solid #333;">Details</th>
+                        <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#333;border-bottom:2px solid #333;">Amount</th>
+                        <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#333;border-bottom:2px solid #333;">Payments</th>
+                        <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#333;border-bottom:2px solid #333;">Balance</th>
+                    </tr></thead>
+                    <tbody>${txnRows}</tbody>
+                </table>
+                <div style="display:flex;justify-content:flex-end;gap:40px;padding:12px 0;font-size:14px;font-weight:700;border-top:2px solid #333;margin-top:16px;">
+                    <span>Balance Due</span>
+                    <span>${currencyPrefix} ${runningBalance.toFixed(3)}</span>
+                </div>
+            </div>`;
+        }
+
+        // ====== Download PDF (Save to download) ======
+        async function downloadPDF() {
+            if (!vendorData) { alert('No vendor data loaded'); return; }
+
+            // Load html2pdf.js if not already loaded
+            if (!window.html2pdf) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+                document.head.appendChild(script);
+                await new Promise((resolve, reject) => { script.onload = resolve; script.onerror = reject; });
+            }
+
+            const htmlContent = generateVendorStatementDocument();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            document.body.appendChild(tempDiv);
+
+            const vendorName = vendorData.display_name || vendorData.name || 'Vendor';
+            try {
+                await html2pdf().set({
+                    margin: [10, 10, 10, 10],
+                    filename: vendorName + '-Statement.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).from(tempDiv.firstElementChild).save();
+            } catch (err) {
+                console.error('Error generating PDF:', err);
+                alert('Error generating PDF');
+            } finally {
+                document.body.removeChild(tempDiv);
+            }
+        }
+
+        // ====== Print — triggers native print dialog on CURRENT page (no new window) ======
+        function printVendor() {
+            if (!vendorData) { alert('No vendor data loaded'); return; }
+
+            // Auto-switch to Statement tab so the @media print CSS shows the SOA
+            const stmtTab = document.querySelector('[data-tab="statement"]');
+            if (stmtTab) switchTab('statement', stmtTab);
+
+            // Brief delay for tab to render, then open native print dialog
+            setTimeout(function () {
+                window.print();
+            }, 300);
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

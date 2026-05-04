@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unpaid Bills - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: white;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .page-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .page-title:hover {
+            color: #4285f4;
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-toggle {
+            display: flex;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .view-btn {
+            width: 36px;
+            height: 32px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .view-btn:first-child {
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .view-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .view-btn.active {
+            background: #e8f0fe;
+            color: #4285f4;
+        }
+
+        .btn-new-group {
+            display: flex;
+        }
+
+        .btn-new {
+            padding: 8px 16px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-new:hover {
+            background: #3367d6;
+        }
+
+        .btn-new-dropdown {
+            padding: 8px 10px;
+            background: #3367d6;
+            color: white;
+            border: none;
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .btn-new-dropdown:hover {
+            background: #2d5bb9;
+        }
+
+        .btn-more {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-more:hover {
+            background: #f5f5f5;
+        }
+
+        /* Table Container */
+        .table-container {
+            padding: 0;
+        }
+
+        /* Bills Table */
+        .bills-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .bills-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f9fafb;
+        }
+
+        .bills-table th:first-child {
+            padding-left: 24px;
+        }
+
+        .bills-table th svg {
+            width: 14px;
+            height: 14px;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .bills-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .bills-table td:first-child {
+            padding-left: 24px;
+        }
+
+        /* Sort Icon */
+        .sort-icon {
+            color: #999;
+            margin-left: 4px;
+            font-size: 10px;
+        }
+
+        /* Empty State */
+        .empty-message {
+            padding: 60px 24px;
+            text-align: center;
+            color: #4285f4;
+            font-size: 14px;
+        }
+
+        /* Refresh Icon */
+        .refresh-icon {
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .refresh-icon:hover {
+            color: #333;
+        }
+
+        /* Filter Dropdown */
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .filter-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+            z-index: 100;
+            margin-top: 4px;
+        }
+
+        .filter-menu.show {
+            display: block;
+        }
+
+        .filter-menu-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            display: block;
+            text-decoration: none;
+        }
+
+        .filter-menu-item:hover {
+            background: #f5f5f5;
+        }
+
+        .filter-menu-item.active {
+            background: #e8f0fe;
+            color: #4285f4;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Container -->
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title-wrapper">
+                    <div class="filter-dropdown">
+                        <h1 class="page-title" onclick="toggleFilterMenu()">
+                            Unpaid Bills
+                            <span class="dropdown-arrow">▼</span>
+                        </h1>
+                        <div class="filter-menu" id="filterMenu">
+                            <a href="#" class="filter-menu-item active" onclick="setFilter('unpaid')">Unpaid Bills</a>
+                            <a href="#" class="filter-menu-item" onclick="setFilter('paid')">Paid Bills</a>
+                            <a href="#" class="filter-menu-item" onclick="setFilter('all')">All Bills</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="view-toggle">
+                        <button class="view-btn active" title="List View">☰</button>
+                        <button class="view-btn" title="Grid View">⊞</button>
+                    </div>
+                    <div class="btn-new-group">
+                        <button class="btn-new" onclick="createBill()">
+                            <span>+</span> New
+                        </button>
+                        <button class="btn-new-dropdown">▼</button>
+                    </div>
+                    <button class="btn-more">⋯</button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-container">
+                <table class="bills-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                DATE <span class="sort-icon">↑</span>
+                            </th>
+                            <th>BILL#</th>
+                            <th>REFERENCE NUMBER</th>
+                            <th>VENDOR NAME</th>
+                            <th>STATUS</th>
+                            <th>DUE DATE</th>
+                            <th>AMOUNT</th>
+                            <th>BALANCE DUE</th>
+                            <th><span class="refresh-icon" onclick="refreshData()"><svg width="14" height="14"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10" />
+                                        <polyline points="1 20 1 14 7 14" />
+                                        <path
+                                            d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                    </svg></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="billsBody">
+                        <!-- Bills will be added here -->
+                    </tbody>
+                </table>
+
+                <!-- Empty State -->
+                <div class="empty-message" id="emptyMessage">
+                    There are no Unpaid Bills
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Script -->
+    <script src="/js/layout.js"></script>
+    <script>
+        let currentFilter = 'unpaid';
+
+        function toggleFilterMenu() {
+            const menu = document.getElementById('filterMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function (e) {
+            const dropdown = document.querySelector('.filter-dropdown');
+            if (!dropdown.contains(e.target)) {
+                document.getElementById('filterMenu').classList.remove('show');
+            }
+        });
+
+        function setFilter(filter) {
+            currentFilter = filter;
+
+            // Update active state
+            document.querySelectorAll('.filter-menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update title
+            const titles = {
+                'unpaid': 'Unpaid Bills',
+                'paid': 'Paid Bills',
+                'all': 'All Bills'
+            };
+            document.querySelector('.page-title').innerHTML = `
+                ${titles[filter]}
+                <span class="dropdown-arrow">▼</span>
+            `;
+
+            // Update empty message
+            const emptyMessage = document.getElementById('emptyMessage');
+            emptyMessage.textContent = `There are no ${titles[filter]}`;
+
+            // Close menu
+            document.getElementById('filterMenu').classList.remove('show');
+
+            // Reload data
+            loadBills();
+        }
+
+        function loadBills() {
+            // In a real app, this would fetch from the API
+            const bills = []; // Empty for now
+
+            const tbody = document.getElementById('billsBody');
+            const emptyMessage = document.getElementById('emptyMessage');
+
+            if (bills.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+            } else {
+                emptyMessage.style.display = 'none';
+                // Populate table
+            }
+        }
+
+        function createBill() {
+            window.location.href = '/new-bill.html';
+        }
+
+        function refreshData() {
+            loadBills();
+        }
+
+        // Initial load
+        loadBills();
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

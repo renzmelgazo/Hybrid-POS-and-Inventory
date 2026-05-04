@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Payment - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/auth-modal.css">
+    <script src="/js/auth-modal.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .main-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ===== Page Header (same as new-bill.html) ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-icon {
+            font-size: 20px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-main {
+            display: flex;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+
+        .left-column {
+            width: 36%;
+            min-width: 320px;
+            max-width: 400px;
+            border-right: 2px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* ===== Left Column Form Sections ===== */
+        .form-section {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row.top-align {
+            align-items: flex-start;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: #333;
+        }
+
+        .form-label.required {
+            color: #dc2626;
+        }
+
+        .form-input {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            max-width: 220px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .form-select {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .input-with-icon {
+            position: relative;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .input-with-icon input {
+            width: 100%;
+            padding-right: 28px;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* Amount with PHP prefix */
+        .amount-input-wrap {
+            display: flex;
+            align-items: center;
+            max-width: 220px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .amount-prefix {
+            padding: 7px 10px;
+            background: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .amount-input-wrap input {
+            border: none;
+            padding: 7px 10px;
+            font-size: 13px;
+            flex: 1;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .received-full-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #555;
+        }
+
+        .received-full-check input[type="checkbox"] {
+            accent-color: #4285f4;
+        }
+
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: #4285f4;
+        }
+
+        /* Notes Section (left column bottom) */
+        .notes-section {
+            padding: 12px 20px;
+            flex: 1;
+        }
+
+        .notes-row {
+            margin-bottom: 12px;
+        }
+
+        .notes-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .notes-sublabel {
+            font-size: 10px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+
+        .form-textarea {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            min-height: 50px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        /* ===== Right Column: Unpaid Invoices ===== */
+        .invoices-table-section {
+            padding: 16px;
+            flex: 1;
+        }
+
+        .invoices-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .invoices-table-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .clear-link {
+            color: #4285f4;
+            font-size: 12px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .clear-link:hover {
+            text-decoration: underline;
+        }
+
+        .invoices-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .invoices-table th {
+            text-align: left;
+            padding: 8px 6px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            background: #f9fafb;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .invoices-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+            font-size: 12px;
+        }
+
+        .invoices-table .due-date {
+            font-size: 10px;
+            color: #4285f4;
+            margin-top: 2px;
+        }
+
+        .pay-full-link {
+            color: #4285f4;
+            font-size: 11px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .pay-full-link:hover {
+            text-decoration: underline;
+        }
+
+        .invoices-footnote {
+            padding: 6px 6px;
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .payment-cell-input {
+            width: 65px;
+            padding: 5px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .date-cell-input {
+            width: 100px;
+            padding: 5px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* Totals Section (right column bottom) */
+        .totals-section {
+            padding: 16px 24px;
+            background: #f9fafb;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .totals-box {
+            max-width: 350px;
+            margin-left: auto;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .totals-label {
+            color: #666;
+        }
+
+        .totals-value {
+            font-weight: 500;
+            color: #333;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .totals-row.total {
+            border-top: 1px solid #d1d5db;
+            padding-top: 8px;
+            margin-top: 4px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* ===== Footer (same as new-bill.html) ===== */
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            position: fixed;
+            bottom: 0;
+            left: 260px;
+            right: 0;
+            z-index: 100;
+        }
+
+        .footer-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-draft {
+            padding: 8px 18px;
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-draft:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-save {
+            padding: 8px 18px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            background: #3367d6;
+        }
+
+        .btn-cancel {
+            padding: 8px 18px;
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #333;
+        }
+
+        .footer-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .footer-right .amount {
+            font-weight: 600;
+        }
+
+        /* ===== Customer Searchable Dropdown ===== */
+        .cust-dd-wrap {
+            position: relative;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .cust-dd-trigger {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            user-select: none;
+            color: #999;
+            transition: border-color 0.15s;
+        }
+
+        .cust-dd-trigger.selected {
+            color: #333;
+        }
+
+        .cust-dd-trigger:hover,
+        .cust-dd-trigger.open {
+            border-color: #4285f4;
+        }
+
+        .cust-dd-trigger .cust-dd-arrow {
+            color: #4285f4;
+            font-size: 10px;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .cust-dd-trigger.open .cust-dd-arrow {
+            transform: rotate(180deg);
+        }
+
+        .cust-dd-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            min-width: 260px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .cust-dd-panel.open {
+            display: block;
+        }
+
+        .cust-dd-search {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cust-dd-search-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #4285f4;
+            border-radius: 6px;
+            padding: 7px 10px;
+        }
+
+        .cust-dd-search-inner .search-icon {
+            color: #999;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .cust-dd-search-inner input {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            flex: 1;
+            font-family: inherit;
+            color: #333;
+        }
+
+        .cust-dd-options {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .cust-dd-option {
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.1s;
+        }
+
+        .cust-dd-option:last-child {
+            border-bottom: none;
+        }
+
+        .cust-dd-option:hover {
+            background: #4285f4;
+            color: white;
+        }
+
+        .cust-dd-option.selected {
+            background: #f0f5ff;
+        }
+
+        .cust-dd-option.selected:hover {
+            background: #4285f4;
+            color: white;
+        }
+
+        .cust-dd-empty {
+            padding: 16px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* ===== Confirmation & Excess Payment Modals ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+            max-width: 440px;
+            width: 90%;
+            padding: 28px 32px 24px;
+        }
+
+        .modal-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 12px;
+        }
+
+        .modal-card p {
+            font-size: 13px;
+            color: #555;
+            margin: 0 0 20px;
+            line-height: 1.55;
+        }
+
+        .modal-card .excess-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 22px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #333;
+            font-family: inherit;
+        }
+
+        .modal-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .modal-btn.primary {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
+        .modal-btn.primary:hover {
+            background: #1d4ed8;
+        }
+
+        .modal-btn.danger {
+            background: #16a34a;
+            color: #fff;
+            border-color: #16a34a;
+        }
+
+        .modal-btn.danger:hover {
+            background: #15803d;
+        }
+
+        /* ===== Check Numbers Section ===== */
+        .check-numbers-section {
+            transition: all 0.2s ease;
+        }
+
+        .check-number-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .check-number-row .form-input {
+            flex: 1;
+        }
+
+        .check-remove-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #fca5a5;
+            border-radius: 4px;
+            background: #fef2f2;
+            color: #dc2626;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .check-remove-btn:hover {
+            background: #fee2e2;
+            border-color: #f87171;
+        }
+
+        .check-add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 12px;
+            border: 1px dashed #93c5fd;
+            border-radius: 4px;
+            background: #f0f7ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 2px;
+            transition: all 0.15s ease;
+        }
+
+        .check-add-btn:hover {
+            background: #dbeafe;
+            border-color: #60a5fa;
+        }
+
+        /* ===== Salesperson Searchable Dropdown ===== */
+        .sp-dd-wrap {
+            position: relative;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .sp-dd-trigger {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            user-select: none;
+            color: #999;
+            transition: border-color 0.15s;
+        }
+
+        .sp-dd-trigger.selected {
+            color: #333;
+        }
+
+        .sp-dd-trigger:hover,
+        .sp-dd-trigger.open {
+            border-color: #8e1616;
+        }
+
+        .sp-dd-trigger .sp-dd-arrow {
+            color: #8e1616;
+            font-size: 10px;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .sp-dd-trigger.open .sp-dd-arrow {
+            transform: rotate(180deg);
+        }
+
+        .sp-dd-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            min-width: 220px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .sp-dd-panel.open {
+            display: block;
+        }
+
+        .sp-dd-search {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .sp-dd-search-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #8e1616;
+            border-radius: 6px;
+            padding: 7px 10px;
+        }
+
+        .sp-dd-search-inner .search-icon {
+            color: #999;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .sp-dd-search-inner input {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            flex: 1;
+            font-family: inherit;
+            color: #333;
+        }
+
+        .sp-dd-options {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .sp-dd-option {
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.1s;
+        }
+
+        .sp-dd-option:last-child {
+            border-bottom: none;
+        }
+
+        .sp-dd-option:hover {
+            background: #8e1616;
+            color: white;
+        }
+
+        .sp-dd-option.selected {
+            background: #fef2f2;
+        }
+
+        .sp-dd-option.selected:hover {
+            background: #8e1616;
+            color: white;
+        }
+
+        .sp-dd-empty {
+            padding: 16px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title-wrapper">
+                    <span class="page-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg></span>
+                    <h1 class="page-title" id="pageTitle">Record Payment</h1>
+                </div>
+                <button class="close-btn" onclick="goBack()">×</button>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="form-main">
+                <!-- ========== LEFT COLUMN: Form Fields ========== -->
+                <div class="left-column">
+                    <!-- Customer Section -->
+                    <div class="form-section">
+                        <div class="form-row">
+                            <label class="form-label required">Customer Name*</label>
+                            <div class="cust-dd-wrap" id="custDdWrap">
+                                <input type="hidden" id="customerId" value="">
+                                <input type="hidden" id="customerName" value="">
+                                <div class="cust-dd-trigger" id="custDdTrigger" onclick="toggleCustDd()">
+                                    <span id="custDdLabel">Select or add a customer</span>
+                                    <span class="cust-dd-arrow">▼</span>
+                                </div>
+                                <div class="cust-dd-panel" id="custDdPanel">
+                                    <div class="cust-dd-search">
+                                        <div class="cust-dd-search-inner">
+                                            <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="11" cy="11" r="8" />
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                </svg></span>
+                                            <input type="text" id="custDdSearch" placeholder="Search"
+                                                oninput="filterCustDd()">
+                                        </div>
+                                    </div>
+                                    <div class="cust-dd-options" id="custDdOptions"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Details Section -->
+                    <div class="form-section">
+                        <div class="form-row top-align">
+                            <label class="form-label required" style="padding-top:8px;">Amount Received*</label>
+                            <div>
+                                <div class="amount-input-wrap">
+                                    <span class="amount-prefix">PHP</span>
+                                    <input type="number" id="amountReceived" step="0.01" placeholder="Enter amount"
+                                        onblur="onAmountReceivedBlur()">
+                                </div>
+                                <label class="received-full-check">
+                                    <input type="checkbox" id="receivedFullCheck" onchange="applyFullAmount()">
+                                    <span id="receivedFullLabel">Received full amount</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Bank Charges (if any)</label>
+                            <input type="number" class="form-input" id="bankCharges" step="0.01">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Payment Date*</label>
+                            <input type="text" class="form-input" id="paymentDate">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Payment #*</label>
+                            <div class="input-with-icon">
+                                <input type="text" class="form-input" id="paymentNumber">
+                                <span class="input-icon">⚙</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Payment Mode</label>
+                            <select class="form-select" id="paymentMode" onchange="onPaymentModeChange()">
+                                <option value="Cash">Cash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Check">Check</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Maya">Maya</option>
+                            </select>
+                        </div>
+                        <!-- Check Numbers Section (visible only when Payment Mode = Check) -->
+                        <div class="form-row check-numbers-section" id="checkNumbersSection" style="display:none;">
+                            <label class="form-label" style="padding-top:8px;">Check Number(s)</label>
+                            <div>
+                                <div id="checkNumbersList">
+                                    <div class="check-number-row">
+                                        <input type="text" class="form-input check-number-input"
+                                            placeholder="Enter check number">
+                                    </div>
+                                </div>
+                                <button type="button" class="check-add-btn" onclick="addCheckNumberRow()">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg> Add Check
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Deposit To*</label>
+                            <select class="form-select" id="depositTo">
+                                <option value="Petty Cash">Petty Cash</option>
+                                <option value="Bank Account">Bank Account</option>
+                                <option value="Undeposited Funds">Undeposited Funds</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" id="branchId">
+                                <option value="">— Select Branch —</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Salesperson*</label>
+                            <div class="sp-dd-wrap" id="spDdWrap">
+                                <input type="hidden" id="selectedSalesperson" value="">
+                                <input type="hidden" id="selectedSalespersonName" value="">
+                                <div class="sp-dd-trigger" id="spDdTrigger" onclick="toggleSpDd()">
+                                    <span id="spDdLabel">Select Salesperson</span>
+                                    <span class="sp-dd-arrow">▼</span>
+                                </div>
+                                <div class="sp-dd-panel" id="spDdPanel">
+                                    <div class="sp-dd-search">
+                                        <div class="sp-dd-search-inner">
+                                            <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="11" cy="11" r="8" />
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                </svg></span>
+                                            <input type="text" id="spDdSearch" placeholder="Search"
+                                                oninput="filterSpDd()">
+                                        </div>
+                                    </div>
+                                    <div class="sp-dd-options" id="spDdOptions"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row" id="referenceNumberRow">
+                            <label class="form-label">Reference#</label>
+                            <input type="text" class="form-input" id="referenceNumber">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Tax deducted?</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="taxDeducted" value="no" checked> No Tax deducted
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="taxDeducted" value="yes"> Yes, TDS
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="notes-section">
+                        <div class="notes-row">
+                            <div class="notes-label">Notes</div>
+                            <div class="notes-sublabel">Internal use. Not visible to customer</div>
+                            <textarea class="form-textarea" id="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Attachments -->
+                    <div class="form-section" style="border-bottom:none;">
+                        <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px;">Attachments</div>
+                        <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#555;cursor:pointer;"
+                            onclick="attachFiles()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="vertical-align:-2px;margin-right:3px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg> Upload File ▾
+                        </div>
+                        <div style="font-size:10px;color:#bbb;margin-top:4px;">Max 5 files, 5MB each</div>
+                        <div id="attachmentList" style="margin-top:8px;"></div>
+                        <div id="uploadProgress" style="display:none;margin-top:6px;font-size:11px;color:#4285f4;">
+                            Uploading...</div>
+                    </div>
+                </div>
+
+                <!-- ========== RIGHT COLUMN: Unpaid Invoices Table ========== -->
+                <div class="right-column">
+                    <div class="invoices-table-section">
+                        <div class="invoices-table-header">
+                            <span class="invoices-table-title">Unpaid Invoices</span>
+                            <a class="clear-link" onclick="clearPayments()"><svg width="14" height="14"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="vertical-align:-2px;margin-right:3px;">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                    <polyline points="15 3 21 3 21 9" />
+                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                </svg> Clear Applied Amount</a>
+                        </div>
+
+                        <table class="invoices-table">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>INVOICE NUMBER</th>
+                                    <th>LOCATION</th>
+                                    <th>INVOICE AMOUNT</th>
+                                    <th>AMOUNT DUE</th>
+                                    <th>PAYMENT RECEIVED ON</th>
+                                    <th>PAYMENT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unpaidInvoicesBody">
+                                <tr>
+                                    <td colspan="7" style="text-align:center;padding:40px;color:#bbb;font-size:12px;">
+                                        Select a customer to view unpaid invoices
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="invoices-footnote">**List contains only SENT invoices</div>
+                    </div>
+
+                    <!-- Totals Section -->
+                    <div class="totals-section">
+                        <div class="totals-box">
+                            <div class="totals-row total">
+                                <span>Total</span>
+                                <span class="totals-value" id="invoicesTotal">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="form-footer" id="mainFooter">
+                <div class="footer-left">
+                    <button type="button" class="btn-draft" onclick="savePayment('DRAFT')">Save as Draft</button>
+                    <button type="button" class="btn-save" onclick="savePayment('PAID')">Save as Paid</button>
+                    <button type="button" class="btn-cancel" onclick="goBack()">Cancel</button>
+                </div>
+                <div class="footer-right">
+                    <span>Total Amount: <span class="amount">PHP <span id="footerTotal">0.00</span></span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal: distribute amount to invoices? -->
+    <div class="modal-overlay" id="confirmDistributeModal">
+        <div class="modal-card">
+            <h3>Distribute Payment</h3>
+            <p>Would you like this amount to be reflected in the payment field?</p>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="confirmDistribute(false)">No</button>
+                <button class="modal-btn primary" onclick="confirmDistribute(true)">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excess Payment Modal -->
+    <div class="modal-overlay" id="excessPaymentModal">
+        <div class="modal-card">
+            <h3>Excess Payment</h3>
+            <p>Would you like to store the excess amount as overpayment from this customer?</p>
+            <div class="excess-amount" id="excessAmountDisplay">PHP 0.00</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeExcessModal()">Cancel</button>
+                <button class="modal-btn danger" onclick="confirmExcessAndSave()">Continue to Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const invoiceId = urlParams.get('invoice_id');
+        const editId = urlParams.get('edit_id');
+        let invoiceData = null;
+        let customersList = [];
+        let unpaidInvoices = [];
+        let salespersonsList = [];
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('paymentDate').value = `${mm}/${dd}/${today.getFullYear()}`;
+
+            // Load customers
+            try {
+                const custRes = await fetch('/api/customers');
+                if (custRes.ok) { customersList = await custRes.json(); }
+            } catch (e) { console.error(e); }
+
+            // Load branches for Branch dropdown
+            try {
+                const brRes = await fetch('/api/locations/branches');
+                if (brRes.ok) {
+                    const branches = await brRes.json();
+                    const brSelect = document.getElementById('branchId');
+                    branches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name;
+                        brSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error(e); }
+
+            // Load salespersons
+            try {
+                const spRes = await fetch('/api/salespersons');
+                if (spRes.ok) {
+                    const data = await spRes.json();
+                    salespersonsList = data.map(sp => ({
+                        id: sp.id,
+                        name: sp.name,
+                        email: sp.email || '',
+                        password: sp.password || ''
+                    }));
+                    renderSpDdOptions();
+                }
+            } catch (e) { console.error(e); }
+
+            // Load next payment number
+            try {
+                const numRes = await fetch('/api/payments-received/next-number');
+                if (numRes.ok) {
+                    const numData = await numRes.json();
+                    document.getElementById('paymentNumber').value = numData.next_number;
+                }
+            } catch (e) { console.error(e); }
+
+            const preCustomerId = urlParams.get('customerId');
+
+            if (invoiceId) {
+                try {
+                    const res = await fetch(`/api/invoices/${invoiceId}`);
+                    if (res.ok) {
+                        invoiceData = await res.json();
+                        document.getElementById('pageTitle').textContent = `Payment for ${invoiceData.invoice_number}`;
+                        selectCustomer(invoiceData.customer_id || '', invoiceData.customer_name || '');
+                        // Auto-default Branch from the invoice's branch
+                        if (invoiceData.branch_id) {
+                            document.getElementById('branchId').value = invoiceData.branch_id;
+                        }
+                        // Amount Received left empty for manual entry
+                    }
+                } catch (e) { console.error(e); }
+            } else if (preCustomerId) {
+                const c = customersList.find(x => String(x.id) === preCustomerId);
+                if (c) {
+                    const name = c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Unnamed';
+                    selectCustomer(c.id, name);
+                }
+            }
+
+            // Render initial customer dropdown
+            renderCustOptions();
+
+            // Edit mode: load existing payment data
+            if (editId) {
+                let editPaymentData = null;
+                try {
+                    const editRes = await fetch('/api/payments-received/' + editId);
+                    if (editRes.ok) {
+                        const p = await editRes.json();
+                        editPaymentData = p;
+                        document.getElementById('pageTitle').textContent = 'Edit Payment';
+                        document.getElementById('paymentNumber').value = p.payment_number || '';
+                        document.getElementById('amountReceived').value = p.amount_received || '';
+                        document.getElementById('bankCharges').value = p.bank_charges || '';
+                        document.getElementById('referenceNumber').value = p.reference_number || '';
+                        document.getElementById('notes').value = p.notes || '';
+                        if (p.payment_mode) document.getElementById('paymentMode').value = p.payment_mode;
+                        onPaymentModeChange();
+                        if (p.check_numbers) {
+                            try {
+                                const cn = typeof p.check_numbers === 'string' ? JSON.parse(p.check_numbers) : p.check_numbers;
+                                loadCheckNumbers(cn);
+                            } catch (e) { }
+                        }
+                        if (p.deposit_to) document.getElementById('depositTo').value = p.deposit_to;
+                        if (p.branch_id) document.getElementById('branchId').value = p.branch_id;
+                        if (p.payment_date) {
+                            var d = new Date(p.payment_date);
+                            var mm2 = String(d.getMonth() + 1).padStart(2, '0');
+                            var dd2 = String(d.getDate()).padStart(2, '0');
+                            document.getElementById('paymentDate').value = mm2 + '/' + dd2 + '/' + d.getFullYear();
+                        }
+                        // Pre-populate salesperson in edit mode
+                        if (p.salesperson_name) {
+                            const sp = salespersonsList.find(s => s.name === p.salesperson_name);
+                            if (sp) {
+                                document.getElementById('selectedSalesperson').value = sp.id;
+                                document.getElementById('selectedSalespersonName').value = sp.name;
+                                document.getElementById('spDdLabel').textContent = sp.name;
+                                document.getElementById('spDdTrigger').classList.add('selected');
+                            } else {
+                                // Salesperson name exists but not in list — display anyway
+                                document.getElementById('selectedSalespersonName').value = p.salesperson_name;
+                                document.getElementById('spDdLabel').textContent = p.salesperson_name;
+                                document.getElementById('spDdTrigger').classList.add('selected');
+                            }
+                        }
+                        if (p.customer_name) {
+                            // Pass payment data so loadUnpaidInvoices can include paid-by-this-payment invoices
+                            await selectCustomerForEdit(p.customer_id || '', p.customer_name, p);
+                        }
+                    }
+                } catch (e) { console.error('Error loading payment for edit:', e); }
+
+                // In edit mode: show only Save + Cancel buttons
+                var footerLeft = document.querySelector('#mainFooter .footer-left');
+                if (footerLeft) {
+                    footerLeft.innerHTML = '<button type="button" class="btn-save" onclick="savePayment(\'PAID\')">Save</button>' +
+                        '<button type="button" class="btn-cancel" onclick="goBack()">Cancel</button>';
+                }
+            }
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#custDdWrap')) {
+                    document.getElementById('custDdPanel').classList.remove('open');
+                    document.getElementById('custDdTrigger').classList.remove('open');
+                }
+                if (!e.target.closest('#spDdWrap')) {
+                    document.getElementById('spDdPanel').classList.remove('open');
+                    document.getElementById('spDdTrigger').classList.remove('open');
+                }
+            });
+        });
+
+        // ===== Check Number Functions =====
+        function onPaymentModeChange() {
+            const mode = document.getElementById('paymentMode').value;
+            const section = document.getElementById('checkNumbersSection');
+            const refRow = document.getElementById('referenceNumberRow');
+            if (mode === 'Check') {
+                section.style.display = '';
+                refRow.style.display = 'none';
+            } else {
+                section.style.display = 'none';
+                refRow.style.display = '';
+            }
+        }
+
+        function addCheckNumberRow() {
+            const list = document.getElementById('checkNumbersList');
+            const row = document.createElement('div');
+            row.className = 'check-number-row';
+            row.innerHTML = `
+                <input type="text" class="form-input check-number-input" placeholder="Enter check number">
+                <button type="button" class="check-remove-btn" onclick="removeCheckNumberRow(this)" title="Remove">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            `;
+            list.appendChild(row);
+            row.querySelector('input').focus();
+        }
+
+        function removeCheckNumberRow(btn) {
+            btn.closest('.check-number-row').remove();
+        }
+
+        function getCheckNumbers() {
+            const inputs = document.querySelectorAll('.check-number-input');
+            const nums = [];
+            inputs.forEach(inp => {
+                const val = inp.value.trim();
+                if (val) nums.push(val);
+            });
+            return nums;
+        }
+
+        function loadCheckNumbers(checkNumbers) {
+            if (!checkNumbers || !Array.isArray(checkNumbers) || checkNumbers.length === 0) return;
+            const list = document.getElementById('checkNumbersList');
+            list.innerHTML = '';
+            checkNumbers.forEach((num, i) => {
+                const row = document.createElement('div');
+                row.className = 'check-number-row';
+                if (i === 0) {
+                    row.innerHTML = `<input type="text" class="form-input check-number-input" placeholder="Enter check number" value="${num}">`;
+                } else {
+                    row.innerHTML = `
+                        <input type="text" class="form-input check-number-input" placeholder="Enter check number" value="${num}">
+                        <button type="button" class="check-remove-btn" onclick="removeCheckNumberRow(this)" title="Remove">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    `;
+                }
+                list.appendChild(row);
+            });
+        }
+
+        // ===== Customer Searchable Dropdown =====
+        function toggleCustDd() {
+            const panel = document.getElementById('custDdPanel');
+            const trigger = document.getElementById('custDdTrigger');
+            const isOpen = panel.classList.contains('open');
+            if (isOpen) {
+                panel.classList.remove('open');
+                trigger.classList.remove('open');
+            } else {
+                panel.classList.add('open');
+                trigger.classList.add('open');
+                document.getElementById('custDdSearch').value = '';
+                document.getElementById('custDdSearch').focus();
+                renderCustOptions();
+            }
+        }
+
+        function renderCustOptions(filter) {
+            const container = document.getElementById('custDdOptions');
+            const selectedId = document.getElementById('customerId').value;
+            let list = customersList;
+
+            if (filter) {
+                const q = filter.toLowerCase();
+                list = list.filter(c => {
+                    const name = c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || '';
+                    return name.toLowerCase().includes(q);
+                });
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="cust-dd-empty">No customers found.</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(c => {
+                const name = c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Unnamed';
+                const sel = String(c.id) === String(selectedId) ? ' selected' : '';
+                return `<div class="cust-dd-option${sel}" onclick="selectCustomer(${c.id}, '${name.replace(/'/g, "\\'")}')">${name}</div>`;
+            }).join('');
+        }
+
+        function filterCustDd() {
+            renderCustOptions(document.getElementById('custDdSearch').value);
+        }
+
+        function selectCustomer(id, name) {
+            document.getElementById('customerId').value = id;
+            document.getElementById('customerName').value = name;
+            document.getElementById('custDdLabel').textContent = name;
+            document.getElementById('custDdTrigger').classList.add('selected');
+            document.getElementById('custDdPanel').classList.remove('open');
+            document.getElementById('custDdTrigger').classList.remove('open');
+            loadUnpaidInvoices(id);
+        }
+
+        // Edit-mode variant: also includes invoices paid by this payment
+        async function selectCustomerForEdit(id, name, paymentData) {
+            document.getElementById('customerId').value = id;
+            document.getElementById('customerName').value = name;
+            document.getElementById('custDdLabel').textContent = name;
+            document.getElementById('custDdTrigger').classList.add('selected');
+            document.getElementById('custDdPanel').classList.remove('open');
+            document.getElementById('custDdTrigger').classList.remove('open');
+            await loadUnpaidInvoices(id, paymentData);
+        }
+
+        async function loadUnpaidInvoices(customerId, editPaymentData) {
+            const tbody = document.getElementById('unpaidInvoicesBody');
+            tbody.innerHTML = '';
+            unpaidInvoices = [];
+            document.getElementById('invoicesTotal').textContent = '0.00';
+            document.getElementById('footerTotal').textContent = '0.00';
+            if (!customerId) return;
+
+            try {
+                const res = await fetch('/api/invoices');
+                if (!res.ok) return;
+                const invoices = await res.json();
+
+                // Parse invoice numbers from the current payment being edited
+                let editInvoiceMap = {}; // { invoice_number: { invAmt, payAmt } }
+                let editInvoiceIds = new Set();
+                if (editPaymentData && editPaymentData.invoice_number) {
+                    const entries = editPaymentData.invoice_number.split(',').map(s => s.trim()).filter(Boolean);
+                    entries.forEach(entry => {
+                        const parts = entry.split('|');
+                        const invNum = parts[0] || '';
+                        editInvoiceMap[invNum] = {
+                            invAmt: parts[1] ? parseFloat(parts[1]) : 0,
+                            payAmt: parts[2] ? parseFloat(parts[2]) : 0
+                        };
+                    });
+                    // Also include by invoice_id if available
+                    if (editPaymentData.invoice_id) {
+                        editInvoiceIds.add(parseInt(editPaymentData.invoice_id));
+                    }
+                }
+
+                unpaidInvoices = invoices.filter(inv => {
+                    const s = (inv.status || '').toUpperCase();
+                    const bal = parseFloat(inv.balance_due);
+                    const isThisCustomer = String(inv.customer_id) === String(customerId);
+                    if (!isThisCustomer) return false;
+
+                    // In edit mode: include invoices that were part of this payment (even if PAID)
+                    if (editPaymentData) {
+                        const invoiceNum = inv.invoice_number || '';
+                        if (editInvoiceMap[invoiceNum] || editInvoiceIds.has(inv.id)) {
+                            return true;
+                        }
+                    }
+
+                    // Normal filter: exclude PAID, DRAFT, VOID, and zero-balance
+                    return s !== 'PAID' && s !== 'DRAFT' && s !== 'VOID'
+                        && (isNaN(bal) || bal > 0);
+                });
+
+                if (unpaidInvoices.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#bbb;font-size:12px;">No unpaid invoices found.</td></tr>';
+                    return;
+                }
+
+                const today = new Date();
+                const todayStr = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+
+                unpaidInvoices.forEach((inv, i) => {
+                    const invDate = inv.invoice_date ? new Date(inv.invoice_date) : null;
+                    const dateStr = invDate ? invDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                    const dueDate = inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                    const amount = parseFloat(inv.total || 0);
+                    const amountDue = parseFloat(inv.balance_due != null ? inv.balance_due : inv.total || 0);
+
+                    // In edit mode, pre-fill the payment amount from saved data
+                    let prefillPayment = 0;
+                    if (editPaymentData) {
+                        const invNum = inv.invoice_number || '';
+                        if (editInvoiceMap[invNum]) {
+                            prefillPayment = editInvoiceMap[invNum].payAmt || 0;
+                        }
+                    }
+
+                    // For edit mode, the max should include the amount already applied by this payment
+                    const maxPayable = editPaymentData && prefillPayment > 0
+                        ? amountDue + prefillPayment
+                        : amountDue;
+
+                    const tr = document.createElement('tr');
+                    // Highlight the contextual invoice row
+                    if (invoiceData && inv.id === invoiceData.id) {
+                        tr.style.background = '#eff6ff';
+                        tr.style.borderLeft = '3px solid #2563eb';
+                    }
+                    tr.setAttribute('data-invoice-id', inv.id);
+                    tr.innerHTML = `
+                        <td>${dateStr}${dueDate ? '<div class="due-date">Due Date: ' + dueDate + '</div>' : ''}</td>
+                        <td>${inv.invoice_number || ''}</td>
+                        <td>${inv.branch_name || '—'}</td>
+                        <td style="text-align:right;">${amount.toFixed(2)}</td>
+                        <td style="text-align:right;">${maxPayable.toFixed(2)}</td>
+                        <td><input type="text" class="date-cell-input" value="${todayStr}"></td>
+                        <td style="text-align:right;">
+                            <input type="number" class="payment-cell-input" value="${prefillPayment.toFixed(2)}" step="0.01"
+                                data-idx="${i}" data-max="${maxPayable}" onchange="updatePaymentTotal()">
+                            <div><a class="pay-full-link" onclick="payInFull(${i})">Pay in Full</a></div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const totalDue = unpaidInvoices.reduce((s, inv) => s + parseFloat(inv.balance_due != null ? inv.balance_due : inv.total || 0), 0);
+                document.getElementById('receivedFullLabel').textContent = `Received full amount (PHP${totalDue.toFixed(2)})`;
+
+                // In edit mode, update the totals to reflect pre-filled amounts
+                if (editPaymentData) {
+                    updatePaymentTotal();
+                }
+
+            } catch (e) { console.error(e); }
+        }
+
+        function payInFull(idx) {
+            const input = document.querySelector(`input[data-idx="${idx}"]`);
+            if (input) { input.value = parseFloat(input.dataset.max || 0).toFixed(2); updatePaymentTotal(); }
+        }
+
+        function updatePaymentTotal() {
+            let total = 0;
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { total += parseFloat(inp.value) || 0; });
+            document.getElementById('invoicesTotal').textContent = total.toFixed(2);
+            document.getElementById('footerTotal').textContent = total.toFixed(2);
+        }
+
+        function clearPayments() {
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { inp.value = '0'; });
+            updatePaymentTotal();
+        }
+
+        function distributeAmountToInvoices() {
+            let remaining = parseFloat(document.getElementById('amountReceived').value) || 0;
+            const inputs = document.querySelectorAll('.payment-cell-input');
+
+            // Reset all to 0 first
+            inputs.forEach(inp => { inp.value = '0'; });
+
+            // If opened from a specific invoice, fill that one first
+            if (invoiceData && invoiceData.id) {
+                const ctxIdx = unpaidInvoices.findIndex(inv => inv.id === invoiceData.id);
+                if (ctxIdx >= 0 && inputs[ctxIdx]) {
+                    const maxDue = parseFloat(inputs[ctxIdx].dataset.max) || 0;
+                    const fill = Math.min(remaining, maxDue);
+                    inputs[ctxIdx].value = fill.toFixed(2);
+                    remaining -= fill;
+                }
+            }
+
+            // Distribute remainder to other invoices (oldest to newest)
+            inputs.forEach((inp, i) => {
+                // Skip the contextual invoice (already filled)
+                if (invoiceData && invoiceData.id && unpaidInvoices[i] && unpaidInvoices[i].id === invoiceData.id) return;
+                const maxDue = parseFloat(inp.dataset.max) || 0;
+                if (remaining <= 0) {
+                    // already 0
+                } else if (remaining >= maxDue) {
+                    inp.value = maxDue.toFixed(2);
+                    remaining -= maxDue;
+                } else {
+                    inp.value = remaining.toFixed(2);
+                    remaining = 0;
+                }
+            });
+            updatePaymentTotal();
+        }
+
+        let amountAlreadyConfirmed = false;
+
+        function onAmountReceivedBlur() {
+            const val = parseFloat(document.getElementById('amountReceived').value) || 0;
+            if (val > 0 && !amountAlreadyConfirmed && unpaidInvoices.length > 0) {
+                document.getElementById('confirmDistributeModal').classList.add('show');
+            }
+        }
+
+        function confirmDistribute(doDistribute) {
+            document.getElementById('confirmDistributeModal').classList.remove('show');
+            amountAlreadyConfirmed = true;
+            if (doDistribute) {
+                distributeAmountToInvoices();
+            }
+            // If NO, keep the amount but don't distribute — treat as unapplied
+        }
+
+        function applyFullAmount() {
+            if (document.getElementById('receivedFullCheck').checked) {
+                const totalDue = unpaidInvoices.reduce((s, inv) => s + parseFloat(inv.balance_due != null ? inv.balance_due : inv.total || 0), 0);
+                document.getElementById('amountReceived').value = totalDue.toFixed(2);
+                amountAlreadyConfirmed = true;
+                distributeAmountToInvoices();
+            }
+        }
+
+        let pendingSaveStatus = null;
+
+        async function savePayment(status) {
+            const customerName = document.getElementById('customerName').value || document.getElementById('custDdLabel').textContent;
+            const paymentNumber = document.getElementById('paymentNumber').value;
+            const amountReceived = document.getElementById('amountReceived').value;
+            const spName = document.getElementById('selectedSalespersonName').value;
+            const spId = document.getElementById('selectedSalesperson').value;
+
+            if (!customerName || customerName === 'Select or add a customer') { alert('Please select a customer.'); return; }
+            if (!paymentNumber) { alert('Payment number is required.'); return; }
+            if (!amountReceived || parseFloat(amountReceived) <= 0) { alert('Amount received must be greater than 0.'); return; }
+            if (!spName) { alert('Please select a salesperson.'); return; }
+
+            // Calculate total applied
+            let totalApplied = 0;
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { totalApplied += parseFloat(inp.value) || 0; });
+            const excess = parseFloat(amountReceived) - totalApplied;
+
+            // If excess exists, show the excess payment modal FIRST, then auth modal
+            if (excess > 0.01) {
+                pendingSaveStatus = status;
+                document.getElementById('excessAmountDisplay').textContent = 'PHP ' + excess.toFixed(2);
+                document.getElementById('excessPaymentModal').classList.add('show');
+                return;
+            }
+
+            // Trigger AuthModal for password verification
+            const sp = salespersonsList.find(s => s.id == spId);
+            AuthModal.open({
+                userName: spName,
+                userRole: 'Salesperson',
+                transactionType: 'Payment Received',
+                salespersonsList: salespersonsList,
+                selectedId: spId,
+                onSuccess: async () => {
+                    await doSavePayment(status, 0);
+                }
+            });
+        }
+
+        function closeExcessModal() {
+            document.getElementById('excessPaymentModal').classList.remove('show');
+            pendingSaveStatus = null;
+        }
+
+        async function confirmExcessAndSave() {
+            document.getElementById('excessPaymentModal').classList.remove('show');
+            let totalApplied = 0;
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { totalApplied += parseFloat(inp.value) || 0; });
+            const excess = parseFloat(document.getElementById('amountReceived').value) - totalApplied;
+            const finalStatus = pendingSaveStatus || 'PAID';
+
+            // Trigger AuthModal for password verification after excess confirmation
+            const spName = document.getElementById('selectedSalespersonName').value;
+            const spId = document.getElementById('selectedSalesperson').value;
+            AuthModal.open({
+                userName: spName,
+                userRole: 'Salesperson',
+                transactionType: 'Payment Received',
+                salespersonsList: salespersonsList,
+                selectedId: spId,
+                onSuccess: async () => {
+                    await doSavePayment(finalStatus, excess);
+                }
+            });
+        }
+
+        async function doSavePayment(status, excessAmount) {
+            const customerName = document.getElementById('customerName').value || document.getElementById('custDdLabel').textContent;
+            const paymentNumber = document.getElementById('paymentNumber').value;
+            const amountReceived = parseFloat(document.getElementById('amountReceived').value);
+            const customerId = document.getElementById('customerId').value || (invoiceData ? invoiceData.customer_id : null);
+
+            const taxDeducted = document.querySelector('input[name="taxDeducted"]:checked').value === 'yes';
+            const invoicePayments = [];
+            document.querySelectorAll('.payment-cell-input').forEach((inp, i) => {
+                const amt = parseFloat(inp.value) || 0;
+                if (amt > 0 && unpaidInvoices[i]) {
+                    invoicePayments.push({ invoice_id: unpaidInvoices[i].id, invoice_number: unpaidInvoices[i].invoice_number, amount: amt });
+                }
+            });
+
+            const paymentData = {
+                payment_number: paymentNumber,
+                invoice_id: invoiceData ? invoiceData.id : (invoicePayments.length === 1 ? invoicePayments[0].invoice_id : null),
+                invoice_number: invoicePayments.length > 0
+                    ? invoicePayments.map(ip => `${ip.invoice_number}|${(unpaidInvoices.find(u => u.id === ip.invoice_id) || {}).total || 0}|${ip.amount}`).join(', ')
+                    : (invoiceData ? invoiceData.invoice_number : ''),
+                customer_id: customerId,
+                customer_name: customerName,
+                amount_received: amountReceived,
+                bank_charges: parseFloat(document.getElementById('bankCharges').value) || 0,
+                tax_deducted: taxDeducted,
+                payment_date: (function () { const parts = (document.getElementById('paymentDate').value || '').split('/'); if (parts.length === 3) return parts[2] + '-' + parts[0] + '-' + parts[1]; const _d = new Date(); return _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0'); })(),
+                payment_mode: document.getElementById('paymentMode').value,
+                check_numbers: document.getElementById('paymentMode').value === 'Check' ? getCheckNumbers() : [],
+                deposit_to: document.getElementById('depositTo').value,
+                location: (function () { const sel = document.getElementById('branchId'); return sel.value ? sel.options[sel.selectedIndex].text : ''; })(),
+                branch_id: document.getElementById('branchId').value || null,
+                reference_number: document.getElementById('referenceNumber').value,
+                notes: document.getElementById('notes').value,
+                status: status,
+                salesperson_name: document.getElementById('selectedSalespersonName').value || '',
+                invoice_payments: invoicePayments
+            };
+
+            try {
+                const url = editId ? '/api/payments-received/' + editId : '/api/payments-received';
+                const method = editId ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+                if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || 'Failed')); return; }
+                const data = await res.json();
+
+                // Invoice status (PAID/PARTIALLY_PAID) is now handled by the backend based on balance_due
+
+                // Store excess as customer credit ONLY for NEW payments (edits handled server-side)
+                if (!editId && excessAmount > 0 && customerId && status === 'PAID') {
+                    try {
+                        await fetch('/api/customer-credits', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                customer_id: customerId,
+                                customer_name: customerName,
+                                amount: excessAmount,
+                                type: 'OVERPAYMENT',
+                                reference_type: 'payment_received',
+                                reference_id: data.id,
+                                description: `Overpayment from Payment #${paymentNumber} — PHP ${excessAmount.toFixed(2)} stored in Unearned Revenue`
+                            })
+                        });
+                    } catch (e) { console.error('Error storing excess credit:', e); }
+                }
+
+                alert(`Payment #${data.payment_number} saved as ${status} successfully!${excessAmount > 0 && status === 'PAID' ? '\nExcess PHP ' + excessAmount.toFixed(2) + ' stored as customer credit.' : ''}`);
+                window.location.href = '/payments-received.html';
+            } catch (err) { console.error(err); alert('Failed to save payment.'); }
+        }
+
+        function goBack() {
+            if (invoiceId) window.location.href = '/invoices.html';
+            else window.location.href = '/payments-received.html';
+        }
+
+        // ===== Salesperson Searchable Dropdown =====
+        function renderSpDdOptions(filter) {
+            const container = document.getElementById('spDdOptions');
+            const selectedId = document.getElementById('selectedSalesperson').value;
+            let list = salespersonsList;
+
+            if (filter) {
+                const q = filter.toLowerCase();
+                list = list.filter(s => s.name.toLowerCase().includes(q));
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="sp-dd-empty">No salespersons found.</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(s => {
+                const sel = String(s.id) === String(selectedId) ? ' selected' : '';
+                return `<div class="sp-dd-option${sel}" onclick="selectSalesperson(${s.id}, '${s.name.replace(/'/g, "\\'")}')">` +
+                    `${s.name}</div>`;
+            }).join('');
+        }
+
+        function toggleSpDd() {
+            const panel = document.getElementById('spDdPanel');
+            const trigger = document.getElementById('spDdTrigger');
+            const isOpen = panel.classList.contains('open');
+            if (isOpen) {
+                panel.classList.remove('open');
+                trigger.classList.remove('open');
+            } else {
+                panel.classList.add('open');
+                trigger.classList.add('open');
+                document.getElementById('spDdSearch').value = '';
+                document.getElementById('spDdSearch').focus();
+                renderSpDdOptions();
+            }
+        }
+
+        function filterSpDd() {
+            renderSpDdOptions(document.getElementById('spDdSearch').value);
+        }
+
+        function selectSalesperson(id, name) {
+            document.getElementById('selectedSalesperson').value = id;
+            document.getElementById('selectedSalespersonName').value = name;
+            document.getElementById('spDdLabel').textContent = name;
+            document.getElementById('spDdTrigger').classList.add('selected');
+            document.getElementById('spDdPanel').classList.remove('open');
+            document.getElementById('spDdTrigger').classList.remove('open');
+        }
+
+        let uploadedFiles = [];
+
+        function attachFiles() {
+            if (uploadedFiles.length >= 5) { alert('Maximum 5 files allowed.'); return; }
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xls,.xlsx,.csv';
+            input.multiple = true;
+            input.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                if (uploadedFiles.length + files.length > 5) {
+                    alert(`You can only upload ${5 - uploadedFiles.length} more file(s).`);
+                    return;
+                }
+                // Check sizes
+                for (const f of files) {
+                    if (f.size > 5 * 1024 * 1024) {
+                        alert(`"${f.name}" exceeds 5MB limit.`);
+                        return;
+                    }
+                }
+
+                const progress = document.getElementById('uploadProgress');
+                progress.style.display = 'block';
+                progress.textContent = 'Uploading...';
+
+                const formData = new FormData();
+                files.forEach(f => formData.append('files', f));
+
+                try {
+                    const res = await fetch('/api/uploads', { method: 'POST', body: formData });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        alert('Upload failed: ' + (err.error || 'Unknown error'));
+                        progress.style.display = 'none';
+                        return;
+                    }
+                    const data = await res.json();
+                    uploadedFiles.push(...data.files);
+                    renderAttachments();
+                    progress.style.display = 'none';
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    alert('Upload failed.');
+                    progress.style.display = 'none';
+                }
+            };
+            input.click();
+        }
+
+        function renderAttachments() {
+            const container = document.getElementById('attachmentList');
+            if (uploadedFiles.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = uploadedFiles.map((f, i) => {
+                const sizeKB = (f.size / 1024).toFixed(1);
+                const icon = f.originalName.match(/\.(jpg|jpeg|png|gif)$/i) ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>';
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;margin-bottom:4px;font-size:12px;">
+                    <span>${icon}</span>
+                    <a href="${f.url}" target="_blank" style="color:#4285f4;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.originalName}">${f.originalName}</a>
+                    <span style="color:#999;font-size:10px;white-space:nowrap;">${sizeKB} KB</span>
+                    <span style="color:#e57373;cursor:pointer;font-size:14px;" onclick="removeAttachment(${i})" title="Remove">✕</span>
+                </div>`;
+            }).join('');
+        }
+
+        async function removeAttachment(idx) {
+            const file = uploadedFiles[idx];
+            try {
+                await fetch('/api/uploads/' + file.filename, { method: 'DELETE' });
+            } catch (e) { /* ignore */ }
+            uploadedFiles.splice(idx, 1);
+            renderAttachments();
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

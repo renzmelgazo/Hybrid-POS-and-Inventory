@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt - Inventory Management</title>
+  <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+  <style>
+    body {
+      background-color: #eeeeee;
+      padding: 20px;
+    }
+    .receipt-container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      border: 1px solid rgba(142, 22, 22, 0.1);
+    }
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid rgba(142, 22, 22, 0.2);
+    }
+    .receipt-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #8e1616;
+      letter-spacing: 0.5px;
+    }
+    .receipt-info {
+      font-size: 13px;
+      color: #495057;
+      font-weight: 500;
+    }
+    .receipt-total {
+      border-top: 2px dashed rgba(142, 22, 22, 0.3);
+      padding-top: 12px;
+    }
+    .receipt-total > div:last-child {
+      font-weight: 800;
+      color: #8e1616;
+      font-size: 20px;
+    }
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+      .receipt-container {
+        box-shadow: none;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="receipt-container" id="receiptContainer">
+    <div class="receipt-header">
+      <div class="receipt-title"><img src="/images/gihon-logo-new.jpg" alt="Inventory Management" style="width: 100px; height: 100px;"></div>
+      <div class="receipt-info">Receipt</div>
+      <div class="receipt-info" id="receiptNumber"></div>
+      <div class="receipt-info" id="receiptDate"></div>
+    </div>
+
+    <div class="receipt-items" id="receiptItems">
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading receipt...
+      </div>
+    </div>
+
+    <div class="receipt-total">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span>Subtotal:</span>
+        <span id="receiptSubtotal">$0.00</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span>Discount:</span>
+        <span id="receiptDiscount">$0.00</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>Tax:</span>
+        <span id="receiptTax">$0.00</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: 700; border-top: 1px dashed #ddd; padding-top: 8px;">
+        <span>Total:</span>
+        <span id="receiptTotal">$0.00</span>
+      </div>
+    </div>
+
+    <div class="receipt-info" style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #ddd;">
+      <div id="receiptCustomer"></div>
+      <div id="receiptPayment"></div>
+      <div style="margin-top: 16px; font-size: 12px; color: #999; text-align: center;">
+        Thank you for your business!
+      </div>
+    </div>
+  </div>
+
+  <div class="no-print" style="text-align: center; margin-top: 24px;">
+    <button class="btn btn-primary" onclick="printReceipt()">Print Receipt</button>
+    <button class="btn btn-secondary" onclick="downloadPDF()">Download PDF</button>
+    <button class="btn btn-secondary" onclick="window.location.href='/sales.html'">Back to Sales</button>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/receipt.js"></script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+</html>
+

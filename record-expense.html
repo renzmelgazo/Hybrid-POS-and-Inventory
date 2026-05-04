@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Expense - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 12px;
+        }
+
+        .main-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Tabs Header */
+        .tabs-header {
+            display: flex;
+            padding: 0 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 16px 20px;
+            font-size: 13px;
+            color: #4285f4;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #3367d6;
+        }
+
+        .tab.active {
+            color: #333;
+            font-weight: 500;
+            border-bottom-color: #4285f4;
+        }
+
+        /* Main Form Area */
+        .form-main {
+            flex: 1;
+            display: flex;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .form-left {
+            flex: 1;
+            padding: 24px;
+            max-width: 600px;
+        }
+
+        .form-right {
+            width: 300px;
+            padding: 24px;
+            background: #f9fafb;
+            border-left: 1px solid #e9ecef;
+        }
+
+        /* Form Section */
+        .form-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: #333;
+            padding-top: 8px;
+        }
+
+        .form-label.required {
+            color: #dc2626;
+        }
+
+        .form-input {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .form-select {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .form-textarea {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            max-width: 300px;
+            resize: vertical;
+            font-family: inherit;
+            min-height: 80px;
+        }
+
+        .itemize-link {
+            font-size: 12px;
+            color: #4285f4;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .itemize-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Amount with Currency */
+        .amount-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .currency-select {
+            padding: 10px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            width: 70px;
+        }
+
+        .amount-input {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            flex: 1;
+            max-width: 220px;
+        }
+
+        /* Radio Options */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            padding-top: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: #4285f4;
+        }
+
+        /* Input with Search */
+        .input-with-search {
+            display: flex;
+            gap: 8px;
+            max-width: 300px;
+        }
+
+        .input-with-search .form-select,
+        .input-with-search .form-input {
+            flex: 1;
+        }
+
+        .search-btn {
+            padding: 10px 14px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .search-btn:hover {
+            background: #3367d6;
+        }
+
+        /* Receipt Upload Section */
+        .upload-section {
+            background: #f5f5f5;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #4285f4;
+            background: #f0f7ff;
+        }
+
+        .upload-section.dragover {
+            border-color: #4285f4;
+            background: #e8f0fe;
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            background: #4285f4;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .upload-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .files-container {
+            margin-top: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .form-footer {
+            position: fixed;
+            bottom: 0;
+            left: 260px;
+            right: 0;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 12px 24px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .btn-save {
+            padding: 10px 20px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            background: #3367d6;
+        }
+
+        .btn-save-new {
+            padding: 10px 20px;
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-save-new:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-cancel {
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #444;
+        }
+
+        /* Hidden file input */
+        #receiptInput {
+            display: none;
+        }
+
+        /* Mileage Tab Content */
+        .mileage-content,
+        .bulk-content {
+            display: none;
+        }
+
+        .mileage-content.active,
+        .bulk-content.active {
+            display: block;
+        }
+
+        .expense-content {
+            display: block;
+        }
+
+        .expense-content.hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Container -->
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- Tabs Header -->
+            <div class="tabs-header">
+                <div class="tab active" data-tab="expense" onclick="switchFormTab('expense')">Record Expense</div>
+                <div class="tab" data-tab="mileage" onclick="switchFormTab('mileage')">Record Mileage</div>
+                <div class="tab" data-tab="bulk" onclick="switchFormTab('bulk')">Bulk Add Expenses</div>
+            </div>
+
+            <!-- Main Form Area -->
+            <div class="form-main">
+                <!-- Left Form Section -->
+                <div class="form-left">
+                    <!-- Record Expense Content -->
+                    <div class="expense-content" id="expense-content">
+                        <div class="form-row">
+                            <label class="form-label required">Date*</label>
+                            <input type="text" class="form-input" id="expenseDate" value="12 Jan 2026">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label required">Category Name*</label>
+                            <div>
+                                <select class="form-select" id="categoryName">
+                                    <option value="">Select Category</option>
+                                    <option value="advertising">Advertising & Marketing</option>
+                                    <option value="automobile">Automobile Expense</option>
+                                    <option value="bank">Bank Fees and Charges</option>
+                                    <option value="consultant">Consultant Expense</option>
+                                    <option value="office">Office Supplies</option>
+                                    <option value="travel">Travel Expense</option>
+                                    <option value="utilities">Utilities</option>
+                                    <option value="other">Other Expense</option>
+                                </select>
+                                <a href="#" class="itemize-link"><svg width="12" height="12" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg> Itemize</a>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label required">Amount*</label>
+                            <div class="amount-group">
+                                <select class="currency-select" id="currency">
+                                    <option value="php">PHP</option>
+                                    <option value="usd">USD</option>
+                                </select>
+                                <input type="number" class="amount-input" id="amount" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Amount Is</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="amountType" value="inclusive"> Tax Inclusive
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="amountType" value="exclusive" checked> Tax Exclusive
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 24px;">
+                            <label class="form-label">Tax</label>
+                            <select class="form-select" id="tax">
+                                <option value="">Select a Tax</option>
+                                <option value="12">VAT 12%</option>
+                                <option value="0">Exempt</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Vendor</label>
+                            <div class="input-with-search">
+                                <select class="form-select" id="vendor">
+                                    <option value="">Select vendor</option>
+                                </select>
+                                <button class="search-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg></button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Reference#</label>
+                            <input type="text" class="form-input" id="reference" placeholder="">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-textarea" id="notes" placeholder="Max. 500 characters"></textarea>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 24px;">
+                            <label class="form-label">Customer Name</label>
+                            <div class="input-with-search">
+                                <select class="form-select" id="customerName">
+                                    <option value="">Select or add a customer</option>
+                                </select>
+                                <button class="search-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Record Mileage Content -->
+                    <div class="mileage-content" id="mileage-content">
+                        <div class="form-row">
+                            <label class="form-label required">Date*</label>
+                            <input type="text" class="form-input" id="mileageDate" value="12 Jan 2026">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label required">Distance*</label>
+                            <div class="amount-group">
+                                <input type="number" class="amount-input" id="distance" placeholder="0">
+                                <select class="currency-select" id="distanceUnit" style="width: 80px;">
+                                    <option value="km">km</option>
+                                    <option value="miles">miles</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Rate per Unit</label>
+                            <div class="amount-group">
+                                <select class="currency-select" id="mileageCurrency">
+                                    <option value="php">PHP</option>
+                                    <option value="usd">USD</option>
+                                </select>
+                                <input type="number" class="amount-input" id="ratePerUnit" value="8.00">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Total Amount</label>
+                            <div class="amount-group">
+                                <span style="padding: 10px 0; font-size: 14px; font-weight: 500;">PHP 0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-textarea" id="mileageNotes"
+                                placeholder="Max. 500 characters"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Add Content -->
+                    <div class="bulk-content" id="bulk-content">
+                        <p style="color: #666; margin-bottom: 24px;">Add multiple expenses at once. Fill in the details
+                            below:</p>
+
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th
+                                        style="text-align: left; padding: 10px; font-size: 11px; font-weight: 600; color: #666; border-bottom: 1px solid #e9ecef;">
+                                        DATE</th>
+                                    <th
+                                        style="text-align: left; padding: 10px; font-size: 11px; font-weight: 600; color: #666; border-bottom: 1px solid #e9ecef;">
+                                        CATEGORY</th>
+                                    <th
+                                        style="text-align: left; padding: 10px; font-size: 11px; font-weight: 600; color: #666; border-bottom: 1px solid #e9ecef;">
+                                        AMOUNT</th>
+                                    <th
+                                        style="text-align: left; padding: 10px; font-size: 11px; font-weight: 600; color: #666; border-bottom: 1px solid #e9ecef;">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulkExpensesBody">
+                                <tr>
+                                    <td style="padding: 8px;"><input type="text" class="form-input"
+                                            style="max-width: 120px;" value="12 Jan 2026"></td>
+                                    <td style="padding: 8px;">
+                                        <select class="form-select" style="max-width: 150px;">
+                                            <option value="">Select</option>
+                                            <option value="office">Office Supplies</option>
+                                            <option value="travel">Travel</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 8px;"><input type="number" class="form-input"
+                                            style="max-width: 100px;" placeholder="0.00"></td>
+                                    <td style="padding: 8px;"><button class="file-remove">×</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button
+                            style="background: none; border: none; color: #4285f4; font-size: 13px; cursor: pointer; padding: 8px 0;"
+                            onclick="addBulkRow()">+ Add Row</button>
+                    </div>
+                </div>
+
+                <!-- Right Upload Section -->
+                <div class="form-right">
+                    <div class="upload-section" id="uploadSection">
+                        <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                            </svg></div>
+                        <div class="upload-text">Drag or Drop your Receipts</div>
+                        <div class="upload-hint">Maximum file size allowed is 10MB</div>
+                        <button class="upload-btn" onclick="document.getElementById('receiptInput').click()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="vertical-align:middle;margin-right:4px;">
+                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                <polyline points="16 6 12 2 8 6" />
+                                <line x1="12" y1="2" x2="12" y2="15" />
+                            </svg> Upload your Files <span style="color: #999;">⊕</span>
+                        </button>
+                    </div>
+                    <div class="files-container" id="filesContainer"></div>
+                    <input type="file" id="receiptInput" accept="image/*,.pdf" multiple
+                        onchange="handleReceiptUpload(event)">
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="form-footer">
+                <button class="btn-save" onclick="saveExpense()">Save (Opt+S)</button>
+                <button class="btn-save-new" onclick="saveAndNew()">Save and New (Opt+N)</button>
+                <button class="btn-cancel" onclick="goBack()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Script -->
+    <script src="/js/layout.js"></script>
+    <script>
+        // Set current date
+        document.addEventListener('DOMContentLoaded', function () {
+            const today = new Date();
+            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+            const dateStr = today.toLocaleDateString('en-GB', options);
+            document.getElementById('expenseDate').value = dateStr;
+            document.getElementById('mileageDate').value = dateStr;
+        });
+
+        // Tab switching
+        function switchFormTab(tabName) {
+            // Update tab active state
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Show/hide content
+            document.getElementById('expense-content').classList.add('hidden');
+            document.getElementById('mileage-content').classList.remove('active');
+            document.getElementById('bulk-content').classList.remove('active');
+
+            if (tabName === 'expense') {
+                document.getElementById('expense-content').classList.remove('hidden');
+            } else if (tabName === 'mileage') {
+                document.getElementById('mileage-content').classList.add('active');
+            } else if (tabName === 'bulk') {
+                document.getElementById('bulk-content').classList.add('active');
+            }
+        }
+
+        // File upload
+        const uploadSection = document.getElementById('uploadSection');
+        const filesContainer = document.getElementById('filesContainer');
+        let uploadedFiles = [];
+
+        uploadSection.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        function handleReceiptUpload(event) {
+            const files = event.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File ' + file.name + ' exceeds 10MB limit');
+                    continue;
+                }
+                uploadedFiles.push(file);
+                displayFile(file);
+            }
+        }
+
+        function displayFile(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <button class="file-remove" onclick="removeFile(this, '${file.name}')">×</button>
+            `;
+            filesContainer.appendChild(fileItem);
+        }
+
+        function removeFile(btn, fileName) {
+            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+            btn.closest('.file-item').remove();
+        }
+
+        function addBulkRow() {
+            const tbody = document.getElementById('bulkExpensesBody');
+            const today = new Date();
+            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+            const dateStr = today.toLocaleDateString('en-GB', options);
+
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td style="padding: 8px;"><input type="text" class="form-input" style="max-width: 120px;" value="${dateStr}"></td>
+                <td style="padding: 8px;">
+                    <select class="form-select" style="max-width: 150px;">
+                        <option value="">Select</option>
+                        <option value="office">Office Supplies</option>
+                        <option value="travel">Travel</option>
+                    </select>
+                </td>
+                <td style="padding: 8px;"><input type="number" class="form-input" style="max-width: 100px;" placeholder="0.00"></td>
+                <td style="padding: 8px;"><button class="file-remove" onclick="this.closest('tr').remove()">×</button></td>
+            `;
+            tbody.appendChild(newRow);
+        }
+
+        function goBack() {
+            window.location.href = '/expenses.html';
+        }
+
+        function saveExpense() {
+            const category = document.getElementById('categoryName').value;
+            const amount = document.getElementById('amount').value;
+
+            if (!category) {
+                alert('Please select a category');
+                return;
+            }
+
+            if (!amount) {
+                alert('Please enter an amount');
+                return;
+            }
+
+            alert('Expense saved successfully!');
+            goBack();
+        }
+
+        function saveAndNew() {
+            const category = document.getElementById('categoryName').value;
+            const amount = document.getElementById('amount').value;
+
+            if (!category) {
+                alert('Please select a category');
+                return;
+            }
+
+            if (!amount) {
+                alert('Please enter an amount');
+                return;
+            }
+
+            alert('Expense saved! Ready for new entry.');
+
+            // Reset form
+            document.getElementById('categoryName').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('vendor').value = '';
+            document.getElementById('reference').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('customerName').value = '';
+            uploadedFiles = [];
+            filesContainer.innerHTML = '';
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

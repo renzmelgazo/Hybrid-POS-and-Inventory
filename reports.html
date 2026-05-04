@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports Center - GIHON</title>
+  <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+  <link rel="stylesheet" href="/css/sidebar.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/css/utilities.css">
+  <!-- Chart.js for visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Reports Center Layout */
+    .reports-center {
+      display: flex;
+      gap: 0;
+      height: calc(100vh - 80px);
+      overflow: hidden;
+    }
+
+    /* Reports Left Sidebar */
+    .reports-sidebar {
+      width: 220px;
+      background: #fafbfc;
+      border-right: 1px solid #e8e8e8;
+      padding: 20px 0;
+      flex-shrink: 0;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+      height: 100%;
+    }
+
+    .reports-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      color: #495057;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .reports-sidebar-item:hover {
+      background: #e9f0ff;
+      color: #2563eb;
+    }
+
+    .reports-sidebar-item.active {
+      background: #e9f0ff;
+      color: #2563eb;
+      font-weight: 600;
+      border-left: 3px solid #2563eb;
+    }
+
+    .reports-sidebar-item i {
+      font-size: 16px;
+      width: 20px;
+    }
+
+    .reports-sidebar-section {
+      padding: 16px 20px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .reports-sidebar-divider {
+      height: 1px;
+      background: #e8e8e8;
+      margin: 12px 0;
+    }
+
+    /* Expandable Category Dropdown */
+    .reports-sidebar-category {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      color: #495057;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      user-select: none;
+      border-left: 3px solid transparent;
+    }
+
+    .reports-sidebar-category:hover {
+      background: #e9f0ff;
+      color: #2563eb;
+    }
+
+    .reports-sidebar-category.active {
+      background: #e9f0ff;
+      color: #2563eb;
+      font-weight: 600;
+      border-left-color: #2563eb;
+    }
+
+    .reports-sidebar-category .cat-label {
+      flex: 1;
+    }
+
+    .reports-sidebar-category .cat-chevron {
+      font-size: 11px;
+      color: #bbb;
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .reports-sidebar-category.expanded .cat-chevron {
+      transform: rotate(90deg);
+      color: #2563eb;
+    }
+
+    /* Sub-items under a category */
+    .reports-sidebar-subitems {
+      display: none;
+      padding: 2px 0 6px;
+    }
+
+    .reports-sidebar-subitems.expanded {
+      display: block;
+    }
+
+    .reports-sidebar-subitem {
+      display: block;
+      padding: 6px 20px 6px 48px;
+      font-size: 12.5px;
+      color: #6b7280;
+      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .reports-sidebar-subitem:hover {
+      background: #e0e7ff;
+      color: #1d4ed8;
+    }
+
+    /* Reports Header */
+    .reports-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .reports-header-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1f3a;
+    }
+
+    .reports-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 150px;
+      justify-content: flex-end;
+    }
+
+    .reports-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 8px 16px;
+      width: 400px;
+      margin: 0 auto;
+      transition: all 0.2s ease;
+    }
+
+    .reports-search:focus-within {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      width: 450px;
+    }
+
+    .reports-search input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    .reports-search input::placeholder {
+      color: #9ca3af;
+    }
+
+    .btn-create-report {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-create-report:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-menu {
+      background: transparent;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #6c757d;
+    }
+
+    /* Reports Main Content */
+    .reports-main {
+      flex: 1;
+      background: white;
+      overflow: hidden;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .reports-table-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .reports-content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #f0f0f0;
+      flex-shrink: 0;
+    }
+
+    .reports-content-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .reports-content-title h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1f3a;
+      margin: 0;
+    }
+
+    .reports-count {
+      background: #e9f0ff;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    /* Reports Table */
+    .reports-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .reports-table thead {
+      background: #f8f9fa;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .reports-table thead th {
+      padding: 14px 24px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e8e8e8;
+      background: #f8f9fa;
+    }
+
+    .reports-table tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s ease;
+    }
+
+    .reports-table tbody tr:hover {
+      background: #f8faff;
+    }
+
+    .reports-table tbody td {
+      padding: 16px 24px;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    .report-name-link {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .report-name-link:hover {
+      text-decoration: underline;
+    }
+
+    .report-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+    }
+
+
+
+    /* Star Favorite Icon */
+    .star-favorite {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+      vertical-align: middle;
+    }
+
+    .star-favorite:hover {
+      transform: scale(1.25);
+    }
+
+    .star-favorite svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: all 0.25s ease;
+    }
+
+    .star-favorite .star-empty {
+      stroke: #c0c5ce;
+      fill: none;
+    }
+
+    .star-favorite:hover .star-empty {
+      stroke: #f0b429;
+    }
+
+    .star-favorite .star-filled {
+      stroke: #f0b429;
+      fill: #f0b429;
+      filter: drop-shadow(0 0 2px rgba(240, 180, 41, 0.4));
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .reports-sidebar {
+        display: none;
+      }
+
+      .reports-header-actions {
+        flex-wrap: wrap;
+      }
+
+      .reports-search {
+        width: 100%;
+      }
+    }
+
+    /* New Custom Report Modal */
+    .new-report-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100000;
+    }
+
+    .new-report-modal.active {
+      display: flex;
+    }
+
+    .new-report-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .new-report-container {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      background: white;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .new-report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e8e8e8;
+      background: white;
+    }
+
+    .new-report-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1f3a;
+    }
+
+    .new-report-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #dc2626;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+
+    .new-report-close:hover {
+      color: #b91c1c;
+    }
+
+    .new-report-body {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 60px 24px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      background-image:
+        radial-gradient(circle at 20px 20px, #e2e8f0 1px, transparent 1px),
+        radial-gradient(circle at 60px 60px, #e2e8f0 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+
+    .new-report-form {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .new-report-form-group {
+      margin-bottom: 24px;
+    }
+
+    .new-report-form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .new-report-select-wrapper {
+      position: relative;
+    }
+
+    .new-report-select-trigger {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      font-size: 14px;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .new-report-select-trigger:hover {
+      border-color: #2563eb;
+    }
+
+    .new-report-select-trigger.open {
+      border-color: #2563eb;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .new-report-select-arrow {
+      font-size: 12px;
+      color: #9ca3af;
+      transition: transform 0.2s ease;
+    }
+
+    .new-report-select-trigger.open .new-report-select-arrow {
+      transform: rotate(180deg);
+    }
+
+    .new-report-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #2563eb;
+      border-top: none;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .new-report-dropdown.open {
+      display: block;
+    }
+
+    .new-report-search {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .new-report-search input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .new-report-search input:focus {
+      border-color: #2563eb;
+    }
+
+    .new-report-option {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .new-report-option:hover {
+      background: #e0e7ff;
+    }
+
+    .new-report-option.selected {
+      background: #2563eb;
+      color: white;
+    }
+
+    .new-report-footer {
+      display: flex;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid #e8e8e8;
+      background: white;
+    }
+
+    .btn-next {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-next:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-next:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .btn-cancel-report {
+      background: white;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel-report:hover {
+      background: #f3f4f6;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar Container -->
+  <div id="sidebarContainer"></div>
+
+  <!-- Header Container -->
+  <div id="headerContainer"></div>
+
+  <!-- Page Configuration -->
+  <script>
+    window.pageConfig = {
+      searchPlaceholder: 'Search reports...'
+    };
+  </script>
+
+  <!-- Main Content -->
+  <div class="main-layout">
+    <div class="content" id="content">
+      <!-- Reports Center View -->
+      <div id="reportsCenterView">
+        <!-- Reports Header -->
+        <div class="reports-header">
+          <div class="reports-header-title">Reports Center</div>
+          
+          <div class="reports-search">
+            <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg></span>
+            <input type="text" id="reportsSearchInput" placeholder="Search for reports, audits, or logs..." oninput="searchReports()">
+          </div>
+        </div>
+
+        <div class="reports-center">
+          <!-- Reports Left Sidebar -->
+          <div class="reports-sidebar">
+            <a class="reports-sidebar-item active" onclick="filterReports('all')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg></span> Home
+            </a>
+            <a class="reports-sidebar-item" onclick="filterReports('favorites')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg></span> Favorites <span id="favoritesCount" style="display:none; background:#f0b429; color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;">0</span>
+            </a>
+
+
+            <a class="reports-sidebar-item" onclick="filterReports('scheduled')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg></span> Scheduled Reports
+            </a>
+
+            <div class="reports-sidebar-divider"></div>
+
+            <div class="reports-sidebar-section">Business Performance</div>
+
+            <!-- Financial Health -->
+            <a class="reports-sidebar-item" onclick="filterReports('financial')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg></span> Financial Health
+            </a>
+
+            <!-- Sales & Orders -->
+            <a class="reports-sidebar-item" onclick="filterReports('sales')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg></span> Sales & Orders
+            </a>
+
+            <!-- Inventory & Warehouse -->
+            <a class="reports-sidebar-item" onclick="filterReports('inventory')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 8l-9-4-9 4v8l9 4 9-4V8z" />
+                  <path d="M3 8l9 4 9-4" />
+                  <path d="M12 22V12" />
+                </svg></span> Inventory & Warehouse
+            </a>
+
+            <!-- Automation & Logs -->
+            <a class="reports-sidebar-item" onclick="filterReports('audit')">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+                  <line x1="4" y1="10" x2="20" y2="10" />
+                  <line x1="10" y1="4" x2="10" y2="20" />
+                </svg></span> Automation & Logs
+            </a>
+          </div>
+
+          <!-- Reports Main Content -->
+          <div class="reports-main">
+            <div class="reports-content-header">
+              <div class="reports-content-title">
+                <h2>All Reports</h2>
+                <span class="reports-count" id="reportsCount">38</span>
+              </div>
+            </div>
+
+            <div class="reports-table-wrapper">
+            <table class="reports-table" id="reportsTable">
+              <thead>
+                <tr>
+                  <th>Report Name</th>
+                  <th>Report Category</th>
+                  <th>Created By</th>
+                  <th>Last Visited</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTableBody">
+                <!-- Sales & Orders (New/Strategic) -->
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=salesman-commission'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=salesman-commission'"><span
+                        class="report-icon" style="color: #2563eb;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg></span> Salesman Commission</a>
+                  </td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=credit-note-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=credit-note-summary'"><span
+                        class="report-icon" style="color: #7c3aed;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg></span> Credit Note Summary</a>
+                  </td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+
+                <!-- Sales Reports -->
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=sales-by-customer'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=sales-by-customer'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Sales by Customer</a></td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=sales-by-item'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=sales-by-item'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Sales by Item</a></td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=order-fulfillment-by-item'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=order-fulfillment-by-item'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Order Fulfillment By Item</a></td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=sales-return-history'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=sales-return-history'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Sales Return History</a></td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=sales-summary'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=sales-summary'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Sales Summary</a></td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/report-view.html?type=profit-by-item'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=profit-by-item'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Profit By Item</a>
+                  </td>
+                  <td>Sales & Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="sales" onclick="window.location.href='/sales-by-salesperson.html'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/sales-by-salesperson.html'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg></span> Sales by Salesperson</a></td>
+                  <td>Sales &amp; Orders</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Inventory & Warehouse (New/Strategic) -->
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=low-stock-reorder'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=low-stock-reorder'"><span
+                        class="report-icon" style="color: #dc2626;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg></span> Low Stock Reorder</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=fulfillment-speed'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=fulfillment-speed'"><span
+                        class="report-icon" style="color: #2563eb;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg></span> Fulfillment Speed</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+
+                <!-- Inventory Reports -->
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=inventory-summary'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Inventory Summary</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=committed-stock-details'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=committed-stock-details'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Committed Stock Details</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-aging-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=inventory-aging-summary'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Inventory Aging Summary</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=stock-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=stock-summary'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Stock Summary</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-adjustment-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link"
+                      onclick="window.location.href='/report-view.html?type=inventory-adjustment-summary'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Inventory Adjustment Summary</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-adjustment-details'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link"
+                      onclick="window.location.href='/report-view.html?type=inventory-adjustment-details'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Inventory Adjustment Details</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=packing-history'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=packing-history'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Packing History</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Stock Movements -->
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=stock-movements'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=stock-movements'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Stock Movement Logs</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-turnover-quantity'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link"
+                      onclick="window.location.href='/report-view.html?type=inventory-turnover-quantity'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Inventory Turnover by Quantity</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Inventory Valuation Reports -->
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-valuation-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link"
+                      onclick="window.location.href='/report-view.html?type=inventory-valuation-summary'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Inventory Valuation Summary</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=fifo-cost-lot-tracking'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=fifo-cost-lot-tracking'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> FIFO
+                      Cost Lot Tracking</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=inventory-turnover-amount'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=inventory-turnover-amount'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Inventory Turnover by Amount</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Purchases Reports -->
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=purchase-summary'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=purchase-summary'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Purchase Summary</a></td>
+                  <td>Purchases and Expenses</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=purchases-by-vendor'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=purchases-by-vendor'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Purchases by Vendor</a></td>
+                  <td>Purchases and Expenses</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=purchases-by-item'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=purchases-by-item'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span> Purchases by Item</a></td>
+                  <td>Purchases and Expenses</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Advanced Inventory Reports -->
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=batch-details'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=batch-details'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Batch Details</a></td>
+                  <td>Inventory & Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="inventory" onclick="window.location.href='/report-view.html?type=serial-number-details'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=serial-number-details'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Serial Number Details</a></td>
+                  <td>Inventory &amp; Warehouse</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+
+                <!-- ═══ Financial Health — 5 Consolidated Reports ═══ -->
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=aged-receivables'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=aged-receivables'"><span
+                        class="report-icon" style="color: #d97706;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg></span> Aged Receivables</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=aged-payables'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=aged-payables'"><span
+                        class="report-icon" style="color: #d97706;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg></span> Aged Payables</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=tax-summary'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=tax-summary'"><span
+                        class="report-icon" style="color: #059669;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <path d="M12 1v22m5-18H7a3 3 0 0 0 0 6h10a3 3 0 0 1 0 6H7" />
+                        </svg></span> Tax Summary Report</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=cash-flow-history'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=cash-flow-history'"><span
+                        class="report-icon" style="color: #2563eb;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                          <polyline points="17 6 23 6 23 12" />
+                        </svg></span> Cash Flow History</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=purchase-analytics'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=purchase-analytics'"><span
+                        class="report-icon" style="color: #7c3aed;"><svg width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round">
+                          <line x1="18" y1="20" x2="18" y2="10" />
+                          <line x1="12" y1="20" x2="12" y2="4" />
+                          <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg></span> Purchase Analytics</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Standalone Financial Reports -->
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=sales-order-details'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=sales-order-details'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Sales Order Details</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="financial" onclick="window.location.href='/report-view.html?type=active-purchase-orders'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=active-purchase-orders'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Active Purchase Orders</a></td>
+                  <td>Financial Health</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Automation & Logs -->
+                <tr data-category="audit" onclick="window.location.href='/report-view.html?type=voided-transactions'"
+                  style="cursor:pointer;">
+                  <td><a class="report-name-link"
+                      onclick="window.location.href='/report-view.html?type=voided-transactions'"><span class="report-icon"
+                        style="color: #6b7280;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                        </svg></span> Voided Transactions Report</a></td>
+                  <td>Automation & Logs</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+
+
+                <tr data-category="audit" onclick="window.location.href='/report-view.html?type=activity-log'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=activity-log'"><span class="report-icon"><svg
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Activity Logs</a></td>
+                  <td>Automation & Logs</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <tr data-category="audit" onclick="window.location.href='/report-view.html?type=pending-inventory-valuations'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=pending-inventory-valuations'"><span
+                        class="report-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg></span>
+                      Pending Inventory Valuations</a></td>
+                  <td>Automation & Logs</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+                <!-- Automation & System Logs (consolidated) -->
+                <tr data-category="audit" onclick="window.location.href='/report-view.html?type=automation-system-logs'" style="cursor:pointer;">
+                  <td><a class="report-name-link" onclick="window.location.href='/report-view.html?type=automation-system-logs'"><span
+                        class="report-icon" style="color: #0891b2;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+                          <line x1="4" y1="10" x2="20" y2="10" />
+                          <line x1="10" y1="4" x2="10" y2="20" />
+                        </svg></span>
+                      Automation & System Logs</a></td>
+                  <td>Automation & Logs</td>
+                  <td>System Generated</td>
+                  <td>-</td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Custom Report Modal -->
+  <div id="newReportModal" class="new-report-modal">
+    <div class="new-report-overlay" onclick="closeNewReportModal()"></div>
+    <div class="new-report-container">
+      <div class="new-report-header">
+        <h2 class="new-report-title">New Custom Report</h2>
+        <button class="new-report-close" onclick="closeNewReportModal()">×</button>
+      </div>
+      <div class="new-report-body">
+        <div class="new-report-form">
+          <div class="new-report-form-group">
+            <label class="new-report-form-label">Parent Module</label>
+            <div class="new-report-select-wrapper">
+              <div id="moduleSelectTrigger" class="new-report-select-trigger" onclick="toggleModuleDropdown()">
+                <span>Select a parent module</span>
+                <span class="new-report-select-arrow">▼</span>
+              </div>
+              <div id="moduleDropdown" class="new-report-dropdown">
+                <div class="new-report-search">
+                  <input type="text" id="moduleSearchInput" placeholder="Search" oninput="searchModules()">
+                </div>
+                <div class="new-report-option" data-module="sales-order"
+                  onclick="selectModule('sales-order', 'Sales Order')">Sales Order</div>
+                <div class="new-report-option" data-module="invoice" onclick="selectModule('invoice', 'Invoice')">
+                  Invoice</div>
+                <div class="new-report-option" data-module="credit-note"
+                  onclick="selectModule('credit-note', 'Credit Note')">Credit Note</div>
+                <div class="new-report-option" data-module="customer-payment"
+                  onclick="selectModule('customer-payment', 'Customer Payment')">Customer Payment</div>
+                <div class="new-report-option" data-module="purchase-order"
+                  onclick="selectModule('purchase-order', 'Purchase Order')">Purchase Order</div>
+                <div class="new-report-option" data-module="bill" onclick="selectModule('bill', 'Bill')">Bill</div>
+                <div class="new-report-option" data-module="vendor-credits"
+                  onclick="selectModule('vendor-credits', 'Vendor Credits')">Vendor Credits</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="new-report-footer">
+        <button id="btnNext" class="btn-next" onclick="goToNextStep()" disabled>Next</button>
+        <button class="btn-cancel-report" onclick="closeNewReportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== FAVORITES SYSTEM ==========
+    let favoriteReportIds = new Set();
+    let currentCategory = 'all';
+
+    // Star SVG markup
+    const STAR_SVG_EMPTY = `<svg viewBox="0 0 24 24" class="star-empty"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const STAR_SVG_FILLED = `<svg viewBox="0 0 24 24" class="star-filled"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+
+    // Derive report ID from row
+    function getReportIdFromRow(row) {
+      const onclick = row.getAttribute('onclick') || '';
+      // Match report-view.html?type=slug
+      const typeMatch = onclick.match(/type=([^'&"]+)/);
+      if (typeMatch) return typeMatch[1];
+      // Legacy: Match window.location.href='/some-page.html'
+      const hrefMatch = onclick.match(/href\s*=\s*'\/([^']+)\.html'/);
+      if (hrefMatch) return hrefMatch[1];
+      // Fallback: use report name slugified
+      const nameEl = row.querySelector('.report-name-link');
+      if (nameEl) return nameEl.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return null;
+    }
+
+    // Inject star icons into all report rows
+    function injectStarIcons() {
+      const rows = document.querySelectorAll('#reportsTableBody tr');
+      rows.forEach(row => {
+        const reportId = getReportIdFromRow(row);
+        if (!reportId) return;
+        row.setAttribute('data-report-id', reportId);
+
+        const firstTd = row.querySelector('td:first-child');
+        if (!firstTd || firstTd.querySelector('.star-favorite')) return;
+
+        const link = firstTd.querySelector('.report-name-link');
+        if (!link) return;
+
+        // Create star button
+        const starBtn = document.createElement('button');
+        starBtn.className = 'star-favorite';
+        starBtn.setAttribute('data-report-id', reportId);
+        starBtn.setAttribute('title', 'Add to favorites');
+        starBtn.innerHTML = favoriteReportIds.has(reportId) ? STAR_SVG_FILLED : STAR_SVG_EMPTY;
+
+        if (favoriteReportIds.has(reportId)) {
+          row.setAttribute('data-favorited', 'true');
+        }
+
+        // Prevent click from triggering row navigation
+        starBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          toggleFavorite(reportId, starBtn, row);
+        });
+
+        // Insert star before the report-icon span
+        link.insertBefore(starBtn, link.firstChild);
+      });
+    }
+
+    // Toggle favorite state
+    async function toggleFavorite(reportId, starBtn, row) {
+      const isFavorited = favoriteReportIds.has(reportId);
+
+      // Optimistically toggle UI
+      if (isFavorited) {
+        favoriteReportIds.delete(reportId);
+        starBtn.innerHTML = STAR_SVG_EMPTY;
+        starBtn.setAttribute('title', 'Add to favorites');
+        row.removeAttribute('data-favorited');
+      } else {
+        favoriteReportIds.add(reportId);
+        starBtn.innerHTML = STAR_SVG_FILLED;
+        starBtn.setAttribute('title', 'Remove from favorites');
+        row.setAttribute('data-favorited', 'true');
+      }
+
+      // Update sidebar favorites count
+      updateFavoritesCount();
+
+      // If currently filtering by favorites and we just unfavorited, hide the row
+      if (currentCategory === 'favorites' && isFavorited) {
+        row.style.display = 'none';
+        updateVisibleCount();
+      }
+
+      // Persist to backend
+      try {
+        if (isFavorited) {
+          await fetch(`/api/reports/${encodeURIComponent(reportId)}/unfavorite`, { method: 'DELETE' });
+        } else {
+          await fetch(`/api/reports/${encodeURIComponent(reportId)}/favorite`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+        }
+      } catch (err) {
+        console.error('Failed to toggle favorite:', err);
+        // Revert on error
+        if (isFavorited) {
+          favoriteReportIds.add(reportId);
+          starBtn.innerHTML = STAR_SVG_FILLED;
+          row.setAttribute('data-favorited', 'true');
+        } else {
+          favoriteReportIds.delete(reportId);
+          starBtn.innerHTML = STAR_SVG_EMPTY;
+          row.removeAttribute('data-favorited');
+        }
+        updateFavoritesCount();
+      }
+    }
+
+    // Load favorites from backend on page load
+    async function loadFavorites() {
+      try {
+        const res = await fetch('/api/reports/favorites');
+        const ids = await res.json();
+        favoriteReportIds = new Set(ids);
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    }
+
+    // Load visit history from backend
+    async function loadVisits() {
+      try {
+        // Cache-busting URL to ensure fresh data on every visit
+        const res = await fetch(`/api/reports/visits?_t=${Date.now()}`);
+        const visits = await res.json();
+        const visitMap = {};
+        visits.forEach(v => { visitMap[v.report_id] = v.last_visited_at; });
+
+        const rows = document.querySelectorAll('#reportsTableBody tr');
+        rows.forEach(row => {
+          const reportId = getReportIdFromRow(row);
+          const lastVisitedAt = visitMap[reportId];
+          if (lastVisitedAt) {
+            const dateCell = row.querySelector('td:last-child');
+            if (dateCell) {
+              const date = new Date(lastVisitedAt);
+              dateCell.textContent = formatVisitTime(date);
+              dateCell.title = date.toLocaleString();
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load visits:', err);
+      }
+    }
+
+    function formatVisitTime(date) {
+      if (!date || isNaN(date.getTime())) return '-';
+      
+      const day = date.getDate().toString().padStart(2, '0');
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      const strHours = hours.toString().padStart(2, '0');
+      
+      return `${day} ${month} ${year} ${strHours}:${minutes} ${ampm}`;
+    }
+
+    // Update the sidebar favorites count badge
+    function updateFavoritesCount() {
+      const badge = document.getElementById('favoritesCount');
+      if (badge) {
+        // Count actual rows marked as favorited to avoid ghost counts from stale/renamed IDs
+        const count = document.querySelectorAll('#reportsTableBody tr[data-favorited="true"]').length;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+      }
+    }
+
+    // Count and update visible rows
+    function updateVisibleCount() {
+      const rows = document.querySelectorAll('#reportsTableBody tr');
+      let count = 0;
+      rows.forEach(r => { if (r.style.display !== 'none') count++; });
+      document.getElementById('reportsCount').textContent = count;
+    }
+
+    // ========== TOGGLE CATEGORY (legacy - no longer used) ==========
+
+    // ========== FILTER & SEARCH ==========
+    function filterReports(category) {
+      currentCategory = category;
+      sessionStorage.setItem('reportsCategory', category);
+
+      // Update active sidebar state
+      document.querySelectorAll('.reports-sidebar-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      // Activate the clicked sidebar item
+      if (typeof event !== 'undefined' && event && event.target && typeof event.target.closest === 'function') {
+        const sidebarItem = event.target.closest('.reports-sidebar-item');
+        if (sidebarItem) sidebarItem.classList.add('active');
+      } else {
+        const sidebarItem = document.querySelector(`.reports-sidebar-item[onclick*="filterReports('${category}')"]`);
+        if (sidebarItem) sidebarItem.classList.add('active');
+      }
+
+      // Update header title
+      const titleEl = document.querySelector('.reports-content-title h2');
+      const titleMap = {
+        'all': 'All Reports',
+        'favorites': 'Favorite Reports',
+
+
+        'scheduled': 'Scheduled Reports',
+        'financial': 'Financial Health',
+        'sales': 'Sales & Orders',
+        'inventory': 'Inventory & Warehouse',
+        'audit': 'Automation & Logs'
+      };
+      if (titleEl) titleEl.textContent = titleMap[category] || 'All Reports';
+
+      // Filter table rows
+      const rows = document.querySelectorAll('#reportsTableBody tr');
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const rowCategory = row.getAttribute('data-category');
+
+        if (category === 'favorites') {
+          if (row.getAttribute('data-favorited') === 'true') {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        } else if (category === 'all' || category === 'shared' || category === 'my' || category === 'scheduled') {
+          row.style.display = '';
+          visibleCount++;
+        } else if (rowCategory === category) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Update count
+      document.getElementById('reportsCount').textContent = visibleCount;
+    }
+
+    function searchReports() {
+      const searchTerm = document.getElementById('reportsSearchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#reportsTableBody tr');
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const reportName = row.querySelector('.report-name-link')?.textContent.toLowerCase() || '';
+        const category = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+
+        const matchesSearch = reportName.includes(searchTerm) || category.includes(searchTerm);
+        const matchesCategory = currentCategory === 'all'
+          || currentCategory === 'shared' || currentCategory === 'my' || currentCategory === 'scheduled'
+          || (currentCategory === 'favorites' && row.getAttribute('data-favorited') === 'true')
+          || row.getAttribute('data-category') === currentCategory;
+
+        if (matchesSearch && matchesCategory) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      document.getElementById('reportsCount').textContent = visibleCount;
+    }
+
+    // ========== NEW REPORT MODAL ==========
+    function createNewReport() {
+      document.getElementById('newReportModal').classList.add('active');
+    }
+
+    function closeNewReportModal() {
+      document.getElementById('newReportModal').classList.remove('active');
+      selectedModule = null;
+      document.getElementById('moduleSelectTrigger').innerHTML = '<span>Select a parent module</span><span class="new-report-select-arrow">▼</span>';
+      document.getElementById('moduleSelectTrigger').classList.remove('open');
+      document.getElementById('moduleDropdown').classList.remove('open');
+      document.querySelectorAll('.new-report-option').forEach(opt => opt.classList.remove('selected'));
+      document.getElementById('btnNext').disabled = true;
+    }
+
+    let selectedModule = null;
+
+    function toggleModuleDropdown() {
+      const trigger = document.getElementById('moduleSelectTrigger');
+      const dropdown = document.getElementById('moduleDropdown');
+      trigger.classList.toggle('open');
+      dropdown.classList.toggle('open');
+
+      if (dropdown.classList.contains('open')) {
+        document.getElementById('moduleSearchInput').focus();
+      }
+    }
+
+    function selectModule(module, displayName) {
+      selectedModule = module;
+      document.getElementById('moduleSelectTrigger').innerHTML = '<span>' + displayName + '</span><span class="new-report-select-arrow">▼</span>';
+
+      document.querySelectorAll('.new-report-option').forEach(opt => {
+        opt.classList.remove('selected');
+        if (opt.getAttribute('data-module') === module) {
+          opt.classList.add('selected');
+        }
+      });
+
+      document.getElementById('btnNext').disabled = false;
+
+      document.getElementById('moduleSelectTrigger').classList.remove('open');
+      document.getElementById('moduleDropdown').classList.remove('open');
+    }
+
+    function searchModules() {
+      const searchTerm = document.getElementById('moduleSearchInput').value.toLowerCase();
+      document.querySelectorAll('.new-report-option').forEach(opt => {
+        const text = opt.textContent.toLowerCase();
+        opt.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    function goToNextStep() {
+      if (selectedModule) {
+        alert('Creating custom report for: ' + selectedModule + '\n\nThis feature will be implemented in the next update!');
+        closeNewReportModal();
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.new-report-select-wrapper')) {
+        document.getElementById('moduleSelectTrigger')?.classList.remove('open');
+        document.getElementById('moduleDropdown')?.classList.remove('open');
+      }
+    });
+
+    // ========== INITIALIZATION ==========
+    document.addEventListener('DOMContentLoaded', async function () {
+      await loadFavorites();
+      await loadVisits();
+      injectStarIcons();
+      updateFavoritesCount();
+      
+      const savedCategory = sessionStorage.getItem('reportsCategory');
+      if (savedCategory) {
+        filterReports(savedCategory);
+      } else {
+        filterReports('all');
+      }
+    });
+
+    // Re-fetch visits when navigating back to the page from the browser cache
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) {
+        loadVisits();
+      } else {
+        // First load is handled by DOMContentLoaded, but no harm in double checking if visits are missing
+        if (document.querySelectorAll('#reportsTableBody tr td:last-child').length > 0 && 
+            [...document.querySelectorAll('#reportsTableBody tr td:last-child')].every(td => td.textContent === '-')) {
+          loadVisits();
+        }
+      }
+    });
+  </script>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/layout.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/global-features.js"></script>
+  <script src="/js/reports.js"></script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

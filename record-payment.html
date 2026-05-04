@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Payment - GiHon</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/auth-modal.css">
+    <script src="/js/auth-modal.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .main-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ===== Page Header ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-icon {
+            font-size: 20px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-main {
+            display: flex;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+
+        .left-column {
+            width: 36%;
+            min-width: 320px;
+            max-width: 400px;
+            border-right: 2px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* ===== Left Column Form Sections ===== */
+        .form-section {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row.top-align {
+            align-items: flex-start;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: #333;
+        }
+
+        .form-label.required {
+            color: #dc2626;
+        }
+
+        .form-input {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            max-width: 220px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .form-select {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .input-with-icon {
+            position: relative;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .input-with-icon input {
+            width: 100%;
+            padding-right: 28px;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* Amount with PHP prefix */
+        .amount-input-wrap {
+            display: flex;
+            align-items: center;
+            max-width: 220px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .amount-prefix {
+            padding: 7px 10px;
+            background: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .amount-input-wrap input {
+            border: none;
+            padding: 7px 10px;
+            font-size: 13px;
+            flex: 1;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .paid-full-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #555;
+        }
+
+        .paid-full-check input[type="checkbox"] {
+            accent-color: #4285f4;
+        }
+
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: #4285f4;
+        }
+
+        /* Notes Section */
+        .notes-section {
+            padding: 12px 20px;
+            flex: 1;
+        }
+
+        .notes-row {
+            margin-bottom: 12px;
+        }
+
+        .notes-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .notes-sublabel {
+            font-size: 10px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+
+        .form-textarea {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            min-height: 50px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        /* ===== Right Column: Unpaid Bills ===== */
+        .bills-table-section {
+            padding: 16px;
+            flex: 1;
+        }
+
+        .bills-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .bills-table-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .clear-link {
+            color: #4285f4;
+            font-size: 12px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .clear-link:hover {
+            text-decoration: underline;
+        }
+
+        .bills-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bills-table th {
+            text-align: left;
+            padding: 8px 6px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            background: #f9fafb;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .bills-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+            font-size: 12px;
+        }
+
+        .pay-full-link {
+            color: #4285f4;
+            font-size: 11px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .pay-full-link:hover {
+            text-decoration: underline;
+        }
+
+        .bills-footnote {
+            padding: 6px 6px;
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .payment-cell-input {
+            width: 65px;
+            padding: 5px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .date-cell-input {
+            width: 100px;
+            padding: 5px 6px;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* Totals Section */
+        .totals-section {
+            padding: 16px 24px;
+            background: #f9fafb;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .totals-box {
+            max-width: 350px;
+            margin-left: auto;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .totals-label {
+            color: #666;
+        }
+
+        .totals-value {
+            font-weight: 500;
+            color: #333;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .totals-row.total {
+            border-top: 1px solid #d1d5db;
+            padding-top: 8px;
+            margin-top: 4px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* ===== Footer ===== */
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            position: fixed;
+            bottom: 0;
+            left: 260px;
+            right: 0;
+            z-index: 100;
+        }
+
+        .footer-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-draft {
+            padding: 8px 18px;
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-draft:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-save {
+            padding: 8px 18px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            background: #3367d6;
+        }
+
+        .btn-cancel {
+            padding: 8px 18px;
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #333;
+        }
+
+        .footer-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .footer-right .amount {
+            font-weight: 600;
+        }
+
+        /* ===== Vendor Searchable Dropdown ===== */
+        .vend-dd-wrap {
+            position: relative;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        .vend-dd-trigger {
+            padding: 7px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            user-select: none;
+            color: #999;
+            transition: border-color 0.15s;
+        }
+
+        .vend-dd-trigger.selected {
+            color: #333;
+        }
+
+        .vend-dd-trigger:hover,
+        .vend-dd-trigger.open {
+            border-color: #4285f4;
+        }
+
+        .vend-dd-trigger .vend-dd-arrow {
+            color: #4285f4;
+            font-size: 10px;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .vend-dd-trigger.open .vend-dd-arrow {
+            transform: rotate(180deg);
+        }
+
+        .vend-dd-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            min-width: 260px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .vend-dd-panel.open {
+            display: block;
+        }
+
+        .vend-dd-search {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .vend-dd-search-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #4285f4;
+            border-radius: 6px;
+            padding: 7px 10px;
+        }
+
+        .vend-dd-search-inner .search-icon {
+            color: #999;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .vend-dd-search-inner input {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            flex: 1;
+            font-family: inherit;
+            color: #333;
+        }
+
+        .vend-dd-options {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .vend-dd-option {
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.1s;
+        }
+
+        .vend-dd-option:last-child {
+            border-bottom: none;
+        }
+
+        .vend-dd-option:hover {
+            background: #4285f4;
+            color: white;
+        }
+
+        .vend-dd-option.selected {
+            background: #f0f5ff;
+        }
+
+        .vend-dd-option.selected:hover {
+            background: #4285f4;
+            color: white;
+        }
+
+        .vend-dd-empty {
+            padding: 16px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* ===== Modals ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+            max-width: 440px;
+            width: 90%;
+            padding: 28px 32px 24px;
+        }
+
+        .modal-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 12px;
+        }
+
+        .modal-card p {
+            font-size: 13px;
+            color: #555;
+            margin: 0 0 20px;
+            line-height: 1.55;
+        }
+
+        .modal-card .excess-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 22px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #333;
+            font-family: inherit;
+        }
+
+        .modal-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .modal-btn.primary {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
+        .modal-btn.primary:hover {
+            background: #1d4ed8;
+        }
+
+        .modal-btn.danger {
+            background: #16a34a;
+            color: #fff;
+            border-color: #16a34a;
+        }
+
+        .modal-btn.danger:hover {
+            background: #15803d;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title-wrapper">
+                    <span class="page-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg></span>
+                    <h1 class="page-title" id="pageTitle">Record Payment</h1>
+                </div>
+                <button class="close-btn" onclick="goBack()">×</button>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="form-main">
+                <!-- ========== LEFT COLUMN: Form Fields ========== -->
+                <div class="left-column">
+                    <!-- Vendor Section -->
+                    <div class="form-section">
+                        <div class="form-row">
+                            <label class="form-label required">Vendor Name*</label>
+                            <div class="vend-dd-wrap" id="vendDdWrap">
+                                <input type="hidden" id="vendorId" value="">
+                                <input type="hidden" id="vendorName" value="">
+                                <div class="vend-dd-trigger" id="vendDdTrigger" onclick="toggleVendDd()">
+                                    <span id="vendDdLabel">Select Vendor</span>
+                                    <span class="vend-dd-arrow">▼</span>
+                                </div>
+                                <div class="vend-dd-panel" id="vendDdPanel">
+                                    <div class="vend-dd-search">
+                                        <div class="vend-dd-search-inner">
+                                            <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="11" cy="11" r="8" />
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                </svg></span>
+                                            <input type="text" id="vendDdSearch" placeholder="Search"
+                                                oninput="filterVendDd()">
+                                        </div>
+                                    </div>
+                                    <div class="vend-dd-options" id="vendDdOptions"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Branch Section -->
+                    <div class="form-section">
+                        <div class="form-row">
+                            <label class="form-label required">Processing Branch*</label>
+                            <select class="form-select" id="processingBranch">
+                                <option value="">Select Branch</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Payment Details Section -->
+                    <div class="form-section">
+                        <div class="form-row top-align">
+                            <label class="form-label required" style="padding-top:8px;">Amount Paid*</label>
+                            <div>
+                                <div class="amount-input-wrap">
+                                    <span class="amount-prefix" id="amountPrefix">PHP</span>
+                                    <input type="number" id="amountPaid" step="0.01" placeholder="Enter amount"
+                                        onblur="onAmountPaidBlur()">
+                                </div>
+                                <label class="paid-full-check">
+                                    <input type="checkbox" id="paidFullCheck" onchange="applyFullAmount()">
+                                    <span id="paidFullLabel">Pay full amount</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Bank Charges (if any)</label>
+                            <input type="number" class="form-input" id="bankCharges" step="0.01">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Payment Date*</label>
+                            <input type="text" class="form-input" id="paymentDate">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Payment #*</label>
+                            <div class="input-with-icon">
+                                <input type="text" class="form-input" id="paymentNumber">
+                                <span class="input-icon">⚙</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Payment Mode</label>
+                            <select class="form-select" id="paymentMode">
+                                <option value="Cash">Cash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Check">Check</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Maya">Maya</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Paid Through*</label>
+                            <select class="form-select" id="paidThrough">
+                                <option value="Petty Cash">Petty Cash</option>
+                                <option value="Cash on Hand">Cash on Hand</option>
+                                <option value="Bank Account">Bank Account</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Reference#</label>
+                            <input type="text" class="form-input" id="referenceNumber">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label required">Paid By*</label>
+                            <select class="form-select" id="paidByUser">
+                                <option value="">Select User</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Tax deducted?</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="taxDeducted" value="no" checked> No Tax deducted
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="taxDeducted" value="yes"> Yes, TDS
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="notes-section">
+                        <div class="notes-row">
+                            <div class="notes-label">Notes</div>
+                            <div class="notes-sublabel">Internal use. Not visible to vendor</div>
+                            <textarea class="form-textarea" id="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Attachments -->
+                    <div class="form-section" style="border-bottom:none;">
+                        <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px;">Attachments</div>
+                        <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#555;cursor:pointer;"
+                            onclick="attachFiles()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="vertical-align:-2px;margin-right:3px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg> Upload File ▾
+                        </div>
+                        <div style="font-size:10px;color:#bbb;margin-top:4px;">Max 5 files, 5MB each</div>
+                        <div id="attachmentList" style="margin-top:8px;"></div>
+                    </div>
+                </div>
+
+                <!-- ========== RIGHT COLUMN: Unpaid Bills Table ========== -->
+                <div class="right-column">
+                    <div class="bills-table-section">
+                        <div class="bills-table-header">
+                            <span class="bills-table-title">Unpaid Bills</span>
+                            <a class="clear-link" onclick="clearPayments()"><svg width="14" height="14"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="vertical-align:-2px;margin-right:3px;">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                    <polyline points="15 3 21 3 21 9" />
+                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                </svg> Clear Applied Amount</a>
+                        </div>
+
+                        <table class="bills-table">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>BILL NUMBER</th>
+                                    <th style="text-align:right;">BILL AMOUNT</th>
+                                    <th style="text-align:right;">AMOUNT DUE</th>
+                                    <th style="text-align:center;padding-left:32px;padding-right:32px;">PAYMENT MADE ON
+                                    </th>
+                                    <th style="text-align:right;">PAYMENT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unpaidBillsBody">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;padding:40px;color:#bbb;font-size:12px;">
+                                        Select a vendor to view unpaid bills
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="bills-footnote">**List contains only OPEN bills</div>
+                    </div>
+
+                    <!-- Totals Section -->
+                    <div class="totals-section">
+                        <div class="totals-box">
+                            <div class="totals-row total">
+                                <span>Total</span>
+                                <span class="totals-value" id="billsTotal">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="form-footer" id="mainFooter">
+                <div class="footer-left">
+                    <button type="button" class="btn-draft" onclick="savePayment('DRAFT')">Save as Draft</button>
+                    <button type="button" class="btn-save" onclick="savePayment('PAID')">Save as Paid</button>
+                    <button type="button" class="btn-cancel" onclick="goBack()">Cancel</button>
+                </div>
+                <div class="footer-right">
+                    <span>Total Amount: <span class="amount"><span id="footerCurrLabel">PHP</span> <span
+                                id="footerTotal">0.00</span></span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal: distribute amount to bills? -->
+    <div class="modal-overlay" id="confirmDistributeModal">
+        <div class="modal-card">
+            <h3>Distribute Payment</h3>
+            <p>Would you like this amount to be reflected in the payment field?</p>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="confirmDistribute(false)">No</button>
+                <button class="modal-btn primary" onclick="confirmDistribute(true)">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excess Payment Modal -->
+    <div class="modal-overlay" id="excessPaymentModal">
+        <div class="modal-card">
+            <h3>Excess Payment</h3>
+            <p>Would you like to store the excess amount as an overpayment from this vendor?</p>
+            <div class="excess-amount" id="excessAmountDisplay">0.00</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeExcessModal()">Cancel</button>
+                <button class="modal-btn danger" onclick="confirmExcessAndSave()">Continue to Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedBillId = urlParams.get('billId');
+        const preselectedVendorId = urlParams.get('vendor_id');
+        const editId = urlParams.get('editId');
+        let isEditMode = !!editId;
+        let editPaymentData = null;
+        let billData = null;
+        let vendorsList = [];
+        let unpaidBills = [];
+        let paymentCurrency = 'PHP';
+        let allBranches = [];
+        let salespersonsList = [];
+        let selectedPaidByUser = '';
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('paymentDate').value = `${mm}/${dd}/${today.getFullYear()}`;
+
+            // Load vendors
+            try {
+                const vendRes = await fetch('/api/suppliers');
+                if (vendRes.ok) { vendorsList = await vendRes.json(); }
+            } catch (e) { console.error(e); }
+
+            // Load next payment number
+            try {
+                const numRes = await fetch('/api/payments-made/next-number');
+                if (numRes.ok) {
+                    const numData = await numRes.json();
+                    document.getElementById('paymentNumber').value = numData.next_number;
+                }
+            } catch (e) { console.error(e); }
+
+            // Load branches for Processing Branch dropdown
+            try {
+                const locRes = await fetch('/api/locations');
+                if (locRes.ok) {
+                    const allLocs = await locRes.json();
+                    allBranches = allLocs.filter(l => l.location_type === 'branch');
+                    const branchSelect = document.getElementById('processingBranch');
+                    allBranches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name;
+                        branchSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error(e); }
+
+            // Load salespersons for "Paid By" dropdown
+            try {
+                const spRes = await fetch('/api/salespersons');
+                if (spRes.ok) {
+                    const spData = await spRes.json();
+                    salespersonsList = spData.map(sp => ({ id: sp.id, name: sp.name, email: sp.email || '', password: sp.password || '' }));
+                    const paidBySelect = document.getElementById('paidByUser');
+                    salespersonsList.forEach(sp => {
+                        const opt = document.createElement('option');
+                        opt.value = sp.id;
+                        opt.textContent = sp.name;
+                        paidBySelect.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error('Error loading salespersons:', e); }
+
+            // If coming from a specific bill
+            if (preselectedBillId) {
+                try {
+                    const res = await fetch('/api/bills/' + preselectedBillId);
+                    if (res.ok) {
+                        billData = await res.json();
+                        paymentCurrency = (billData.currency_code || 'PHP').toUpperCase();
+                        document.getElementById('amountPrefix').textContent = paymentCurrency;
+                        document.getElementById('footerCurrLabel').textContent = paymentCurrency;
+                        document.getElementById('pageTitle').textContent = `Payment for ${billData.bill_number}`;
+
+                        // Auto-populate Processing Branch from bill (read-only)
+                        if (billData.branch_id) {
+                            const branchSelect = document.getElementById('processingBranch');
+                            branchSelect.value = billData.branch_id;
+                            branchSelect.disabled = true;
+                            branchSelect.style.background = '#f5f5f5';
+                            branchSelect.title = 'Inherited from Bill — cannot change';
+                        }
+
+                        // Find vendor by supplier_id or name
+                        const vendorId = billData.supplier_id || '';
+                        const vendorName = billData.supplier_name || '';
+                        selectVendor(vendorId, vendorName);
+
+                        // Re-apply bill currency AFTER selectVendor (bill currency takes precedence)
+                        paymentCurrency = (billData.currency_code || 'PHP').toUpperCase();
+                        document.getElementById('amountPrefix').textContent = paymentCurrency;
+                        document.getElementById('footerCurrLabel').textContent = paymentCurrency;
+                    }
+                } catch (e) { console.error(e); }
+            } else if (preselectedVendorId) {
+                const v = vendorsList.find(x => String(x.id) === preselectedVendorId);
+                if (v) {
+                    const name = v.name || v.display_name || v.supplier_name || 'Unnamed';
+                    selectVendor(v.id, name);
+                    // Lock vendor dropdown
+                    document.getElementById('vendDdTrigger').style.pointerEvents = 'none';
+                    document.getElementById('vendDdTrigger').style.background = '#f5f5f5';
+                }
+            }
+
+            // Render initial vendor dropdown
+            renderVendOptions();
+
+            // EDIT MODE: load existing payment data
+            if (isEditMode) {
+                await loadEditPayment();
+            }
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#vendDdWrap')) {
+                    document.getElementById('vendDdPanel').classList.remove('open');
+                    document.getElementById('vendDdTrigger').classList.remove('open');
+                }
+            });
+        });
+
+        // ===== EDIT MODE: Load existing payment =====
+        async function loadEditPayment() {
+            try {
+                const res = await fetch('/api/payments-made/' + editId);
+                if (!res.ok) { alert('Payment not found'); return; }
+                editPaymentData = await res.json();
+                const p = editPaymentData;
+
+                // Title
+                document.getElementById('pageTitle').textContent = 'Edit Payment' + (p.payment_number ? ` #${p.payment_number}` : '');
+
+                // Currency
+                paymentCurrency = (p.currency_code || 'PHP').toUpperCase();
+                document.getElementById('amountPrefix').textContent = paymentCurrency;
+                document.getElementById('footerCurrLabel').textContent = paymentCurrency;
+
+                // Vendor
+                if (p.supplier_id || p.supplier_name) {
+                    selectVendor(p.supplier_id || '', p.supplier_name || '');
+                    // Re-apply payment record currency (takes precedence over vendor default)
+                    paymentCurrency = (p.currency_code || 'PHP').toUpperCase();
+                    document.getElementById('amountPrefix').textContent = paymentCurrency;
+                    document.getElementById('footerCurrLabel').textContent = paymentCurrency;
+                }
+
+                // Fields
+                document.getElementById('amountPaid').value = parseFloat(p.amount_paid || 0);
+                document.getElementById('paymentNumber').value = p.payment_number || '';
+                document.getElementById('bankCharges').value = p.bank_charges || '';
+                document.getElementById('referenceNumber').value = p.reference_number || '';
+                document.getElementById('notes').value = p.notes || '';
+
+                // Payment date
+                if (p.payment_date) {
+                    const d = new Date(p.payment_date);
+                    document.getElementById('paymentDate').value = String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + '/' + d.getFullYear();
+                }
+
+                // Payment mode
+                if (p.payment_mode) {
+                    const modeSelect = document.getElementById('paymentMode');
+                    for (let opt of modeSelect.options) {
+                        if (opt.value === p.payment_mode) { opt.selected = true; break; }
+                    }
+                }
+
+                // Paid through
+                if (p.paid_through) {
+                    const ptSelect = document.getElementById('paidThrough');
+                    for (let opt of ptSelect.options) {
+                        if (opt.value === p.paid_through) { opt.selected = true; break; }
+                    }
+                }
+
+                // Tax deducted
+                if (p.tax_deducted) {
+                    document.querySelector('input[name="taxDeducted"][value="yes"]').checked = true;
+                }
+
+                // Processing Branch
+                if (p.branch_id) {
+                    document.getElementById('processingBranch').value = p.branch_id;
+                }
+
+                // Paid By — pre-select by matching name
+                if (p.paid_by) {
+                    const paidBySelect = document.getElementById('paidByUser');
+                    const matchedSp = salespersonsList.find(s => s.name === p.paid_by);
+                    if (matchedSp) {
+                        paidBySelect.value = matchedSp.id;
+                    }
+                }
+
+                // Wait for bills to load, then pre-fill the payment amount for the linked bill
+                setTimeout(() => {
+                    if (p.bill_id && unpaidBills.length > 0) {
+                        const billIdx = unpaidBills.findIndex(b => b.id === p.bill_id);
+                        if (billIdx >= 0) {
+                            const input = document.querySelector(`input[data-idx="${billIdx}"]`);
+                            if (input) {
+                                input.value = parseFloat(p.amount_paid || 0).toFixed(3);
+                                updatePaymentTotal();
+                            }
+                        }
+                    }
+                }, 500);
+
+                // Lock vendor dropdown in edit mode
+                document.getElementById('vendDdTrigger').style.pointerEvents = 'none';
+                document.getElementById('vendDdTrigger').style.background = '#f5f5f5';
+
+                // Update footer buttons based on status
+                const payStatus = (p.status || 'DRAFT').toUpperCase();
+                const footer = document.getElementById('mainFooter');
+                if (payStatus === 'DRAFT') {
+                    footer.querySelector('.footer-left').innerHTML = `
+                        <button type="button" class="btn-draft" onclick="savePayment('DRAFT')">Save</button>
+                        <button type="button" class="btn-save" onclick="savePayment('PAID')">Save as Paid</button>
+                        <button type="button" class="btn-cancel" onclick="goBack()">Cancel</button>
+                    `;
+                } else {
+                    footer.querySelector('.footer-left').innerHTML = `
+                        <button type="button" class="btn-save" onclick="savePayment('${payStatus}')">Save</button>
+                        <button type="button" class="btn-cancel" onclick="goBack()">Cancel</button>
+                    `;
+                }
+
+            } catch (e) {
+                console.error('Error loading payment for edit:', e);
+                alert('Error loading payment data');
+            }
+        }
+
+        // ===== Vendor Searchable Dropdown =====
+        function toggleVendDd() {
+            const panel = document.getElementById('vendDdPanel');
+            const trigger = document.getElementById('vendDdTrigger');
+            const isOpen = panel.classList.contains('open');
+            if (isOpen) {
+                panel.classList.remove('open');
+                trigger.classList.remove('open');
+            } else {
+                panel.classList.add('open');
+                trigger.classList.add('open');
+                document.getElementById('vendDdSearch').value = '';
+                document.getElementById('vendDdSearch').focus();
+                renderVendOptions();
+            }
+        }
+
+        function renderVendOptions(filter) {
+            const container = document.getElementById('vendDdOptions');
+            const selectedId = document.getElementById('vendorId').value;
+            let list = vendorsList;
+
+            if (filter) {
+                const q = filter.toLowerCase();
+                list = list.filter(v => {
+                    const name = v.name || v.display_name || v.supplier_name || '';
+                    return name.toLowerCase().includes(q);
+                });
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="vend-dd-empty">No vendors found.</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(v => {
+                const name = v.name || v.display_name || v.supplier_name || 'Unnamed';
+                const sel = String(v.id) === String(selectedId) ? ' selected' : '';
+                return `<div class="vend-dd-option${sel}" onclick="selectVendor(${v.id}, '${name.replace(/'/g, "\\'")}')">${name}</div>`;
+            }).join('');
+        }
+
+        function filterVendDd() {
+            renderVendOptions(document.getElementById('vendDdSearch').value);
+        }
+
+        function selectVendor(id, name) {
+            document.getElementById('vendorId').value = id;
+            document.getElementById('vendorName').value = name;
+            document.getElementById('vendDdLabel').textContent = name;
+            document.getElementById('vendDdTrigger').classList.add('selected');
+            document.getElementById('vendDdPanel').classList.remove('open');
+            document.getElementById('vendDdTrigger').classList.remove('open');
+
+            // Detect vendor's currency and update payment currency labels
+            const vendorObj = vendorsList.find(v => String(v.id) === String(id));
+            if (vendorObj && vendorObj.currency) {
+                const vCur = vendorObj.currency.toUpperCase();
+                paymentCurrency = vCur;
+                document.getElementById('amountPrefix').textContent = vCur;
+                document.getElementById('footerCurrLabel').textContent = vCur;
+            } else {
+                // Default fallback to PHP
+                paymentCurrency = 'PHP';
+                document.getElementById('amountPrefix').textContent = 'PHP';
+                document.getElementById('footerCurrLabel').textContent = 'PHP';
+            }
+
+            loadUnpaidBills(id, name);
+        }
+
+        async function loadUnpaidBills(vendorId, vendorName) {
+            const tbody = document.getElementById('unpaidBillsBody');
+            tbody.innerHTML = '';
+            unpaidBills = [];
+            document.getElementById('billsTotal').textContent = '0.00';
+            document.getElementById('footerTotal').textContent = '0.00';
+            if (!vendorId && !vendorName) return;
+
+            try {
+                const res = await fetch('/api/bills');
+                if (!res.ok) return;
+                const allBills = await res.json();
+                const vName = (vendorName || '').trim().toLowerCase();
+
+                unpaidBills = allBills.filter(b => {
+                    const s = (b.status || '').toUpperCase();
+                    const matches = String(b.supplier_id) === String(vendorId) || (b.supplier_name || '').trim().toLowerCase() === vName;
+                    return matches && s !== 'PAID' && s !== 'DRAFT';
+                });
+
+                // In edit mode, include the linked bill even if it's already paid
+                if (isEditMode && editPaymentData && editPaymentData.bill_id) {
+                    const linkedBillId = editPaymentData.bill_id;
+                    if (!unpaidBills.find(b => b.id === linkedBillId)) {
+                        const linkedBill = allBills.find(b => b.id === linkedBillId);
+                        if (linkedBill) {
+                            unpaidBills.unshift(linkedBill); // Add at the top
+                        }
+                    }
+                }
+
+                // Sort oldest first
+                unpaidBills.sort((a, b) => new Date(a.bill_date || 0) - new Date(b.bill_date || 0));
+
+                if (unpaidBills.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#bbb;font-size:12px;">No unpaid bills found.</td></tr>';
+                    document.getElementById('paidFullLabel').textContent = 'Pay full amount';
+                    return;
+                }
+
+                const today = new Date();
+                const todayStr = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+
+                unpaidBills.forEach((bill, i) => {
+                    const billDate = bill.bill_date ? new Date(bill.bill_date) : null;
+                    const dateStr = billDate ? billDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                    const dueDate = bill.due_date ? new Date(bill.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                    const amount = parseFloat(bill.total_amount || 0);
+                    const amountDue = parseFloat(bill.balance_due != null ? bill.balance_due : bill.total_amount || 0);
+
+                    const tr = document.createElement('tr');
+                    // Highlight the contextual bill row
+                    if (billData && bill.id === billData.id) {
+                        tr.style.background = '#eff6ff';
+                        tr.style.borderLeft = '3px solid #2563eb';
+                    }
+                    tr.setAttribute('data-bill-id', bill.id);
+                    const billCur = (bill.currency_code || paymentCurrency || 'PHP').toUpperCase();
+                    const exRate = parseFloat(bill.exchange_rate) || 1;
+                    const fmtAmt = (n) => {
+                        const v = parseFloat(n || 0);
+                        let s = billCur + ' ' + v.toLocaleString('en-PH', { minimumFractionDigits: 3 });
+                        if (billCur !== 'PHP') s += '<div style="font-size:10px;color:#888;margin-top:1px;">₱' + (v * exRate).toLocaleString('en-PH', { minimumFractionDigits: 3 }) + '</div>';
+                        return s;
+                    };
+                    tr.innerHTML = `
+                        <td>${dateStr}${dueDate ? '<div style="font-size:10px;color:#4285f4;margin-top:2px;">Due: ' + dueDate + '</div>' : ''}</td>
+                        <td style="color:#4285f4;font-weight:500;">${bill.bill_number || ''}</td>
+                        <td style="text-align:right;">${fmtAmt(amount)}</td>
+                        <td style="text-align:right;">${fmtAmt(amountDue)}</td>
+                        <td style="text-align:center;padding-left:32px;padding-right:32px;"><input type="text" class="date-cell-input" value="${todayStr}"></td>
+                        <td style="text-align:right;">
+                            <input type="number" class="payment-cell-input" value="0" step="0.01"
+                                data-idx="${i}" data-max="${amountDue}" onchange="updatePaymentTotal()">
+                            <div><a class="pay-full-link" onclick="payInFull(${i})">Pay in Full</a></div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const totalDue = unpaidBills.reduce((s, b) => s + parseFloat(b.balance_due != null ? b.balance_due : b.total_amount || 0), 0);
+                // paymentCurrency is already set by selectVendor() from the vendor's currency field
+                document.getElementById('paidFullLabel').textContent = `Pay full amount (${paymentCurrency}${totalDue.toFixed(3)})`;
+
+            } catch (e) { console.error(e); }
+        }
+
+        function payInFull(idx) {
+            const input = document.querySelector(`input[data-idx="${idx}"]`);
+            if (input) { input.value = parseFloat(input.dataset.max || 0).toFixed(3); updatePaymentTotal(); }
+        }
+
+        function updatePaymentTotal() {
+            let total = 0;
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { total += parseFloat(inp.value) || 0; });
+            document.getElementById('billsTotal').textContent = total.toFixed(3);
+            document.getElementById('footerTotal').textContent = total.toFixed(3);
+        }
+
+        function clearPayments() {
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { inp.value = '0'; });
+            updatePaymentTotal();
+        }
+
+        // ===== Distribute Payment Logic =====
+        function distributeAmountToBills() {
+            let remaining = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const inputs = document.querySelectorAll('.payment-cell-input');
+
+            // Reset all to 0 first
+            inputs.forEach(inp => { inp.value = '0'; });
+
+            // If opened from a specific bill, fill that one first
+            if (billData && billData.id) {
+                const ctxIdx = unpaidBills.findIndex(b => b.id === billData.id);
+                if (ctxIdx >= 0 && inputs[ctxIdx]) {
+                    const maxDue = parseFloat(inputs[ctxIdx].dataset.max) || 0;
+                    const fill = Math.min(remaining, maxDue);
+                    inputs[ctxIdx].value = fill.toFixed(3);
+                    remaining -= fill;
+                }
+            }
+
+            // Distribute remainder to other bills (oldest to newest)
+            inputs.forEach((inp, i) => {
+                if (billData && billData.id && unpaidBills[i] && unpaidBills[i].id === billData.id) return;
+                const maxDue = parseFloat(inp.dataset.max) || 0;
+                if (remaining <= 0) {
+                    // already 0
+                } else if (remaining >= maxDue) {
+                    inp.value = maxDue.toFixed(3);
+                    remaining -= maxDue;
+                } else {
+                    inp.value = remaining.toFixed(3);
+                    remaining = 0;
+                }
+            });
+            updatePaymentTotal();
+        }
+
+        let amountAlreadyConfirmed = false;
+
+        function onAmountPaidBlur() {
+            const val = parseFloat(document.getElementById('amountPaid').value) || 0;
+            if (val > 0 && !amountAlreadyConfirmed && unpaidBills.length > 0) {
+                document.getElementById('confirmDistributeModal').classList.add('show');
+            }
+        }
+
+        function confirmDistribute(doDistribute) {
+            document.getElementById('confirmDistributeModal').classList.remove('show');
+            amountAlreadyConfirmed = true;
+            if (doDistribute) {
+                distributeAmountToBills();
+            }
+        }
+
+        function applyFullAmount() {
+            if (document.getElementById('paidFullCheck').checked) {
+                const totalDue = unpaidBills.reduce((s, b) => s + parseFloat(b.balance_due != null ? b.balance_due : b.total_amount || 0), 0);
+                document.getElementById('amountPaid').value = totalDue.toFixed(3);
+                amountAlreadyConfirmed = true;
+                distributeAmountToBills();
+            }
+        }
+
+        // ===== Save Logic with Excess Payment =====
+        let pendingSaveStatus = null;
+
+        async function savePayment(status) {
+            const vendorNameVal = document.getElementById('vendorName').value;
+            const paymentNumber = document.getElementById('paymentNumber').value;
+            const amountPaid = document.getElementById('amountPaid').value;
+
+            if (!vendorNameVal || vendorNameVal === 'Select Vendor') { alert('Please select a vendor.'); return; }
+            if (!paymentNumber) { alert('Payment number is required.'); return; }
+            if (!amountPaid || parseFloat(amountPaid) <= 0) { alert('Amount paid must be greater than 0.'); return; }
+
+            // Validate Paid By
+            selectedPaidByUser = document.getElementById('paidByUser').value;
+            if (!selectedPaidByUser) { alert('Please select who is recording this payment (Paid By).'); return; }
+
+            const sp = salespersonsList.find(s => s.id == selectedPaidByUser);
+            AuthModal.open({
+                userName: sp ? sp.name : '',
+                userRole: 'Paid By',
+                transactionType: 'Payment',
+                salespersonsList: salespersonsList,
+                selectedId: selectedPaidByUser,
+                onSuccess: async () => {
+                    // Calculate total applied
+                    let totalApplied = 0;
+                    document.querySelectorAll('.payment-cell-input').forEach(inp => { totalApplied += parseFloat(inp.value) || 0; });
+                    const excess = parseFloat(amountPaid) - totalApplied;
+
+                    // If excess exists, show the excess payment modal
+                    if (excess > 0.01) {
+                        pendingSaveStatus = status;
+                        document.getElementById('excessAmountDisplay').textContent = paymentCurrency + ' ' + excess.toFixed(3);
+                        document.getElementById('excessPaymentModal').classList.add('show');
+                        return;
+                    }
+
+                    await doSavePayment(status, 0);
+                }
+            });
+        }
+
+        function closeExcessModal() {
+            document.getElementById('excessPaymentModal').classList.remove('show');
+            pendingSaveStatus = null;
+        }
+
+        async function confirmExcessAndSave() {
+            document.getElementById('excessPaymentModal').classList.remove('show');
+            let totalApplied = 0;
+            document.querySelectorAll('.payment-cell-input').forEach(inp => { totalApplied += parseFloat(inp.value) || 0; });
+            const excess = parseFloat(document.getElementById('amountPaid').value) - totalApplied;
+            await doSavePayment(pendingSaveStatus || 'PAID', excess);
+        }
+
+        async function doSavePayment(status, excessAmount) {
+            const vendorNameVal = document.getElementById('vendorName').value;
+            const paymentNumber = document.getElementById('paymentNumber').value;
+            const amountPaid = parseFloat(document.getElementById('amountPaid').value);
+            const vendorId = document.getElementById('vendorId').value;
+
+            const taxDeducted = document.querySelector('input[name="taxDeducted"]:checked').value === 'yes';
+
+            // Determine primary bill (highest applied)
+            let primaryBillId = null;
+            let primaryBillNumber = null;
+            let maxPayment = 0;
+            const billPayments = [];
+
+            document.querySelectorAll('.payment-cell-input').forEach((inp, i) => {
+                const amt = parseFloat(inp.value) || 0;
+                if (amt > 0 && unpaidBills[i]) {
+                    billPayments.push({ bill_id: unpaidBills[i].id, bill_number: unpaidBills[i].bill_number, amount: amt });
+                    if (amt > maxPayment) {
+                        maxPayment = amt;
+                        primaryBillId = unpaidBills[i].id;
+                        primaryBillNumber = unpaidBills[i].bill_number;
+                    }
+                }
+            });
+
+            // Parse payment date
+            const paymentDateRaw = document.getElementById('paymentDate').value || '';
+            let paymentDate;
+            const parts = paymentDateRaw.split('/');
+            if (parts.length === 3) {
+                paymentDate = parts[2] + '-' + parts[0] + '-' + parts[1];
+            } else {
+                const _d = new Date();
+                paymentDate = _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0');
+            }
+
+            const paymentData = {
+                payment_number: paymentNumber,
+                bill_id: primaryBillId,
+                bill_number: primaryBillNumber,
+                supplier_id: parseInt(vendorId) || null,
+                supplier_name: vendorNameVal,
+                amount_paid: amountPaid,
+                bank_charges: parseFloat(document.getElementById('bankCharges').value) || 0,
+                tax_deducted: taxDeducted,
+                payment_date: paymentDate,
+                payment_mode: document.getElementById('paymentMode').value,
+                paid_through: document.getElementById('paidThrough').value,
+                location: 'Head Office',
+                reference_number: document.getElementById('referenceNumber').value,
+                notes: document.getElementById('notes').value,
+                status: status,
+                currency_code: paymentCurrency,
+                exchange_rate: (function() {
+                    // 1. From the linked bill
+                    if (billData && billData.exchange_rate) return parseFloat(billData.exchange_rate);
+                    // 2. From edit mode
+                    if (editPaymentData && editPaymentData.exchange_rate) return parseFloat(editPaymentData.exchange_rate);
+                    // 3. PHP needs no conversion
+                    if (paymentCurrency === 'PHP') return 1;
+                    // 4. From localStorage (manual rate set in Items or PO)
+                    const manualRate = localStorage.getItem(`manual_rate_${paymentCurrency}_PHP`) || localStorage.getItem(`gihon_exrate_${paymentCurrency}`);
+                    if (manualRate && !isNaN(parseFloat(manualRate))) return parseFloat(manualRate);
+                    // 5. Hardcoded fallback rates (same as items.js)
+                    const fallbacks = { CNY: 8.05, USD: 56.0, EUR: 61.0, JPY: 0.38, GBP: 72.0, KRW: 0.042, SGD: 42.0, HKD: 7.2, TWD: 1.8, THB: 1.6, MYR: 12.5, IDR: 0.0036, VND: 0.0023, AUD: 37.0, CAD: 41.0, AED: 15.3, SAR: 14.9, INR: 0.67 };
+                    return fallbacks[paymentCurrency] || 1;
+                })(),
+                branch_id: parseInt(document.getElementById('processingBranch').value) || null,
+                paid_by: (function() {
+                    const sel = document.getElementById('paidByUser');
+                    const spId = sel ? sel.value : '';
+                    const sp = salespersonsList.find(s => s.id == spId);
+                    return sp ? sp.name : '';
+                })()
+            };
+
+            try {
+                let url, method;
+                if (isEditMode) {
+                    url = '/api/payments-made/' + editId;
+                    method = 'PUT';
+                } else {
+                    url = '/api/payments-made';
+                    method = 'POST';
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+                if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || 'Failed')); return; }
+                const data = await res.json();
+
+                // Store excess as vendor credit
+                if (excessAmount > 0 && vendorId && status === 'PAID') {
+                    try {
+                        await fetch('/api/vendor-credits', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                supplier_id: parseInt(vendorId),
+                                supplier_name: vendorNameVal,
+                                credit_date: paymentDate,
+                                reason: `Overpayment from Payment #${paymentNumber}`,
+                                status: 'open',
+                                currency_code: paymentCurrency,
+                                exchange_rate: paymentData.exchange_rate,
+                                items: [{
+                                    item_name: 'Overpayment',
+                                    account: 'Vendor Overpayment',
+                                    account_type: 'overpayment',
+                                    quantity: 1,
+                                    rate: excessAmount
+                                }]
+                            })
+                        });
+                    } catch (e) { console.error('Error storing vendor credit:', e); }
+                }
+
+                alert(`Payment #${data.payment_number || paymentNumber} ${isEditMode ? 'updated' : 'saved as ' + status} successfully!${excessAmount > 0 && status === 'PAID' ? '\nExcess ' + paymentCurrency + ' ' + excessAmount.toFixed(3) + ' stored as vendor credit.' : ''}`);
+                if (isEditMode) {
+                    window.location.href = '/payment-made-detail.html?id=' + editId;
+                } else {
+                    window.location.href = '/payments-made.html';
+                }
+            } catch (err) { console.error(err); alert('Failed to save payment.'); }
+        }
+
+        function goBack() {
+            if (isEditMode) window.location.href = '/payment-made-detail.html?id=' + editId;
+            else if (preselectedBillId) window.location.href = '/bill-detail.html?id=' + preselectedBillId;
+            else if (preselectedVendorId) window.location.href = '/vendors.html#vendor=' + preselectedVendorId;
+            else window.location.href = '/payments-made.html';
+        }
+
+        // ===== Attachments =====
+        let uploadedFiles = [];
+
+        function attachFiles() {
+            if (uploadedFiles.length >= 5) { alert('Maximum 5 files allowed.'); return; }
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xls,.xlsx,.csv';
+            input.multiple = true;
+            input.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                if (uploadedFiles.length + files.length > 5) {
+                    alert(`You can only upload ${5 - uploadedFiles.length} more file(s).`);
+                    return;
+                }
+                for (const f of files) {
+                    if (f.size > 5 * 1024 * 1024) {
+                        alert(`"${f.name}" exceeds 5MB limit.`);
+                        return;
+                    }
+                }
+                try {
+                    const formData = new FormData();
+                    files.forEach(f => formData.append('files', f));
+                    const res = await fetch('/api/uploads', { method: 'POST', body: formData });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        alert('Upload failed: ' + (err.error || 'Unknown error'));
+                        return;
+                    }
+                    const data = await res.json();
+                    uploadedFiles.push(...data.files);
+                    renderAttachments();
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    alert('Upload failed.');
+                }
+            };
+            input.click();
+        }
+
+        function renderAttachments() {
+            const container = document.getElementById('attachmentList');
+            if (uploadedFiles.length === 0) { container.innerHTML = ''; return; }
+            container.innerHTML = uploadedFiles.map((f, i) => {
+                const sizeKB = (f.size / 1024).toFixed(1);
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;margin-bottom:4px;font-size:12px;">
+                    <a href="${f.url}" target="_blank" style="color:#4285f4;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.originalName}</a>
+                    <span style="color:#999;font-size:10px;white-space:nowrap;">${sizeKB} KB</span>
+                    <span style="color:#e57373;cursor:pointer;font-size:14px;" onclick="removeAttachment(${i})" title="Remove">✕</span>
+                </div>`;
+            }).join('');
+        }
+
+        async function removeAttachment(idx) {
+            const file = uploadedFiles[idx];
+            try { await fetch('/api/uploads/' + file.filename, { method: 'DELETE' }); } catch (e) { }
+            uploadedFiles.splice(idx, 1);
+            renderAttachments();
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

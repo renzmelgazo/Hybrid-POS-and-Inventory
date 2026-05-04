@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales by Item - Reports</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: #fff;
+        }
+
+        /* ===== TOP HEADER BAR ===== */
+        .report-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 44px;
+        }
+
+        .report-top-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .breadcrumb-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb-category {
+            font-size: 11px;
+            color: #4285f4;
+            font-weight: 500;
+        }
+
+        .breadcrumb-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .breadcrumb-date {
+            font-size: 12px;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-bar-actions button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .top-bar-actions button:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-export {
+            width: auto !important;
+            padding: 0 12px;
+            font-size: 12px !important;
+            font-weight: 500;
+            gap: 4px;
+        }
+
+        .btn-close-report {
+            color: #e53935 !important;
+            font-size: 18px !important;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: #555;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .filter-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .filter-dropdown select {
+            border: none;
+            background: none;
+            font-size: 12px;
+            color: #333;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .filter-more {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #4285f4;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 5px 8px;
+        }
+
+        .filter-more:hover {
+            text-decoration: underline;
+        }
+
+        .btn-run-report {
+            padding: 7px 18px;
+            background: #f4511e;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-run-report:hover {
+            background: #e64a19;
+        }
+
+        /* ===== OPTIONS BAR ===== */
+        .options-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 8px 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 16px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .option-item:hover {
+            color: #333;
+        }
+
+        .option-icon {
+            font-size: 13px;
+        }
+
+        .option-bold {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .customize-count {
+            background: #4285f4;
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* ===== REPORT BODY ===== */
+        .report-body {
+            padding: 0;
+            background: #fff;
+        }
+
+        .report-header-section {
+            text-align: center;
+            padding: 32px 24px 24px;
+        }
+
+        .company-name {
+            font-size: 12px;
+            color: #4285f4;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .report-main-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .report-date-range {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .report-date-range .date-highlight {
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        /* ===== DATA TABLE ===== */
+        .report-table-wrapper {
+            padding: 0 20px 40px;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .report-table thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            background: #fff;
+        }
+
+        .report-table thead th.align-right {
+            text-align: right;
+        }
+
+        .report-table thead th .sort-icon {
+            font-size: 10px;
+            color: #bbb;
+            margin-left: 2px;
+        }
+
+        .report-table tbody td {
+            padding: 13px 16px;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f2f2f2;
+        }
+
+        .report-table tbody td.align-right {
+            text-align: right;
+        }
+
+        .report-table tbody td.value-blue {
+            color: #4285f4;
+        }
+
+        .report-table tbody td.item-link {
+            color: #4285f4;
+            cursor: pointer;
+        }
+
+        .report-table tbody td.item-link:hover {
+            text-decoration: underline;
+        }
+
+        .report-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+        /* Total row */
+        .report-table tfoot td {
+            padding: 14px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .report-table tfoot td.align-right {
+            text-align: right;
+        }
+
+        /* Breadcrumb links */
+        .breadcrumb-category a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+
+        .breadcrumb-category a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+
+            <!-- TOP HEADER BAR -->
+            <div class="report-top-bar">
+                <div class="report-top-left">
+                    <button class="hamburger-btn" onclick="window.location.href='/reports.html'">☰</button>
+                    <div class="breadcrumb-area">
+                        <span class="breadcrumb-category" id="breadcrumbCategory">Sales</span>
+                        <span class="breadcrumb-title">
+                            <span id="breadcrumbTitleText">Sales by Item</span>
+                            <span class="breadcrumb-date" id="breadcrumbDate">•</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <button title="Schedule"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span></button>
+                    <button title="Refresh" onclick="runReport()"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span></button>
+                    <button title="Share"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span></button>
+                    <button class="btn-export" title="Export">Export ▾</button>
+                    <button title="Print" onclick="window.print()"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span></button>
+                    <button class="btn-close-report" title="Close"
+                        onclick="window.location.href='/reports.html'">✕</button>
+                </div>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+                <span class="filter-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filters :</span>
+
+                <div class="filter-dropdown">
+                    <span>Date Range :</span>
+                    <select id="dateRangeSelect" onchange="handleDateRangeChange()">
+                        <option value="this-month">This Month</option>
+                        <option value="last-month">Last Month</option>
+                        <option value="this-quarter">This Quarter</option>
+                        <option value="this-year">This Year</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+
+                <div class="filter-dropdown">
+                    <span>Entities :</span>
+                    <select>
+                        <option>All</option>
+                    </select>
+                </div>
+
+                <button class="filter-more">⊕ More Filters</button>
+
+                <button class="btn-run-report" onclick="runReport()">Run Report</button>
+            </div>
+
+            <!-- OPTIONS BAR -->
+            <div class="options-bar">
+                <div class="option-item">
+                    <span class="option-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+                    Group By : <span class="option-bold">None</span> ▾
+                </div>
+                <div class="option-item">
+                    <span class="option-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                    Compare With : <span class="option-bold">None</span> ▾
+                </div>
+                <div class="option-item">
+                    <span class="option-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                    Customize Report Columns
+                    <span class="customize-count">5</span>
+                </div>
+            </div>
+
+            <!-- REPORT BODY -->
+            <div class="report-body">
+                <div class="report-header-section">
+                    <div class="company-name">SOLO</div>
+                    <div class="report-main-title" id="reportMainTitle">Sales by Item</div>
+                    <div class="report-date-range" id="reportDateRange">
+                        From <span class="date-highlight" id="fromDateDisplay">-</span> To <span class="date-highlight"
+                            id="toDateDisplay">-</span>
+                    </div>
+                </div>
+
+                <div class="report-table-wrapper">
+                    <table class="report-table">
+                        <thead id="reportTableHead">
+                            <tr>
+                                <th>ITEM NAME <span class="sort-icon">⇅</span></th>
+                                <th>SKU</th>
+                                <th class="align-right">QUANTITY SOLD</th>
+                                <th class="align-right">AMOUNT</th>
+                                <th class="align-right">AVERAGE PRICE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center; padding:40px; color:#999;">Loading...</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="reportTableFoot" style="display:none;">
+                            <tr>
+                                <td>Total</td>
+                                <td></td>
+                                <td class="align-right" id="totalQty"></td>
+                                <td class="align-right" id="totalAmt"></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script src="/js/report-export.js"></script>
+    <script>
+        let currentFrom = '';
+        let currentTo = '';
+        let currentView = 'items'; // 'items' or 'customers'
+        let currentItemName = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setThisMonth();
+            runReport();
+        });
+
+        function setThisMonth() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth();
+            currentFrom = new Date(y, m, 1).toISOString().split('T')[0];
+            currentTo = new Date(y, m + 1, 0).toISOString().split('T')[0];
+            updateDateDisplays();
+        }
+
+        function handleDateRangeChange() {
+            const v = document.getElementById('dateRangeSelect').value;
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth();
+
+            switch (v) {
+                case 'this-month':
+                    currentFrom = new Date(y, m, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, m + 1, 0).toISOString().split('T')[0];
+                    break;
+                case 'last-month':
+                    currentFrom = new Date(y, m - 1, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, m, 0).toISOString().split('T')[0];
+                    break;
+                case 'this-quarter':
+                    const qStart = Math.floor(m / 3) * 3;
+                    currentFrom = new Date(y, qStart, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, qStart + 3, 0).toISOString().split('T')[0];
+                    break;
+                case 'this-year':
+                    currentFrom = new Date(y, 0, 1).toISOString().split('T')[0];
+                    currentTo = new Date(y, 11, 31).toISOString().split('T')[0];
+                    break;
+                case 'custom':
+                    break;
+            }
+            updateDateDisplays();
+            if (currentView === 'customers') {
+                showCustomerBreakdown(currentItemName);
+            } else {
+                runReport();
+            }
+        }
+
+        function updateDateDisplays() {
+            const fmt = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const fromStr = currentFrom ? fmt(currentFrom) : '-';
+            const toStr = currentTo ? fmt(currentTo) : '-';
+
+            document.getElementById('fromDateDisplay').textContent = fromStr;
+            document.getElementById('toDateDisplay').textContent = toStr;
+            document.getElementById('breadcrumbDate').textContent = `• From ${fromStr} To ${toStr}`;
+        }
+
+        function fmtPHP(val) {
+            return 'PHP' + parseFloat(val).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // ===== MAIN REPORT VIEW (Items) =====
+        async function runReport() {
+            currentView = 'items';
+            currentItemName = '';
+
+            // Reset headers
+            document.getElementById('breadcrumbCategory').innerHTML = 'Sales';
+            document.getElementById('breadcrumbTitleText').textContent = 'Sales by Item';
+            document.getElementById('reportMainTitle').textContent = 'Sales by Item';
+
+            // Reset table headers
+            document.getElementById('reportTableHead').innerHTML = `
+                <tr>
+                    <th>ITEM NAME <span class="sort-icon">⇅</span></th>
+                    <th>SKU</th>
+                    <th class="align-right">QUANTITY SOLD</th>
+                    <th class="align-right">AMOUNT</th>
+                    <th class="align-right">AVERAGE PRICE</th>
+                </tr>
+            `;
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#999;">Loading...</td></tr>';
+            document.getElementById('reportTableFoot').style.display = 'none';
+
+            try {
+                let url = '/api/sales/reports/sales-by-item';
+                if (currentFrom && currentTo) {
+                    url += `?from=${currentFrom}&to=${currentTo}`;
+                }
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:60px;color:#999;font-size:14px;">No sales data found for the selected period.</td></tr>';
+                    return;
+                }
+
+                let totalQty = 0;
+                let totalAmt = 0;
+
+                tbody.innerHTML = data.map(item => {
+                    const qty = parseFloat(item.quantity_sold) || 0;
+                    const amt = parseFloat(item.total_amount) || 0;
+                    const avg = parseFloat(item.average_price) || 0;
+                    totalQty += qty;
+                    totalAmt += amt;
+                    const escapedName = item.item_name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    return `
+                        <tr>
+                            <td class="item-link" onclick="showCustomerBreakdown('${escapedName}')">${item.item_name}</td>
+                            <td>${item.sku || ''}</td>
+                            <td class="align-right item-link" onclick="showCustomerBreakdown('${escapedName}')">${qty.toFixed(2)}</td>
+                            <td class="align-right value-blue">${fmtPHP(amt)}</td>
+                            <td class="align-right value-blue">${fmtPHP(avg)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Update totals footer (5 columns)
+                document.getElementById('reportTableFoot').innerHTML = `
+                    <tr>
+                        <td>Total</td>
+                        <td></td>
+                        <td class="align-right">${totalQty.toFixed(2)}</td>
+                        <td class="align-right">${fmtPHP(totalAmt)}</td>
+                        <td></td>
+                    </tr>
+                `;
+                document.getElementById('reportTableFoot').style.display = '';
+
+            } catch (e) {
+                console.error('Error:', e);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#e53935;">Error loading report data.</td></tr>';
+            }
+        }
+
+        // ===== CUSTOMER DRILL-DOWN VIEW =====
+        async function showCustomerBreakdown(itemName) {
+            currentView = 'customers';
+            currentItemName = itemName;
+
+            // Update breadcrumb: Sales > Sales by Item
+            document.getElementById('breadcrumbCategory').innerHTML = '<a href="javascript:void(0)" onclick="runReport()">Sales</a> &gt; <a href="javascript:void(0)" onclick="runReport()">Sales by Item</a>';
+            document.getElementById('breadcrumbTitleText').textContent = 'Sales by Item - ' + itemName;
+            document.getElementById('reportMainTitle').textContent = 'Sales by Item - ' + itemName;
+
+            // Update table headers for customer view (4 columns)
+            document.getElementById('reportTableHead').innerHTML = `
+                <tr>
+                    <th>CUSTOMER NAME <span class="sort-icon">⇅</span></th>
+                    <th class="align-right">QUANTITY</th>
+                    <th class="align-right">AMOUNT</th>
+                    <th class="align-right">AVERAGE PRICE</th>
+                </tr>
+            `;
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#999;">Loading...</td></tr>';
+            document.getElementById('reportTableFoot').style.display = 'none';
+
+            try {
+                let url = `/api/sales/reports/sales-by-item/${encodeURIComponent(itemName)}/customers`;
+                if (currentFrom && currentTo) {
+                    url += `?from=${currentFrom}&to=${currentTo}`;
+                }
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:60px;color:#999;font-size:14px;">No customer data found for this item.</td></tr>';
+                    return;
+                }
+
+                let totalQty = 0;
+                let totalAmt = 0;
+
+                tbody.innerHTML = data.map(c => {
+                    const qty = parseFloat(c.quantity) || 0;
+                    const amt = parseFloat(c.amount) || 0;
+                    const avg = parseFloat(c.average_price) || 0;
+                    totalQty += qty;
+                    totalAmt += amt;
+
+                    return `
+                        <tr>
+                            <td class="item-link">${c.customer_name}</td>
+                            <td class="align-right value-blue">${qty.toFixed(2)}</td>
+                            <td class="align-right value-blue">${fmtPHP(amt)}</td>
+                            <td class="align-right value-blue">${fmtPHP(avg)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Update totals footer (4 columns)
+                document.getElementById('reportTableFoot').innerHTML = `
+                    <tr>
+                        <td>Total</td>
+                        <td class="align-right">${totalQty.toFixed(2)}</td>
+                        <td class="align-right">${fmtPHP(totalAmt)}</td>
+                        <td></td>
+                    </tr>
+                `;
+                document.getElementById('reportTableFoot').style.display = '';
+
+            } catch (e) {
+                console.error('Error:', e);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#e53935;">Error loading customer data.</td></tr>';
+            }
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

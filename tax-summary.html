@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Summary - Reports</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: #fff;
+        }
+
+        /* ===== TOP HEADER BAR ===== */
+        .report-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 44px;
+        }
+
+        .report-top-left {
+            display: flex;
+            align-items: center; gap: 12px;
+        }
+
+        .breadcrumb-area {
+            display: flex; flex-direction: column;
+        }
+
+        .breadcrumb-category {
+            font-size: 11px; color: #999;
+        }
+
+        .breadcrumb-title {
+            font-size: 15px; font-weight: 600; color: #222;
+        }
+
+        .top-bar-actions {
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .top-bar-actions button {
+            background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 14px; color: #555;
+        }
+
+        .btn-close-report {
+            color: #e53935 !important; font-weight: bold;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: #f9fafb; border-bottom: 1px solid #e8e8e8;
+        }
+
+        /* ===== REPORT BODY ===== */
+        .report-body {
+            padding: 30px 20px 60px;
+        }
+
+        .summary-cards {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .card-label {
+            font-size: 12px; color: #666; font-weight: 500; margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 20px; font-weight: 700; color: #222;
+        }
+
+        .value-output { color: #2563eb; }
+        .value-input { color: #dc2626; }
+        .value-net { color: #059669; }
+
+        .report-table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+
+        .report-table thead th {
+            text-align: left; padding: 10px; border-bottom: 2px solid #ddd; background: #fafafa;
+        }
+
+        .report-table tbody td {
+            padding: 12px 10px; border-bottom: 1px solid #f0f0f0;
+        }
+
+        .align-right { text-align: right !important; }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content">
+            <div class="report-top-bar">
+                <div class="report-top-left">
+                    <button class="hamburger-btn" onclick="window.location.href='/reports.html'">☰</button>
+                    <div class="breadcrumb-area">
+                        <span class="breadcrumb-category">Financial Health</span>
+                        <span class="breadcrumb-title">Tax Summary</span>
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <button class="btn-close-report" onclick="window.location.href='/reports.html'">✕</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <input type="month" id="reportMonth" style="padding:5px; border:1px solid #ddd; border-radius:4px;">
+                <button class="btn-run-report" onclick="runReport()" style="background:#e53935; color:#fff; border:none; padding:7px 20px; border-radius:4px; font-weight:600; cursor:pointer;">Run Report</button>
+            </div>
+
+            <div class="report-body">
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="card-label">TOTAL OUTPUT TAX (Sales)</div>
+                        <div class="card-value value-output" id="totalOutput">PHP 0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-label">TOTAL INPUT TAX (Purchases)</div>
+                        <div class="card-value value-input" id="totalInput">PHP 0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-label">NET TAX PAYABLE</div>
+                        <div class="card-value value-net" id="netTax">PHP 0.00</div>
+                    </div>
+                </div>
+
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>TAX NAME</th>
+                            <th>TAX TYPE</th>
+                            <th class="align-right">TAXABLE AMOUNT</th>
+                            <th class="align-right">TAX AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding: 40px; color: #888;">Generating tax data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        async function runReport() {
+            // Mock data for demo
+            document.getElementById('totalOutput').textContent = 'PHP 124,500.00';
+            document.getElementById('totalInput').textContent = 'PHP 85,200.00';
+            document.getElementById('netTax').textContent = 'PHP 39,300.00';
+
+            document.getElementById('reportTableBody').innerHTML = `
+                <tr>
+                    <td>Standard VAT (12%)</td>
+                    <td>Output (Invoices)</td>
+                    <td class="align-right">PHP 1,037,500.00</td>
+                    <td class="align-right">PHP 124,500.00</td>
+                </tr>
+                <tr>
+                    <td>Purchase VAT (12%)</td>
+                    <td>Input (Bills)</td>
+                    <td class="align-right">PHP 710,000.00</td>
+                    <td class="align-right">PHP 85,200.00</td>
+                </tr>
+            `;
+        }
+
+        window.onload = runReport;
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

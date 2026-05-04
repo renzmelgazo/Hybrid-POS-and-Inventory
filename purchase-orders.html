@@ -1,0 +1,3621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link rel="stylesheet" href="/css/pagination.css">
+    <link rel="stylesheet" href="/css/global-search.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            padding-top: 57px !important;
+            /* 1px > sticky threshold to avoid Chrome flow-space collapse */
+            background: white;
+            min-width: 0;
+        }
+
+        /* ===== LIST VIEW — full-height flex column =====
+           page-header stays pinned at top;
+           orders-container scrolls internally with sticky th headers */
+        #listView {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 57px);
+            /* 57px = content padding-top for notif bar */
+            overflow: hidden;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            /* Cancel main.css top:56px — in flexbox, sticky top offsets visually
+               like position:relative, pushing the bar 56px DOWN and obscuring
+               the column headers. top:0 keeps visual = flex flow position. */
+            top: 0 !important;
+        }
+
+        .page-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .page-title:hover {
+            color: #4285f4;
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: #666;
+            transition: transform 0.2s ease;
+        }
+
+        .dropdown-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        /* ===== PO Filter Dropdown ===== */
+        .po-filter-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            width: 300px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .po-filter-dropdown.open {
+            display: block;
+        }
+
+        .po-filter-search {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e9ecef;
+            gap: 8px;
+        }
+
+        .po-filter-search .search-icon {
+            color: #999;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .po-filter-search input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: #333;
+            background: transparent;
+        }
+
+        .po-filter-search input::placeholder {
+            color: #bbb;
+        }
+
+        .po-filter-list {
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+
+        .po-filter-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: background 0.1s ease;
+        }
+
+        .po-filter-item:hover {
+            background: #f5f8ff;
+        }
+
+        .po-filter-item.active {
+            background: #4285f4;
+            color: white;
+        }
+
+        .po-filter-item.active .po-filter-star {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .po-filter-star {
+            font-size: 18px;
+            color: #ccc;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.15s ease;
+        }
+
+        .po-filter-star:hover {
+            color: #f5c518;
+        }
+
+        .po-filter-star.favorited {
+            color: #f5c518;
+        }
+
+        .po-filter-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 12px 16px;
+        }
+
+        .po-filter-new-view {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .po-filter-new-view:hover {
+            color: #4285f4;
+        }
+
+        .po-filter-new-view .plus-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .page-title-wrapper {
+            position: relative;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-transit {
+            padding: 8px 16px;
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-transit:hover {
+            background: #f5f5f5;
+            border-color: #4285f4;
+            color: #4285f4;
+        }
+
+        .btn-new-group {
+            display: flex;
+        }
+
+        .btn-new {
+            padding: 10px 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-new:hover {
+            background: #3367d6;
+        }
+
+        .btn-new-dropdown {
+            padding: 8px 10px;
+            background: #3367d6;
+            color: white;
+            border: none;
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .btn-new-dropdown:hover {
+            background: #2d5bb9;
+        }
+
+        .btn-more {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-more:hover {
+            background: #f5f5f5;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 150px 24px;
+            text-align: center;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 12px 0;
+        }
+
+        .empty-state-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin: 0 0 28px 0;
+            max-width: 500px;
+        }
+
+        .btn-create {
+            padding: 12px 28px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-create:hover {
+            background: #3367d6;
+        }
+
+        /* ===== PURCHASE ORDERS TABLE =====
+           orders-container is the internal scroller — it fills the remaining
+           flex height below the page-header + selection-bar so only tbody scrolls */
+        .orders-container {
+            flex: 1;
+            min-height: 0;
+            /* required: lets flex child shrink below content size */
+            overflow-y: auto;
+            overflow-x: auto;
+            width: 100%;
+            background: white;
+            padding: 0;
+            /* ← REMOVED the old padding-top gap */
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: separate;
+            /* required for position:sticky on th in Chrome/Safari */
+            border-spacing: 0;
+            background: transparent;
+        }
+
+        /* THEAD ROW — Blue-Grey band matching customers.html design system */
+        .orders-table thead tr {
+            border-bottom: 2px solid #8b9fb8;
+            background: #dde3ec !important;
+        }
+
+        .orders-table th {
+            /* ── Sticky anchored to top of the internal scroll container ── */
+            position: sticky;
+            top: 0;
+            /* ← FIXED: top:0 inside overflow-y:auto container */
+            z-index: 10;
+            text-align: left;
+            padding: 9px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2d3a4a;
+            /* ← FIXED: solid dark blue-grey (was #888) */
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            /* ── SOLID opaque background prevents bleed-through ── */
+            background: #dde3ec !important;
+            /* ← FIXED: Blue-Grey (was semi-transparent #f9fafb) */
+            border-bottom: 2px solid #8b9fb8;
+            box-shadow: 0 2px 0 #8b9fb8;
+            /* shadow seals gap between header and first row */
+            white-space: nowrap;
+        }
+
+        .orders-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* Column Settings Dropdown */
+        .col-settings-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .cust-filter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 6px;
+            border-radius: 4px;
+            background: #f0f5ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .cust-filter-icon:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .cust-filter-icon svg {
+            transition: all 0.2s ease;
+        }
+
+        .cust-filter-icon:hover svg {
+            fill: #6d1515;
+        }
+
+        .col-settings-dropdown {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 200px;
+            z-index: 9999;
+            padding: 8px 0;
+            overflow: visible;
+        }
+
+        .col-settings-dropdown.show {
+            display: block;
+            animation: poDropFadeIn 0.15s ease-out;
+        }
+
+        @keyframes poDropFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .col-settings-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .col-settings-item:first-child {
+            background: #8B1A1A;
+            color: white;
+            margin: 4px 8px 8px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .col-settings-item:first-child:hover {
+            background: #6d1515;
+            color: white;
+        }
+
+        .col-settings-item:hover {
+            background: #f3f4f6;
+            color: #1a1f3a;
+        }
+
+        .col-settings-item.active {
+            background: #8B1A1A;
+            color: white;
+        }
+
+        .col-settings-icon {
+            font-size: 16px;
+            color: inherit;
+            width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Checkbox Styles */
+        .row-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #4285f4;
+            cursor: pointer;
+        }
+
+        .orders-table th:first-child,
+        .orders-table td:first-child {
+            width: 32px;
+            text-align: center;
+            padding-left: 8px;
+            padding-right: 4px;
+        }
+
+        .orders-table th:nth-child(2),
+        .orders-table td:nth-child(2) {
+            width: 32px;
+            text-align: center;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
+        /* Clip Text Mode */
+        .orders-table.clip-text {
+            table-layout: fixed;
+        }
+
+        .orders-table.clip-text td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Wrap Text Mode (default) */
+        .orders-table:not(.clip-text) td {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        /* Toast Notification */
+        .clip-toast {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 1px solid #d4edda;
+            border-radius: 8px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 10000;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #333;
+            min-width: 340px;
+        }
+
+        .clip-toast.show {
+            display: flex;
+        }
+
+        .clip-toast-icon {
+            width: 24px;
+            height: 24px;
+            background: #28a745;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .clip-toast-text {
+            flex: 1;
+            font-weight: 400;
+        }
+
+        .clip-toast-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        /* Customize Columns Modal */
+        .cc-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 9999;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 60px;
+        }
+
+        .cc-overlay.show {
+            display: flex;
+        }
+
+        .cc-modal {
+            background: white;
+            width: 500px;
+            max-height: 85vh;
+            border-radius: 4px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .cc-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .cc-header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .cc-count {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .cc-close {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .cc-search {
+            padding: 16px 24px;
+        }
+
+        .cc-search input {
+            width: 100%;
+            padding: 10px 14px 10px 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0'/%3E%3C/svg%3E") no-repeat 12px center;
+        }
+
+        .cc-search input:focus {
+            border-color: #8B1A1A;
+            box-shadow: 0 0 0 2px rgba(139, 26, 26, 0.1);
+        }
+
+        .cc-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+            min-height: 0;
+        }
+
+        .cc-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            margin: 4px 0;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #f8fafc;
+            font-size: 14px;
+            color: #333;
+            cursor: default;
+            transition: all 0.15s;
+        }
+
+        .cc-item:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .cc-item:has(input:checked) {
+            background: #e6f4ff;
+            border-color: #91caff;
+        }
+
+        .cc-drag {
+            color: #ccc;
+            font-size: 14px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .cc-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #8B1A1A;
+            cursor: pointer;
+        }
+
+        .cc-item .cc-lock {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .cc-item-label {
+            flex: 1;
+            font-weight: 400;
+        }
+
+        .cc-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            gap: 10px;
+        }
+
+        .cc-btn-save {
+            padding: 9px 22px;
+            background: #8B1A1A;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .cc-btn-save:hover {
+            background: #6d1515;
+        }
+
+        .cc-btn-cancel {
+            padding: 9px 22px;
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .cc-btn-cancel:hover {
+            background: #f5f5f5;
+        }
+
+        /* ===== SELECTION ACTION BAR (Bulk Actions) =====
+           White background — only column headers use Blue-Grey.
+           Fixed min-height matches .page-header so the table never shifts
+           when the bar appears/disappears. */
+        .selection-bar {
+            display: none;
+            align-items: center;
+            padding: 0 24px;
+            min-height: 57px;
+            /* matches .page-header height — no layout shift */
+            box-sizing: border-box;
+            background: #fff;
+            /* white — same as page-header */
+            border-bottom: 1px solid #e9ecef;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .selection-bar.show {
+            display: flex;
+        }
+
+        .sel-btn {
+            padding: 6px 14px;
+            background: white;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .sel-btn:hover {
+            background: #f0f4ff;
+            border-color: #4285f4;
+            color: #4285f4;
+        }
+
+        .sel-icon-btn {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .sel-icon-btn:hover {
+            background: #f0f4ff;
+            border-color: #4285f4;
+            color: #4285f4;
+        }
+
+        .sel-divider {
+            width: 1px;
+            height: 24px;
+            background: #e0e0e0;
+            margin: 0 6px;
+        }
+
+        .sel-count {
+            margin-left: auto;
+            font-size: 13px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sel-count-num {
+            color: #8B1A1A;
+            /* GiHon maroon */
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .sel-close {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            margin-left: 12px;
+        }
+
+        .sel-close:hover {
+            background: #fef2f2;
+            border-radius: 4px;
+        }
+
+        /* Selection Kebab Dropdown */
+        .sel-kebab-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            min-width: 140px;
+            z-index: 200;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .sel-kebab-dropdown.show {
+            display: block;
+        }
+
+        .sel-kebab-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .sel-kebab-item:hover {
+            background: #f5f8ff;
+        }
+
+        .sel-kebab-item.danger {
+            color: #dc2626;
+        }
+
+        .sel-kebab-item.danger:hover {
+            background: #fef2f2;
+        }
+
+        /* Bulk Update Modal */
+        .bu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .bu-overlay.show {
+            display: flex;
+        }
+
+        .bu-modal {
+            background: white;
+            width: 520px;
+            border-radius: 10px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            padding: 28px;
+        }
+
+        .bu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .bu-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bu-close {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .bu-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .bu-fields {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .bu-field-wrap {
+            flex: 1;
+            position: relative;
+        }
+
+        .bu-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .bu-select:focus {
+            border-color: #4285f4;
+            outline: none;
+        }
+
+        .bu-note {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .bu-note strong {
+            color: #e74c3c;
+        }
+
+        .bu-footer {
+            display: flex;
+            gap: 10px;
+        }
+
+        .bu-btn-update {
+            padding: 10px 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .bu-btn-update:hover {
+            background: #3367d6;
+        }
+
+        .bu-btn-cancel {
+            padding: 10px 24px;
+            background: #3c3c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .bu-btn-cancel:hover {
+            background: #555;
+        }
+
+        /* Kebab Dropdown Menu */
+        .kebab-wrapper {
+            position: relative;
+        }
+
+        .kebab-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 6px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+            min-width: 220px;
+            z-index: 1000;
+            overflow: visible;
+            padding: 6px 0;
+        }
+
+        .kebab-dropdown.show {
+            display: block;
+        }
+
+        .kebab-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+            position: relative;
+        }
+
+        .kebab-item:hover {
+            background: #f5f7fa;
+        }
+
+        .kebab-item .ki-icon {
+            width: 18px;
+            text-align: center;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .kebab-item .ki-arrow {
+            margin-left: auto;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* Sort by - highlighted blue */
+        .kebab-item.ki-sort {
+            position: relative;
+        }
+
+        .kebab-item.ki-sort:hover {
+            background: #f5f7fa;
+        }
+
+        /* Sort Submenu */
+        .sort-submenu {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: -6px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+            min-width: 190px;
+            padding: 6px 0;
+            z-index: 1001;
+        }
+
+        .kebab-item.ki-sort:hover .sort-submenu,
+        .kebab-item:hover>.sort-submenu {
+            display: block;
+        }
+
+        .sort-submenu::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 20px;
+            height: 100%;
+        }
+
+        .sort-sub-item {
+            padding: 9px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .sort-sub-item:hover {
+            background: #f5f7fa;
+        }
+
+        .sort-sub-item.active {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .sort-sub-item.active:hover {
+            background: #f5f7fa;
+        }
+
+        .sort-sub-item .sort-dir {
+            margin-left: auto;
+            font-size: 14px;
+        }
+
+        /* Export submenu */
+        .export-submenu {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: -6px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+            min-width: 170px;
+            padding: 6px 0;
+            z-index: 1001;
+        }
+
+        .kebab-item.ki-export:hover .export-submenu {
+            display: block;
+        }
+
+        .export-submenu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 20px;
+            height: 100%;
+        }
+
+        .export-sub-item {
+            padding: 9px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .export-sub-item:hover {
+            background: #f5f7fa;
+        }
+
+        /* ===== Export PO Modal ===== */
+        .export-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 10000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 40px;
+        }
+
+        .export-modal-overlay.show {
+            display: flex;
+        }
+
+        .export-modal {
+            background: white;
+            border-radius: 8px;
+            width: 680px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .export-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .export-modal-header h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .export-modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #e74c3c;
+            cursor: pointer;
+        }
+
+        .export-modal-close:hover {
+            color: #c0392b;
+        }
+
+        .export-modal-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: #e8f0fe;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .export-modal-info .info-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .export-modal-body {
+            padding: 24px;
+        }
+
+        .export-field-group {
+            margin-bottom: 20px;
+        }
+
+        .export-field-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e74c3c;
+            margin-bottom: 8px;
+        }
+
+        .export-field-label.normal {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .export-field-select {
+            width: 100%;
+            max-width: 380px;
+            padding: 9px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #333;
+            background: white;
+        }
+
+        .export-radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .export-radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .export-radio-group input[type="radio"] {
+            accent-color: #4285f4;
+        }
+
+        .export-pii-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #555;
+            margin-top: 16px;
+        }
+
+        .export-password-group {
+            margin-top: 20px;
+        }
+
+        .export-password-group label {
+            font-size: 13px;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .export-password-wrap {
+            position: relative;
+            max-width: 380px;
+        }
+
+        .export-password-wrap input {
+            width: 100%;
+            padding: 9px 40px 9px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .export-password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .export-password-hint {
+            font-size: 11px;
+            color: #e74c3c;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .export-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .export-note strong {
+            color: #333;
+        }
+
+        .export-note a {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .export-note a:hover {
+            text-decoration: underline;
+        }
+
+        .export-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .export-modal-footer .btn-export {
+            padding: 9px 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .export-modal-footer .btn-export:hover {
+            background: #3367d6;
+        }
+
+        .export-modal-footer .btn-cancel {
+            padding: 9px 24px;
+            background: none;
+            color: #555;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .export-modal-footer .btn-cancel:hover {
+            color: #333;
+        }
+
+        /* ===== Import PO Modal ===== */
+        .import-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f7fa;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .import-overlay.show {
+            display: flex;
+        }
+
+        .import-header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 32px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .import-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 18px;
+        }
+
+        .import-close {
+            position: absolute;
+            top: 16px;
+            right: 24px;
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #e74c3c;
+            cursor: pointer;
+        }
+
+        .import-close:hover {
+            color: #c0392b;
+        }
+
+        /* Stepper */
+        .import-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding-bottom: 16px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #aaa;
+            font-weight: 500;
+        }
+
+        .step-item.active {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .step-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .step-item.active .step-num {
+            background: #4285f4;
+            color: white;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: #e0e0e0;
+            margin: 0 12px;
+        }
+
+        /* Body */
+        .import-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .import-content {
+            max-width: 780px;
+            width: 100%;
+        }
+
+        /* Dropzone */
+        .import-dropzone {
+            border: 2px dashed #c8d6e5;
+            border-radius: 10px;
+            padding: 48px 24px;
+            text-align: center;
+            background: white;
+            margin-bottom: 24px;
+            transition: border-color 0.2s, background 0.2s;
+            cursor: pointer;
+        }
+
+        .import-dropzone.dragover {
+            border-color: #4285f4;
+            background: #eff6ff;
+        }
+
+        .import-dropzone-icon {
+            width: 56px;
+            height: 56px;
+            background: #eff6ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .import-dropzone-icon svg {
+            color: #4285f4;
+        }
+
+        .import-dropzone-text {
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .import-choose-btn {
+            display: inline-flex;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .import-choose-btn span:first-child {
+            padding: 9px 16px;
+        }
+
+        .import-choose-btn span:last-child {
+            padding: 9px 10px;
+            background: rgba(0, 0, 0, 0.12);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .import-choose-btn:hover {
+            background: #3367d6;
+        }
+
+        .import-file-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 14px;
+        }
+
+        .import-sample-link {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 28px;
+        }
+
+        .import-sample-link a {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .import-sample-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Options */
+        .import-option-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .import-option-row label {
+            font-size: 13px;
+            color: #555;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .import-option-row select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            min-width: 240px;
+            color: #333;
+            background: white;
+        }
+
+        .import-checkbox-row {
+            margin-bottom: 8px;
+        }
+
+        .import-checkbox-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .import-checkbox-hint {
+            font-size: 12px;
+            color: #888;
+            margin-left: 26px;
+            margin-top: 4px;
+            margin-bottom: 24px;
+        }
+
+        /* Page Tips */
+        .import-tips {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px 24px;
+        }
+
+        .import-tips-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .import-tips ul {
+            margin: 0;
+            padding: 0 0 0 20px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .import-footer {
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .import-next-btn {
+            padding: 10px 28px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .import-next-btn:hover {
+            background: #3367d6;
+        }
+
+        .import-cancel-btn {
+            padding: 10px 28px;
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .import-cancel-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .import-file-selected {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .import-file-selected.show {
+            display: flex;
+        }
+
+        .import-file-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .import-file-size {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .import-file-remove {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* PO Preferences Panel */
+        .po-pref-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.15);
+            z-index: 9998;
+        }
+
+        .po-pref-overlay.show {
+            display: block;
+        }
+
+        .po-pref-panel {
+            position: fixed;
+            top: 0;
+            right: -520px;
+            bottom: 0;
+            width: 500px;
+            background: white;
+            z-index: 9999;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+            transition: right 0.25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .po-pref-panel.show {
+            right: 0;
+        }
+
+        .po-pref-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 24px;
+        }
+
+        .po-pref-tabs {
+            display: flex;
+            gap: 0;
+        }
+
+        .po-pref-tab {
+            padding: 16px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .po-pref-tab.active {
+            color: #1a1f3a;
+            border-bottom-color: #3b82f6;
+        }
+
+        .po-pref-tab:hover {
+            color: #1a1f3a;
+        }
+
+        .po-pref-header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .po-pref-all-link {
+            font-size: 13px;
+            color: #3b82f6;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .po-pref-all-link:hover {
+            text-decoration: underline;
+        }
+
+        .po-pref-close {
+            font-size: 20px;
+            color: #ef4444;
+            cursor: pointer;
+            background: none;
+            border: none;
+            line-height: 1;
+        }
+
+        .po-pref-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px;
+        }
+
+        .po-pref-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1f3a;
+            margin-bottom: 16px;
+        }
+
+        .po-pref-radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .po-pref-radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .po-pref-radio-label input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #8B1A1A;
+            cursor: pointer;
+        }
+
+        .po-pref-field-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1f3a;
+            margin-bottom: 8px;
+        }
+
+        .po-pref-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 24px;
+        }
+
+        .po-pref-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .po-pref-save {
+            padding: 10px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .po-pref-save:hover {
+            background: #2563eb;
+        }
+    
+        #clipTextItem, [onclick*="ClipText"], [onclick*="TextMode"], [onclick*="WrapText"] {
+            background: #8B1A1A !important;
+            color: white !important;
+            margin: 0 8px 4px 8px !important;
+            border-radius: 6px !important;
+            width: calc(100% - 16px) !important;
+        }
+
+        #clipTextItem:hover, [onclick*="ClipText"]:hover, [onclick*="TextMode"]:hover, [onclick*="WrapText"]:hover {
+            background: #6d1515 !important;
+            color: white !important;
+        }
+        
+        #clipTextItem *, [onclick*="ClipText"] *, [onclick*="TextMode"] *, [onclick*="WrapText"] * {
+            color: white !important;
+            fill: white !important;
+            stroke: white !important;
+        }
+
+    </style>
+    <link rel="stylesheet" href="/css/list-table.css">
+</head>
+
+<body>
+    <!-- Sidebar Container -->
+    <div id="sidebarContainer"></div>
+
+    <!-- Toast Notification -->
+    <div class="clip-toast" id="clipToast">
+        <span class="clip-toast-icon">✔</span>
+        <span class="clip-toast-text" id="clipToastText"></span>
+        <button class="clip-toast-close" onclick="hideClipToast()">×</button>
+    </div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- ===== LIST VIEW WRAPPER — flex-column scroll container ===== -->
+            <div id="listView">
+                <!-- Selection Action Bar -->
+                <div class="selection-bar" id="selectionBar">
+                    <button class="sel-icon-btn" title="PDF" onclick="selPdfPO()"><svg width="14" height="14"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg></button>
+                    <button class="sel-icon-btn" title="Print" onclick="selPrintPO()"><svg width="14" height="14"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9V2h12v7" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg></button>
+                    <div class="sel-kebab-wrap" style="position:relative;display:inline-block;">
+                        <button class="sel-icon-btn" title="More" onclick="toggleSelKebab(event)">⋯</button>
+                        <div class="sel-kebab-dropdown" id="selKebabDropdown">
+                            <div class="sel-kebab-item" onclick="selCancelPO()">Cancel</div>
+                            <div class="sel-kebab-item" onclick="selUncancelPO()">Uncancel</div>
+                            <div class="sel-kebab-item danger" onclick="selDeletePO()">Delete</div>
+                        </div>
+                    </div>
+                    <div class="sel-count">
+                        <span class="sel-count-num" id="selCountNum">0</span>
+                        <span>Selected</span>
+                    </div>
+                    <button class="sel-close" onclick="clearAllSelections()">Esc ✕</button>
+                </div>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-title-wrapper">
+                        <h1 class="page-title" onclick="togglePOFilterDropdown()">
+                            <span id="poFilterLabel">All Purchase Orders</span>
+                            <span class="dropdown-arrow" id="poFilterArrow">▲</span>
+                        </h1>
+                        <!-- PO Filter Dropdown -->
+                        <div class="po-filter-dropdown" id="poFilterDropdown">
+                            <div class="po-filter-search">
+                                <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg></span>
+                                <input type="text" id="poFilterSearchInput" placeholder=""
+                                    oninput="filterPOFilterItems()">
+                            </div>
+                            <div class="po-filter-list" id="poFilterList">
+                                <div class="po-filter-item active" data-filter="all"
+                                    onclick="selectPOFilter('all', 'All Purchase Orders')">
+                                    <span>All</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="draft"
+                                    onclick="selectPOFilter('draft', 'Draft')">
+                                    <span>Draft</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+
+                                <div class="po-filter-item" data-filter="issued"
+                                    onclick="selectPOFilter('issued', 'Issued')">
+                                    <span>Issued</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="billed"
+                                    onclick="selectPOFilter('billed', 'Billed')">
+                                    <span>Billed</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="partially_billed"
+                                    onclick="selectPOFilter('partially_billed', 'Partially Billed')">
+                                    <span>Partially Billed</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="closed"
+                                    onclick="selectPOFilter('closed', 'Closed')">
+                                    <span>Closed</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="cancelled"
+                                    onclick="selectPOFilter('cancelled', 'Cancelled')">
+                                    <span>Cancelled</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="partially_received"
+                                    onclick="selectPOFilter('partially_received', 'Partially Received')">
+                                    <span>Partially Received</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="received"
+                                    onclick="selectPOFilter('received', 'Received')">
+                                    <span>Received</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="pending_received"
+                                    onclick="selectPOFilter('pending_received', 'Pending Received')">
+                                    <span>Pending Received</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+
+                                <div class="po-filter-item" data-filter="billed_not_received"
+                                    onclick="selectPOFilter('billed_not_received', 'Billed &amp; Not Received')">
+                                    <span>Billed &amp; Not Received</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                                <div class="po-filter-item" data-filter="received_not_billed"
+                                    onclick="selectPOFilter('received_not_billed', 'Received &amp; Not Billed')">
+                                    <span>Received &amp; Not Billed</span><span class="po-filter-star"
+                                        onclick="event.stopPropagation(); togglePOStar(this)">☆</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="global-search-container">
+                        <span class="global-search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="text" class="global-search-input" id="poSearchInput"
+                            placeholder="Search purchase orders..." oninput="searchPurchaseOrders()">
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-transit" onclick="goToTransitReceives()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="vertical-align:middle;margin-right:4px;">
+                                <path
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                            </svg> In Transit Receives
+                        </button>
+                        <div class="btn-new-group">
+                            <button class="btn-new" onclick="createNewPurchaseOrder()">
+                                <span>+</span> New
+                            </button>
+                        </div>
+                        <div class="kebab-wrapper">
+                            <button class="btn-more" onclick="toggleKebabMenu(event)">⋯</button>
+                            <div class="kebab-dropdown" id="kebabDropdown">
+                                <!-- Sort by -->
+                                <div class="kebab-item ki-sort">
+                                    <span class="ki-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M11 5h10M11 9h7M11 13h4M3 4l3 3 3-3M6 7v10" />
+                                        </svg></span>
+                                    <span>Sort by</span>
+                                    <span class="ki-arrow">›</span>
+                                    <!-- Sort Submenu -->
+                                    <div class="sort-submenu">
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortPOBy('date', this)">Date</div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortPOBy('po_number', this)">Purchase
+                                            Order#
+                                        </div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortPOBy('vendor_name', this)">Vendor Name
+                                        </div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortPOBy('amount', this)">Amount</div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortPOBy('delivery_date', this)">Delivery
+                                            Date
+                                        </div>
+                                        <div class="sort-sub-item active"
+                                            onclick="event.stopPropagation(); sortPOBy('created_at', this)">Created Time
+                                            <span class="sort-dir">↓</span>
+                                        </div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); sortPOBy('updated_at', this)">Last
+                                            Modified
+                                            Time</div>
+                                    </div>
+                                </div>
+                                <!-- Import -->
+                                <div class="kebab-item" onclick="importPurchaseOrders()">
+                                    <span class="ki-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                                        </svg></span>
+                                    <span>Import Purchase Orders</span>
+                                </div>
+                                <!-- Export Purchase Orders -->
+                                <div class="kebab-item" style="position:relative;">
+                                    <span class="ki-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                                        </svg></span>
+                                    <span>Export</span>
+                                    <span class="ki-arrow">›</span>
+                                    <div class="sort-submenu" style="min-width:210px;">
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); exportAllPO(); document.getElementById('kebabDropdown').classList.remove('show');">
+                                            Export Purchase Orders</div>
+                                        <div class="sort-sub-item"
+                                            onclick="event.stopPropagation(); exportCurrentPOView(); document.getElementById('kebabDropdown').classList.remove('show');">
+                                            Export Current View</div>
+                                    </div>
+                                </div>
+                                <!-- Refresh List -->
+                                <div class="kebab-item" onclick="refreshPOList()">
+                                    <span class="ki-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <polyline points="23 4 23 10 17 10" />
+                                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                                        </svg></span>
+                                    <span>Refresh List</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <h2 class="empty-state-title">Start Managing Your Purchase Activities!</h2>
+                    <p class="empty-state-subtitle">Create, customize, and send professional Purchase Orders to your
+                        vendors.</p>
+                    <button class="btn-create" onclick="createNewPurchaseOrder()">CREATE NEW PURCHASE ORDER</button>
+                </div>
+
+                <!-- Purchase Orders Container (hidden when empty) -->
+                <div class="orders-container" id="ordersContainer" style="display: none;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="col-settings-wrap">
+                                        <span class="cust-filter-icon" onclick="toggleColSettings(event)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#8B1A1A">
+                                                <path
+                                                    d="M3 5h2v2H3V5zm4 0h14v2H7V5zm-4 6h2v2H3v-2zm4 0h14v2H7v-2zm-4 6h2v2H3v-2zm4 0h14v2H7v-2z" />
+                                            </svg>
+                                        </span>
+                                        <div class="col-settings-dropdown" id="colSettingsDropdown">
+                                            <div class="col-settings-item active" onclick="openCustomizeColumns()">
+                                                <span class="col-settings-icon"><svg width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                                        <path
+                                                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                                    </svg></span> Customize Columns
+                                            </div>
+                                            <div class="col-settings-item" id="clipTextItem" onclick="toggleClipText()">
+                                                <span class="col-settings-icon" id="poClipIcon"><svg width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                                                    </svg></span> <span id="clipTextLabel">Clip Text</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th><input type="checkbox" class="row-checkbox" id="selectAllPO"
+                                        onclick="toggleSelectAllPO(this)"></th>
+                                <th>DATE</th>
+                                <th>PURCHASE ORDER#</th>
+                                <th>REFERENCE#</th>
+                                <th>VENDOR NAME</th>
+                                <th>STATUS</th>
+                                <th style="text-align:center;">RECEIVED</th>
+                                <th style="text-align:center;">BILLED</th>
+                                <th>AMOUNT</th>
+                                <th>CREATED BY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody">
+                            <!-- Orders will be added here -->
+                        </tbody>
+                    </table>
+                    <div id="poPaginationContainer"></div>
+                </div><!-- /.orders-container -->
+
+            </div><!-- /#listView -->
+        </div>
+    </div>
+
+    <!-- Customize Columns Modal -->
+    <div class="cc-overlay" id="ccOverlay">
+        <div class="cc-modal">
+            <div class="cc-header">
+                <div class="cc-header-left">
+                    <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="#333" stroke-width="1.8"
+                        stroke-linecap="round">
+                        <line x1="3" y1="4" x2="15" y2="4" />
+                        <circle cx="6" cy="4" r="1.5" fill="#333" />
+                        <line x1="3" y1="9" x2="15" y2="9" />
+                        <circle cx="11" cy="9" r="1.5" fill="#333" />
+                        <line x1="3" y1="14" x2="15" y2="14" />
+                        <circle cx="8" cy="14" r="1.5" fill="#333" />
+                    </svg>
+                    Customize Columns
+                </div>
+                <div class="cc-header-right">
+                    <span class="cc-count" id="ccCount">10 of 12 Selected</span>
+                    <button class="cc-close" onclick="closeCustomizeColumns()">✕</button>
+                </div>
+            </div>
+            <div class="cc-search">
+                <input type="text" id="ccSearchInput" placeholder="Search" oninput="filterCCItems()">
+            </div>
+            <div class="cc-list" id="ccList">
+                <!-- items rendered by JS -->
+            </div>
+            <div class="cc-footer">
+                <button class="cc-btn-save" onclick="saveCustomizeColumns()">Save</button>
+                <button class="cc-btn-cancel" onclick="closeCustomizeColumns()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Update Modal -->
+    <div class="bu-overlay" id="buOverlay">
+        <div class="bu-modal">
+            <div class="bu-header">
+                <span class="bu-title">Bulk Update Purchase Orders</span>
+                <button class="bu-close" onclick="closeBulkUpdate()">✕</button>
+            </div>
+            <div class="bu-desc">Choose a field from the dropdown and update with new information.</div>
+            <div class="bu-fields">
+                <div class="bu-field-wrap">
+                    <select class="bu-select" id="buField" onchange="onBuFieldChange()">
+                        <option value="">Select field</option>
+                        <option value="status">Status</option>
+                        <option value="vendor">Vendor Name</option>
+                        <option value="payment_terms">Payment Terms</option>
+                        <option value="receive_status">Receive Status</option>
+                        <option value="bill_status">Bill Status</option>
+                    </select>
+                </div>
+                <div class="bu-field-wrap">
+                    <select class="bu-select" id="buValue">
+                        <option value="">Select value</option>
+                    </select>
+                </div>
+            </div>
+            <div class="bu-note">
+                <strong>Note:</strong> All the selected items will be updated with the new information and you cannot
+                undo this action.
+            </div>
+            <div class="bu-footer">
+                <button class="bu-btn-update" onclick="executeBulkUpdate()">Update</button>
+                <button class="bu-btn-cancel" onclick="closeBulkUpdate()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PO Preferences Overlay -->
+    <div class="po-pref-overlay" id="poPrefOverlay" onclick="closePOPreferences()"></div>
+
+    <!-- PO Preferences Panel -->
+    <div class="po-pref-panel" id="poPrefPanel">
+        <div class="po-pref-header">
+            <div class="po-pref-tabs">
+                <button class="po-pref-tab active" onclick="switchPOPrefTab('preferences', this)">Preferences</button>
+                <button class="po-pref-tab" onclick="switchPOPrefTab('fields', this)">Field Customization</button>
+            </div>
+            <div class="po-pref-header-right">
+                <a class="po-pref-all-link" onclick="closePOPreferences()">All Preferences</a>
+                <button class="po-pref-close" onclick="closePOPreferences()">×</button>
+            </div>
+        </div>
+        <div class="po-pref-body" id="poPrefBody">
+            <!-- Preferences Tab Content -->
+            <div id="poPrefTabPreferences">
+                <div class="po-pref-section-title">When do you want your Purchase Orders to be closed?</div>
+                <div class="po-pref-radio-group">
+                    <label class="po-pref-radio-label">
+                        <input type="radio" name="poCloseOption" value="receive"> When a Purchase Receive is recorded
+                    </label>
+                    <label class="po-pref-radio-label">
+                        <input type="radio" name="poCloseOption" value="bill" checked> When a Bill is created
+                    </label>
+                    <label class="po-pref-radio-label">
+                        <input type="radio" name="poCloseOption" value="both"> When Receives and Bills are recorded
+                    </label>
+                </div>
+
+                <div class="po-pref-field-label">Terms & Conditions</div>
+                <textarea class="po-pref-textarea" id="poPrefTerms"
+                    placeholder="Enter your terms and conditions..."></textarea>
+
+                <div class="po-pref-field-label">Notes</div>
+                <textarea class="po-pref-textarea" id="poPrefNotes" placeholder="Enter any notes..."></textarea>
+
+                <button class="po-pref-save" onclick="savePOPreferences()">Save</button>
+            </div>
+
+            <!-- Field Customization Tab Content (hidden by default) -->
+            <div id="poPrefTabFields" style="display: none;">
+                <div class="po-pref-section-title">Field Customization</div>
+                <p style="color: #6b7280; font-size: 14px;">Customize the fields that appear in your Purchase Orders.
+                    This feature is coming soon.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Script -->
+    <script src="/js/pagination.js"></script>
+    <script src="/js/layout.js"></script>
+    <script src="/js/report-export.js"></script>
+    <script>
+        // Create new purchase order
+        function createNewPurchaseOrder() {
+            window.location.href = '/new-purchase-order.html';
+        }
+
+        // Go to In Transit Receives
+        function goToTransitReceives() {
+            window.location.href = '/purchase-receives.html?filter=in-transit';
+        }
+
+        let allPurchasesList = [];
+        let currentPOFilter = 'all';
+
+        // ===== PO Filter Dropdown Functions =====
+        function togglePOFilterDropdown() {
+            const dropdown = document.getElementById('poFilterDropdown');
+            const arrow = document.getElementById('poFilterArrow');
+            dropdown.classList.toggle('open');
+            arrow.classList.toggle('open');
+            if (dropdown.classList.contains('open')) {
+                document.getElementById('poFilterSearchInput').focus();
+            }
+        }
+
+        function closePOFilterDropdown() {
+            document.getElementById('poFilterDropdown').classList.remove('open');
+            document.getElementById('poFilterArrow').classList.remove('open');
+            document.getElementById('poFilterSearchInput').value = '';
+            filterPOFilterItems();
+        }
+
+        function filterPOFilterItems() {
+            const query = (document.getElementById('poFilterSearchInput').value || '').toLowerCase();
+            document.querySelectorAll('.po-filter-item').forEach(item => {
+                const text = item.querySelector('span').textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function selectPOFilter(filter, label) {
+            currentPOFilter = filter;
+            document.getElementById('poFilterLabel').textContent = label === 'All Purchase Orders' ? 'All Purchase Orders' : label;
+
+            // Update active state
+            document.querySelectorAll('.po-filter-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-filter') === filter);
+            });
+
+            closePOFilterDropdown();
+            applyPOFilter();
+        }
+
+        function applyPOFilter() {
+            if (currentPOFilter === 'all') {
+                renderFilteredPOs(allPurchasesList);
+                return;
+            }
+
+            const filtered = allPurchasesList.filter(po => {
+                const status = (po.status || 'DRAFT').toUpperCase();
+                const recvStatus = (po.receive_status || 'NOT RECEIVED').toUpperCase();
+                const billSt = (po.bill_status || 'UNBILLED').toUpperCase();
+
+                switch (currentPOFilter) {
+                    case 'draft': return status === 'DRAFT';
+                    case 'pending_approval': return status === 'PENDING APPROVAL' || status === 'PENDING_APPROVAL';
+                    case 'approved': return status === 'APPROVED';
+                    case 'issued': return status === 'ISSUED';
+                    case 'billed': return billSt === 'BILLED';
+                    case 'partially_billed': return billSt === 'PARTIALLY BILLED';
+                    case 'closed': return status === 'CLOSED';
+                    case 'cancelled': return status === 'CANCELLED' || status === 'CANCELED';
+                    case 'partially_received': return recvStatus === 'PARTIALLY RECEIVED';
+                    case 'received': return recvStatus === 'RECEIVED';
+                    case 'pending_received': return (recvStatus === 'NOT RECEIVED' || recvStatus === '' || recvStatus === 'UNRECEIVED') && status !== 'DRAFT' && status !== 'CANCELLED' && status !== 'CANCELED';
+                    case 'dropshipped': return status === 'DROPSHIPPED';
+                    case 'backorder': return status === 'BACKORDER';
+                    case 'unbilled_backorder': return status === 'BACKORDER' && billSt === 'UNBILLED';
+                    case 'billed_not_received': return billSt === 'BILLED' && recvStatus !== 'RECEIVED';
+                    case 'received_not_billed': return recvStatus === 'RECEIVED' && billSt === 'UNBILLED';
+                    default: return true;
+                }
+            });
+
+            renderFilteredPOs(filtered);
+        }
+
+        function renderFilteredPOs(list) {
+            if (list.length === 0) {
+                document.getElementById('emptyState').style.display = 'flex';
+                document.getElementById('ordersContainer').style.display = 'none';
+                document.getElementById('poPaginationContainer').innerHTML = '';
+                return;
+            }
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('ordersContainer').style.display = 'block';
+
+            window.poPager = Pagination.create({
+                data: list, perPage: 14, containerId: 'poPaginationContainer',
+                onPageChange: function (pageData) { renderPORows(pageData); }
+            });
+        }
+
+        // Helper: build dot indicator HTML
+        function buildDotIndicator(value, type) {
+            // type: 'received' or 'billed'
+            const v = (value || '').toUpperCase();
+            let color, title;
+            if (type === 'received') {
+                if (v === 'RECEIVED') { color = '#4285f4'; title = 'Received'; }
+                else { color = '#ccc'; title = 'Not Received'; }
+            } else {
+                if (v === 'BILLED') { color = '#4285f4'; title = 'Billed'; }
+                else { color = '#ccc'; title = 'Unbilled'; }
+            }
+            return `<span title="${title}" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};"></span>`;
+        }
+
+        function renderPORows(pageData) {
+            const tbody = document.getElementById('ordersBody');
+            tbody.innerHTML = '';
+            pageData.forEach(po => {
+                const date = po.date ? new Date(po.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                const mainStatus = (po.status || 'DRAFT').toUpperCase();
+                const amount = parseFloat(po.total_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 3 });
+
+                const statusColors = {
+                    'DRAFT': '#856404; background: #fff3cd',
+                    'ISSUED': '#084298; background: #cfe2ff',
+                    'CLOSED': '#0a3622; background: #d1e7dd',
+                    'CANCELLED': '#842029; background: #f8d7da',
+                    'APPROVED': '#0d6efd; background: #cfe2ff',
+                };
+                const statusColorStr = statusColors[mainStatus] || '#666; background: #f0f0f0';
+
+                const receivedDot = buildDotIndicator(po.receive_status, 'received');
+                const billedDot = buildDotIndicator(po.bill_status, 'billed');
+
+                const row = document.createElement('tr');
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', () => { window.location.href = '/purchase-order-detail.html?id=' + po.id; });
+                row.addEventListener('mouseenter', () => { row.style.background = '#f5f8ff'; });
+                row.addEventListener('mouseleave', () => { row.style.background = ''; });
+                row.innerHTML = `
+                    <td></td>
+                    <td><input type="checkbox" class="row-checkbox po-row-check" onclick="event.stopPropagation()"></td>
+                    <td>${date}</td>
+                    <td>Head Office</td>
+                    <td style="color: #3366cc; font-weight: 500;">${po.po_number || 'PO-' + po.id}</td>
+                    <td>${po.reference_number || '-'}</td>
+                    <td>${po.supplier_name || '-'}</td>
+                    <td><span style="padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; color: ${statusColorStr}">${mainStatus}</span></td>
+                    <td style="text-align:center;">${receivedDot}</td>
+                    <td style="text-align:center;">${billedDot}</td>
+                    <td style="font-weight: 500;">${po.currency_code || 'PHP'}${amount}${(po.currency_code && po.currency_code !== 'PHP') ? '<br><span style="font-size:11px;color:#888;font-weight:400;">PHP' + (parseFloat(po.total_amount || 0) * (parseFloat(po.exchange_rate) || 1)).toLocaleString('en-PH', { minimumFractionDigits: 3 }) + '</span>' : ''}</td>
+                    <td>${po.created_by_name || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function togglePOStar(el) {
+            el.classList.toggle('favorited');
+            el.textContent = el.classList.contains('favorited') ? '★' : '☆';
+        }
+
+        // Teleport colSettingsDropdown to <body> on first call so it is
+        // never clipped by the sticky <th> stacking context.
+        let _poDropTeleported = false;
+        function _teleportPoDrop() {
+            if (_poDropTeleported) return;
+            const dd = document.getElementById('colSettingsDropdown');
+            if (dd) { document.body.appendChild(dd); _poDropTeleported = true; }
+        }
+
+        // Column Settings Dropdown
+        function toggleColSettings(e) {
+            e.stopPropagation();
+            _teleportPoDrop();
+            const dd = document.getElementById('colSettingsDropdown');
+            const icon = e.currentTarget || e.target.closest('.cust-filter-icon');
+            const isOpen = dd.classList.contains('show');
+            dd.classList.toggle('show', !isOpen);
+            if (!isOpen && icon) {
+                const rect = icon.getBoundingClientRect();
+                dd.style.position = 'fixed';
+                dd.style.top  = (rect.bottom + 8) + 'px';
+                dd.style.left = rect.left + 'px';
+            }
+        }
+
+        let isClipMode = false;
+
+        function toggleClipText() {
+            const table = document.querySelector('.orders-table');
+            isClipMode = !isClipMode;
+            const clipSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
+            const wrapSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>';
+            const icon = document.getElementById('poClipIcon');
+            if (isClipMode) {
+                table.classList.add('clip-text');
+                if (icon) icon.innerHTML = wrapSvg;
+                document.getElementById('clipTextLabel').textContent = 'Wrap Text';
+                showToast('Clip Text enabled - Click Wrap Text to expand');
+            } else {
+                table.classList.remove('clip-text');
+                if (icon) icon.innerHTML = clipSvg;
+                document.getElementById('clipTextLabel').textContent = 'Clip Text';
+                showToast('Wrap Text enabled - Text will wrap');
+            }
+            document.getElementById('colSettingsDropdown').classList.remove('show');
+        }
+
+        function hideClipToast() {
+            document.getElementById('clipToast').classList.remove('show');
+            clearTimeout(window._clipToastTimer);
+        }
+
+        // Select All Checkboxes
+        function toggleSelectAllPO(el) {
+            const checkboxes = document.querySelectorAll('.po-row-check');
+            checkboxes.forEach(cb => cb.checked = el.checked);
+            updateSelectionBar();
+        }
+
+        // Selection bar logic
+        function updateSelectionBar() {
+            const checked = document.querySelectorAll('.po-row-check:checked');
+            const bar = document.getElementById('selectionBar');
+            const header = document.querySelector('.page-header');
+            if (checked.length > 0) {
+                bar.classList.add('show');
+                header.style.display = 'none';
+                document.getElementById('selCountNum').textContent = checked.length;
+            } else {
+                bar.classList.remove('show');
+                header.style.display = '';
+            }
+        }
+
+        function clearAllSelections() {
+            document.querySelectorAll('.po-row-check').forEach(cb => cb.checked = false);
+            document.getElementById('selectAllPO').checked = false;
+            updateSelectionBar();
+        }
+
+        // Listen for checkbox changes on dynamically created rows
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('po-row-check')) {
+                updateSelectionBar();
+                // Update select-all state
+                const all = document.querySelectorAll('.po-row-check');
+                const checked = document.querySelectorAll('.po-row-check:checked');
+                document.getElementById('selectAllPO').checked = all.length > 0 && all.length === checked.length;
+            }
+        });
+
+        // Esc key to clear selection
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') clearAllSelections();
+        });
+
+        // Selection action helpers
+        function getSelectedPOIds() {
+            const ids = [];
+            document.querySelectorAll('.po-row-check:checked').forEach(cb => {
+                const row = cb.closest('tr');
+                if (row) {
+                    const link = row.querySelector('td[style*="color: #3366cc"]');
+                    if (link) {
+                        const onclick = row.getAttribute('onclick') || '';
+                        // Get ID from click handler
+                        const poNum = link.textContent;
+                        const po = allPurchasesList.find(p => (p.po_number || 'PO-' + p.id) === poNum);
+                        if (po) ids.push(po.id);
+                    }
+                }
+            });
+            return ids;
+        }
+
+        function bulkUpdatePO() {
+            document.getElementById('buOverlay').classList.add('show');
+            document.getElementById('buField').value = '';
+            document.getElementById('buValue').innerHTML = '<option value="">Select value</option>';
+        }
+
+        function closeBulkUpdate() {
+            document.getElementById('buOverlay').classList.remove('show');
+        }
+
+        function onBuFieldChange() {
+            const field = document.getElementById('buField').value;
+            const valueSel = document.getElementById('buValue');
+            let options = '<option value="">Select value</option>';
+
+            const fieldOptions = {
+                'status': [
+                    { v: 'draft', l: 'Draft' },
+                    { v: 'issued', l: 'Issued' },
+                    { v: 'approved', l: 'Approved' },
+                    { v: 'closed', l: 'Closed' },
+                    { v: 'cancelled', l: 'Cancelled' }
+                ],
+                'vendor': allPurchasesList
+                    .map(p => p.supplier_name)
+                    .filter((v, i, a) => v && a.indexOf(v) === i)
+                    .map(v => ({ v: v, l: v })),
+                'payment_terms': [
+                    { v: 'Due on Receipt', l: 'Due on Receipt' },
+                    { v: 'Net 15', l: 'Net 15' },
+                    { v: 'Net 30', l: 'Net 30' },
+                    { v: 'Net 45', l: 'Net 45' },
+                    { v: 'Net 60', l: 'Net 60' }
+                ],
+                'receive_status': [
+                    { v: 'received', l: 'Received' },
+                    { v: 'not received', l: 'Not Received' },
+                    { v: 'partially received', l: 'Partially Received' }
+                ],
+                'bill_status': [
+                    { v: 'billed', l: 'Billed' },
+                    { v: 'unbilled', l: 'Unbilled' },
+                    { v: 'partially billed', l: 'Partially Billed' }
+                ]
+            };
+
+            if (fieldOptions[field]) {
+                fieldOptions[field].forEach(opt => {
+                    options += `<option value="${opt.v}">${opt.l}</option>`;
+                });
+            }
+            valueSel.innerHTML = options;
+        }
+
+        async function executeBulkUpdate() {
+            const field = document.getElementById('buField').value;
+            const value = document.getElementById('buValue').value;
+            if (!field || !value) { alert('Please select both a field and a value'); return; }
+
+            const ids = getSelectedPOIds();
+            if (!ids.length) { alert('No purchase orders selected'); return; }
+
+            const fieldMap = {
+                'status': 'status',
+                'vendor': 'supplier_name',
+                'payment_terms': 'payment_terms',
+                'receive_status': 'receive_status',
+                'bill_status': 'bill_status'
+            };
+
+            const apiField = fieldMap[field];
+            if (!apiField) return;
+
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ [apiField]: value })
+                    });
+                }
+                closeBulkUpdate();
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) updated successfully');
+            } catch (e) {
+                console.error(e);
+                alert('Error updating purchase orders');
+            }
+        }
+        function generatePOHtml(po) {
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            const orderDate = fmtDate(po.date);
+            const deliveryDate = po.expected_date ? fmtDate(po.expected_date + 'T00:00:00') : '-';
+            const refNumber = po.reference_number || '-';
+            const vendorName = po.supplier_name || '-';
+            const poNumber = po.po_number || ('PO-' + po.id);
+            const ptLabels = { 'due-end-next-month': 'Due end of next month', 'due-end-month': 'Due end of the month', 'due-on-receipt': 'Due on Receipt', 'net-15': 'Net 15', 'net-30': 'Net 30', 'net-45': 'Net 45', 'net-60': 'Net 60' };
+            const paymentTerms = ptLabels[po.payment_terms] || po.payment_terms || '-';
+            let itemsRows = '', subtotal = 0;
+            if (po.items && po.items.length > 0) {
+                po.items.forEach((item, i) => {
+                    const qty = parseFloat(item.quantity) || 0, rate = parseFloat(item.unit_price) || 0, amount = qty * rate;
+                    subtotal += amount;
+                    const desc = item.description || item.purchase_description || '';
+                    itemsRows += `<tr><td style="padding:12px 10px;text-align:center;font-size:13px;border-bottom:1px solid #eee;">${i + 1}</td><td style="padding:12px 10px;font-size:13px;border-bottom:1px solid #eee;"><strong>${item.item_name || '-'}</strong>${desc ? '<br><span style="color:#888;font-size:12px;">' + desc + '</span>' : ''}</td><td style="padding:12px 10px;text-align:right;font-size:13px;border-bottom:1px solid #eee;">${qty.toLocaleString('en-PH', { maximumFractionDigits: 6 })}</td><td style="padding:12px 10px;text-align:right;font-size:13px;border-bottom:1px solid #eee;">${rate.toLocaleString('en-PH', { minimumFractionDigits: 3 })}</td><td style="padding:12px 10px;text-align:right;font-size:13px;border-bottom:1px solid #eee;">${amount.toLocaleString('en-PH', { minimumFractionDigits: 3 })}</td></tr>`;
+                });
+            }
+            const discPct = parseFloat(po.discount_percent) || 0, discAmt = subtotal * (discPct / 100), adj = parseFloat(po.adjustment) || 0, total = subtotal - discAmt + adj;
+            let totalsHtml = `<tr><td colspan="3"></td><td style="padding:8px 10px;text-align:right;font-weight:600;font-size:13px;color:#555;">Sub Total</td><td style="padding:8px 10px;text-align:right;font-size:13px;">${subtotal.toLocaleString('en-PH', { minimumFractionDigits: 3 })}</td></tr>`;
+            if (discPct > 0) totalsHtml += `<tr><td colspan="3"></td><td style="padding:6px 10px;text-align:right;font-size:13px;color:#555;">Discount (${discPct}%)</td><td style="padding:6px 10px;text-align:right;font-size:13px;">${discAmt.toLocaleString('en-PH', { minimumFractionDigits: 3 })}</td></tr>`;
+            if (adj !== 0) totalsHtml += `<tr><td colspan="3"></td><td style="padding:6px 10px;text-align:right;font-size:13px;color:#555;">Adjustment</td><td style="padding:6px 10px;text-align:right;font-size:13px;">${adj.toLocaleString('en-PH', { minimumFractionDigits: 3 })}</td></tr>`;
+            totalsHtml += `<tr><td colspan="3"></td><td style="padding:12px 10px;text-align:right;font-weight:700;font-size:14px;border-top:2px solid #333;">Total</td><td style="padding:12px 10px;text-align:right;font-weight:700;font-size:14px;border-top:2px solid #333;">${(po.currency_code || 'PHP')}${total.toLocaleString('en-PH', { minimumFractionDigits: 3 })}</td></tr>`;
+            return `<div style="font-family:'Inter','Helvetica Neue',Arial,sans-serif;max-width:750px;margin:0 auto;padding:40px;color:#333;background:white;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;"><div><div style="font-size:20px;font-weight:800;color:#1a1a1a;">GIHON</div><div style="font-size:12px;color:#888;margin-top:2px;">Philippines</div><div style="font-size:12px;color:#888;">btambling413@gmail.com</div></div><div style="text-align:right;"><div style="font-size:28px;font-weight:800;color:#1a1a1a;letter-spacing:1px;">PURCHASE ORDER</div><div style="font-size:13px;color:#555;margin-top:4px;"># ${poNumber}</div></div></div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;"><div style="max-width:55%;"><div style="font-size:11px;color:#999;margin-bottom:4px;">Vendor Address</div><div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:16px;">${vendorName}</div></div><div style="text-align:right;"><table style="border-collapse:collapse;margin-left:auto;"><tr><td style="padding:4px 16px 4px 0;font-size:12px;color:#888;text-align:right;">Date :</td><td style="padding:4px 0;font-size:13px;font-weight:500;text-align:right;">${orderDate}</td></tr><tr><td style="padding:4px 16px 4px 0;font-size:12px;color:#888;text-align:right;">Delivery Date :</td><td style="padding:4px 0;font-size:13px;font-weight:500;text-align:right;">${deliveryDate}</td></tr><tr><td style="padding:4px 16px 4px 0;font-size:12px;color:#888;text-align:right;">Ref# :</td><td style="padding:4px 0;font-size:13px;font-weight:500;text-align:right;">${refNumber}</td></tr><tr><td style="padding:4px 16px 4px 0;font-size:12px;color:#888;text-align:right;">Payment Terms :</td><td style="padding:4px 0;font-size:13px;font-weight:500;text-align:right;">${paymentTerms}</td></tr></table></div></div>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:20px;"><thead><tr style="background:#f8f0e8;"><th style="padding:10px;text-align:center;font-size:12px;font-weight:600;color:#8b5e34;width:40px;">#</th><th style="padding:10px;text-align:left;font-size:12px;font-weight:600;color:#8b5e34;">Item & Description</th><th style="padding:10px;text-align:right;font-size:12px;font-weight:600;color:#8b5e34;width:90px;">Qty</th><th style="padding:10px;text-align:right;font-size:12px;font-weight:600;color:#8b5e34;width:100px;">Rate</th><th style="padding:10px;text-align:right;font-size:12px;font-weight:600;color:#8b5e34;width:100px;">Amount</th></tr></thead><tbody>${itemsRows}${totalsHtml}</tbody></table>
+            </div>`;
+        }
+
+        async function selPdfPO() {
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            let allHtml = '';
+            for (let i = 0; i < ids.length; i++) {
+                try {
+                    const res = await fetch('/api/purchases/' + ids[i]);
+                    if (!res.ok) continue;
+                    const po = await res.json();
+                    if (i > 0) allHtml += '<div style="page-break-before:always;"></div>';
+                    allHtml += generatePOHtml(po);
+                } catch (e) { console.error(e); }
+            }
+            const w = window.open('', '_blank');
+            w.document.write(`<!DOCTYPE html><html><head><title>Purchase Orders - PDF</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"><style>@media print{body{margin:0;padding:0;}@page{margin:15mm;}}body{font-family:'Inter',Arial,sans-serif;background:white;margin:0;padding:0;}
+        #clipTextItem, [onclick*="ClipText"], [onclick*="TextMode"], [onclick*="WrapText"] {
+            background: #8B1A1A !important;
+            color: white !important;
+            margin: 0 8px 4px 8px !important;
+            border-radius: 6px !important;
+            width: calc(100% - 16px) !important;
+        }
+
+        #clipTextItem:hover, [onclick*="ClipText"]:hover, [onclick*="TextMode"]:hover, [onclick*="WrapText"]:hover {
+            background: #6d1515 !important;
+            color: white !important;
+        }
+        
+        #clipTextItem *, [onclick*="ClipText"] *, [onclick*="TextMode"] *, [onclick*="WrapText"] * {
+            color: white !important;
+            fill: white !important;
+            stroke: white !important;
+        }
+
+    </style>    <link rel="stylesheet" href="/css/list-table.css">
+</head><body>${allHtml}<script>setTimeout(function(){window.print();},500);<\/script>
+</body></html>`);
+            w.document.close();
+        }
+
+        async function selPrintPO() {
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            let allHtml = '';
+            for (let i = 0; i < ids.length; i++) {
+                try {
+                    const res = await fetch('/api/purchases/' + ids[i]);
+                    if (!res.ok) continue;
+                    const po = await res.json();
+                    if (i > 0) allHtml += '<div style="page-break-before:always;"></div>';
+                    allHtml += generatePOHtml(po);
+                } catch (e) { console.error(e); }
+            }
+            const w = window.open('', '_blank');
+            w.document.write(`<!DOCTYPE html><html><head><title>Purchase Orders - Print</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"><style>@media print{body{margin:0;padding:0;}@page{margin:15mm;}}body{font-family:'Inter',Arial,sans-serif;background:white;margin:0;padding:0;}
+        #clipTextItem, [onclick*="ClipText"], [onclick*="TextMode"], [onclick*="WrapText"] {
+            background: #8B1A1A !important;
+            color: white !important;
+            margin: 0 8px 4px 8px !important;
+            border-radius: 6px !important;
+            width: calc(100% - 16px) !important;
+        }
+
+        #clipTextItem:hover, [onclick*="ClipText"]:hover, [onclick*="TextMode"]:hover, [onclick*="WrapText"]:hover {
+            background: #6d1515 !important;
+            color: white !important;
+        }
+        
+        #clipTextItem *, [onclick*="ClipText"] *, [onclick*="TextMode"] *, [onclick*="WrapText"] * {
+            color: white !important;
+            fill: white !important;
+            stroke: white !important;
+        }
+
+    </style>    <link rel="stylesheet" href="/css/list-table.css">
+</head><body>${allHtml}<script>setTimeout(function(){window.print();},500);<\/script>
+</body></html>`);
+            w.document.close();
+        }
+        function selEmailPO() { }
+        function selConvertToBill() { alert('Convert to Bill - ' + getSelectedPOIds().length + ' purchase orders'); }
+
+        function toggleSelKebab(e) {
+            e.stopPropagation();
+            document.getElementById('selKebabDropdown').classList.toggle('show');
+        }
+        document.addEventListener('click', function () {
+            const dd = document.getElementById('selKebabDropdown');
+            if (dd) dd.classList.remove('show');
+        });
+
+        async function selCancelPO() {
+            document.getElementById('selKebabDropdown').classList.remove('show');
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            if (!confirm('Cancel ' + ids.length + ' purchase order(s)?')) return;
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'CANCELLED' })
+                    });
+                }
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) cancelled');
+            } catch (e) { console.error(e); alert('Error cancelling'); }
+        }
+
+        async function selUncancelPO() {
+            document.getElementById('selKebabDropdown').classList.remove('show');
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            if (!confirm('Uncancel ' + ids.length + ' purchase order(s)? They will revert to ISSUED.')) return;
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'ISSUED' })
+                    });
+                }
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) uncancelled');
+            } catch (e) { console.error(e); alert('Error uncancelling'); }
+        }
+
+        async function selDeletePO() {
+            document.getElementById('selKebabDropdown').classList.remove('show');
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            if (!confirm('Delete ' + ids.length + ' purchase order(s)? This cannot be undone.')) return;
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, { method: 'DELETE' });
+                }
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) deleted');
+            } catch (e) { console.error(e); alert('Error deleting'); }
+        }
+
+        async function selMarkAsIssued() {
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            if (!confirm('Mark ' + ids.length + ' purchase order(s) as Issued?')) return;
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'issued' })
+                    });
+                }
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) marked as Issued');
+            } catch (e) { alert('Error updating purchase orders'); }
+        }
+
+        async function selMarkAsReceived() {
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            if (!confirm('Mark ' + ids.length + ' purchase order(s) as Received?')) return;
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ receive_status: 'received' })
+                    });
+                }
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) marked as Received');
+            } catch (e) { alert('Error updating purchase orders'); }
+        }
+
+        async function selMarkAsUnreceived() {
+            const ids = getSelectedPOIds();
+            if (!ids.length) return;
+            if (!confirm('Mark ' + ids.length + ' purchase order(s) as Unreceived?')) return;
+            try {
+                for (const id of ids) {
+                    await fetch('/api/purchases/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ receive_status: 'not received' })
+                    });
+                }
+                clearAllSelections();
+                await loadPurchaseOrders();
+                showToast(ids.length + ' purchase order(s) marked as Unreceived');
+            } catch (e) { alert('Error updating purchase orders'); }
+        }
+
+        // Close col settings on outside click
+        document.addEventListener('click', function (e) {
+            const dd = document.getElementById('colSettingsDropdown');
+            if (!dd || !dd.classList.contains('show')) return;
+            if (!dd.contains(e.target) && !e.target.closest('.cust-filter-icon')) {
+                dd.classList.remove('show');
+            }
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function (e) {
+            const wrapper = document.querySelector('.page-title-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closePOFilterDropdown();
+            }
+        });
+
+        function searchPurchaseOrders() {
+            const query = (document.getElementById('poSearchInput').value || '').toLowerCase();
+            if (!query) { applyPOFilter(); return; }
+            const filtered = allPurchasesList.filter(po => {
+                const dateStr = po.date ? new Date(po.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                const delivDateStr = po.expected_date ? new Date(po.expected_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                const amtStr = String(po.total_amount || '');
+                return (po.po_number || '').toLowerCase().includes(query) ||
+                    (po.supplier_name || '').toLowerCase().includes(query) ||
+                    (po.reference_number || '').toLowerCase().includes(query) ||
+                    (po.status || '').toLowerCase().includes(query) ||
+                    (po.company_name || '').toLowerCase().includes(query) ||
+                    (po.created_by_name || '').toLowerCase().includes(query) ||
+                    (po.currency_code || '').toLowerCase().includes(query) ||
+                    dateStr.toLowerCase().includes(query) ||
+                    delivDateStr.toLowerCase().includes(query) ||
+                    amtStr.includes(query);
+            });
+            renderFilteredPOs(filtered);
+        }
+
+        // Load and display purchase orders
+        async function loadPurchaseOrders() {
+            try {
+                const [purchasesRes, billsRes] = await Promise.all([
+                    fetch('/api/purchases'),
+                    fetch('/api/bills')
+                ]);
+                const purchases = await purchasesRes.json();
+                const allBills = billsRes.ok ? await billsRes.json() : [];
+
+                // Override bill_status for each PO based on actual non-draft bills
+                purchases.forEach(po => {
+                    const poBills = allBills.filter(b => b.purchase_order_id == po.id);
+                    const nonDraftBills = poBills.filter(b => (b.status || '').toUpperCase() !== 'DRAFT');
+                    if (nonDraftBills.length > 0) {
+                        po.bill_status = 'BILLED';
+                    } else {
+                        po.bill_status = 'UNBILLED';
+                    }
+                });
+
+                allPurchasesList = purchases;
+                applyPOFilter();
+            } catch (error) {
+                console.error('Error loading purchase orders:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Read filter from URL params (e.g., from dashboard link)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlFilter = urlParams.get('filter');
+            if (urlFilter) {
+                currentPOFilter = urlFilter;
+                // Update the filter dropdown label
+                const filterLabels = {
+                    'all': 'All Purchase Orders',
+                    'draft': 'Draft',
+                    'pending_approval': 'Pending Approval',
+                    'approved': 'Approved',
+                    'issued': 'Issued',
+                    'billed': 'Billed',
+                    'partially_billed': 'Partially Billed',
+                    'closed': 'Closed',
+                    'cancelled': 'Cancelled',
+                    'partially_received': 'Partially Received',
+                    'received': 'Received',
+                    'pending_received': 'To Be Received',
+                    'dropshipped': 'Dropshipped',
+                    'backorder': 'Backorder'
+                };
+                const label = filterLabels[urlFilter] || 'All Purchase Orders';
+                const filterLabel = document.getElementById('poFilterLabel');
+                if (filterLabel) filterLabel.textContent = label;
+            }
+            loadPurchaseOrders();
+        });
+
+        // ===== Customize Columns =====
+        const allColumns = [
+            { key: 'date', label: 'Date', locked: true, visible: true },
+            { key: 'po_number', label: 'Purchase Order#', locked: true, visible: true },
+            { key: 'reference', label: 'Reference#', locked: false, visible: true },
+            { key: 'vendor', label: 'Vendor Name', locked: true, visible: true },
+            { key: 'location', label: 'Location', locked: false, visible: true },
+            { key: 'status', label: 'Status', locked: true, visible: true },
+            { key: 'received', label: 'Received', locked: false, visible: true },
+            { key: 'billed', label: 'Billed', locked: false, visible: true },
+            { key: 'amount', label: 'Amount', locked: true, visible: true },
+            { key: 'delivery_date', label: 'Delivery Date', locked: false, visible: true },
+            { key: 'company_name', label: 'Company Name', locked: false, visible: false },
+            { key: 'expected_delivery', label: 'Expected Delivery Date', locked: false, visible: false },
+            { key: 'created_by', label: 'Created By', locked: false, visible: false }
+        ];
+
+        // Load saved column prefs from localStorage
+        const savedCols = localStorage.getItem('po_columns');
+        if (savedCols) {
+            try {
+                const parsed = JSON.parse(savedCols);
+                allColumns.forEach(col => {
+                    if (!col.locked && parsed[col.key] !== undefined) {
+                        col.visible = parsed[col.key];
+                    }
+                });
+            } catch (e) { }
+        }
+
+        let tempColumnState = {};
+
+        function openCustomizeColumns() {
+            document.getElementById('colSettingsDropdown').classList.remove('show');
+            // Copy current state to temp
+            tempColumnState = {};
+            allColumns.forEach(col => { tempColumnState[col.key] = col.visible; });
+            renderCCList();
+            updateCCCount();
+            document.getElementById('ccSearchInput').value = '';
+            document.getElementById('ccOverlay').classList.add('show');
+        }
+
+        function closeCustomizeColumns() {
+            document.getElementById('ccOverlay').classList.remove('show');
+        }
+
+        function renderCCList(filter) {
+            const container = document.getElementById('ccList');
+            const fl = (filter || '').toLowerCase();
+            let html = '';
+            allColumns.forEach(col => {
+                if (fl && !col.label.toLowerCase().includes(fl)) return;
+                const isVisible = tempColumnState[col.key];
+                if (col.locked) {
+                    html += `<div class="cc-item" data-key="${col.key}">
+                        <span class="cc-drag">⠿</span>
+                        <span class="cc-lock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                        <span class="cc-item-label">${col.label}</span>
+                    </div>`;
+                } else {
+                    html += `<div class="cc-item" data-key="${col.key}">
+                        <span class="cc-drag">⠿</span>
+                        <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleCCColumn('${col.key}', this.checked)">
+                        <span class="cc-item-label">${col.label}</span>
+                    </div>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleCCColumn(key, checked) {
+            tempColumnState[key] = checked;
+            updateCCCount();
+        }
+
+        function updateCCCount() {
+            const total = allColumns.length;
+            const selected = allColumns.filter(c => c.locked || tempColumnState[c.key]).length;
+            document.getElementById('ccCount').textContent = selected + ' of ' + total + ' Selected';
+        }
+
+        function filterCCItems() {
+            renderCCList(document.getElementById('ccSearchInput').value);
+        }
+
+        function saveCustomizeColumns() {
+            // Apply temp state to actual columns
+            const savedState = {};
+            allColumns.forEach(col => {
+                if (!col.locked) {
+                    col.visible = tempColumnState[col.key];
+                    savedState[col.key] = col.visible;
+                }
+            });
+            localStorage.setItem('po_columns', JSON.stringify(savedState));
+
+            // Rebuild the table header and re-render rows
+            rebuildTableColumns();
+            applyPOFilter();
+            closeCustomizeColumns();
+        }
+
+        function rebuildTableColumns() {
+            const thead = document.querySelector('.orders-table thead tr');
+            // Keep first two TH (settings icon + checkbox)
+            const firstTh = thead.children[0];
+            const secondTh = thead.children[1];
+            thead.innerHTML = '';
+            thead.appendChild(firstTh);
+            thead.appendChild(secondTh);
+
+            allColumns.forEach(col => {
+                if (!col.visible && !col.locked) return;
+                const th = document.createElement('th');
+                th.textContent = col.label.toUpperCase();
+                th.setAttribute('data-col', col.key);
+                if (col.key === 'received' || col.key === 'billed') {
+                    th.style.textAlign = 'center';
+                }
+                thead.appendChild(th);
+            });
+        }
+
+        // Get visible column keys
+        function getVisibleColumns() {
+            return allColumns.filter(c => c.visible || c.locked).map(c => c.key);
+        }
+
+        // Override renderPORows to respect column visibility
+        const _origRenderPORows = renderPORows;
+        renderPORows = function (pageData) {
+            const tbody = document.getElementById('ordersBody');
+            tbody.innerHTML = '';
+            const visibleCols = getVisibleColumns();
+
+            pageData.forEach(po => {
+                const date = po.date ? new Date(po.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                const deliveryDate = po.expected_date ? new Date(po.expected_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                const mainStatus = (po.status || 'DRAFT').toUpperCase();
+                const amount = parseFloat(po.total_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 3 });
+                const statusColors = {
+                    'DRAFT': '#856404; background: #fff3cd',
+                    'ISSUED': '#084298; background: #cfe2ff',
+                    'CLOSED': '#0a3622; background: #d1e7dd',
+                    'CANCELLED': '#842029; background: #f8d7da',
+                    'APPROVED': '#0d6efd; background: #cfe2ff',
+                };
+                const statusColorStr = statusColors[mainStatus] || '#666; background: #f0f0f0';
+                const receivedDot = buildDotIndicator(po.receive_status, 'received');
+                const billedDot = buildDotIndicator(po.bill_status, 'billed');
+
+                const colData = {
+                    'date': `<td>${date}</td>`,
+                    'po_number': `<td style="color: #3366cc; font-weight: 500;">${po.po_number || 'PO-' + po.id}</td>`,
+                    'reference': `<td>${po.reference_number || '-'}</td>`,
+                    'vendor': `<td>${po.supplier_name || '-'}</td>`,
+                    'location': `<td>${po.warehouse_location || '-'}</td>`,
+                    'status': `<td><span style="padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; color: ${statusColorStr}">${mainStatus}</span></td>`,
+                    'received': `<td style="text-align:center;">${receivedDot}</td>`,
+                    'billed': `<td style="text-align:center;">${billedDot}</td>`,
+                    'amount': `<td style="font-weight: 500;">${po.currency_code || 'PHP'}${amount}${(po.currency_code && po.currency_code !== 'PHP') ? '<br><span style="font-size:11px;color:#888;font-weight:400;">PHP' + (parseFloat(po.total_amount || 0) * (parseFloat(po.exchange_rate) || 1)).toLocaleString('en-PH', { minimumFractionDigits: 3 }) + '</span>' : ''}</td>`,
+                    'delivery_date': `<td>${deliveryDate}</td>`,
+                    'company_name': `<td>${po.supplier_name || '-'}</td>`,
+                    'expected_delivery': `<td>${deliveryDate}</td>`,
+                    'created_by': `<td>${po.created_by_name || '-'}</td>`
+                };
+
+                const row = document.createElement('tr');
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', () => { window.location.href = '/purchase-order-detail.html?id=' + po.id; });
+                row.addEventListener('mouseenter', () => { row.style.background = '#f5f8ff'; });
+                row.addEventListener('mouseleave', () => { row.style.background = ''; });
+
+                let rowHTML = `<td></td><td><input type="checkbox" class="row-checkbox po-row-check" onclick="event.stopPropagation()"></td>`;
+                visibleCols.forEach(key => { rowHTML += colData[key] || '<td>-</td>'; });
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+        };
+
+        // Initial column rebuild on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            rebuildTableColumns();
+        });
+        // ========== KEBAB MENU FUNCTIONS ==========
+        let currentPOSort = 'created_at';
+        let currentPOSortDir = 'desc';
+
+        function toggleKebabMenu(e) {
+            e.stopPropagation();
+            const dd = document.getElementById('kebabDropdown');
+            dd.classList.toggle('show');
+        }
+
+        // Close kebab on outside click
+        document.addEventListener('click', function (e) {
+            const dd = document.getElementById('kebabDropdown');
+            if (dd && !e.target.closest('.kebab-wrapper')) {
+                dd.classList.remove('show');
+            }
+        });
+
+        function sortPOBy(field, el) {
+            // Toggle direction if same field
+            if (currentPOSort === field) {
+                currentPOSortDir = currentPOSortDir === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentPOSort = field;
+                currentPOSortDir = 'desc';
+            }
+
+            // Update active state in submenu
+            document.querySelectorAll('.sort-sub-item').forEach(item => {
+                item.classList.remove('active');
+                const arrow = item.querySelector('.sort-dir');
+                if (arrow) arrow.remove();
+            });
+            if (el) {
+                el.classList.add('active');
+                const dirArrow = currentPOSortDir === 'desc' ? '↓' : '↑';
+                el.innerHTML = el.textContent.trim() + ` <span class="sort-dir">${dirArrow}</span>`;
+            }
+
+            // Sort the actual data array
+            const fieldMap = {
+                'date': 'date',
+                'po_number': 'po_number',
+                'vendor_name': 'supplier_name',
+                'amount': 'total_amount',
+                'delivery_date': 'expected_date',
+                'created_at': 'created_at',
+                'updated_at': 'created_at'
+            };
+            const sortKey = fieldMap[field] || field;
+
+            allPurchasesList.sort((a, b) => {
+                let aVal = a[sortKey];
+                let bVal = b[sortKey];
+
+                // Handle nulls
+                if (aVal == null) aVal = '';
+                if (bVal == null) bVal = '';
+
+                // Numeric comparison for amount
+                if (field === 'amount') {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                    return currentPOSortDir === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+
+                // Date comparison
+                if (['date', 'delivery_date', 'created_at', 'updated_at'].includes(field)) {
+                    const aDate = new Date(aVal || 0).getTime();
+                    const bDate = new Date(bVal || 0).getTime();
+                    return currentPOSortDir === 'asc' ? aDate - bDate : bDate - aDate;
+                }
+
+                // String comparison
+                aVal = String(aVal).toLowerCase();
+                bVal = String(bVal).toLowerCase();
+                return currentPOSortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+
+            // Re-render with current filter
+            applyPOFilter();
+
+            let dirLabel;
+            if (field === 'amount') {
+                dirLabel = currentPOSortDir === 'desc' ? 'highest' : 'lowest';
+            } else if (['date', 'delivery_date', 'created_at', 'updated_at'].includes(field)) {
+                dirLabel = currentPOSortDir === 'desc' ? 'newest first' : 'oldest first';
+            } else {
+                dirLabel = currentPOSortDir === 'desc' ? 'Z-A' : 'A-Z';
+            }
+            showToast(`Sorted by ${field.replace(/_/g, ' ')} (${dirLabel})`);
+            document.getElementById('kebabDropdown').classList.remove('show');
+        }
+
+        let importSelectedFile = null;
+
+        function importPurchaseOrders() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            document.getElementById('importFileInput').click();
+        }
+
+        function handleImportFile(file) {
+            if (!file) return;
+            const allowed = ['csv', 'tsv', 'xls', 'xlsx'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!allowed.includes(ext)) {
+                showToast('Please select a CSV, TSV, or XLS file');
+                return;
+            }
+            if (file.size > 25 * 1024 * 1024) {
+                showToast('File must be less than 25 MB');
+                return;
+            }
+            alert('File selected: ' + file.name + '\nImport processing will be available soon.');
+            document.getElementById('importFileInput').value = '';
+        }
+
+        function removeImportFile() {
+            importSelectedFile = null;
+            document.getElementById('importFileSelected').classList.remove('show');
+            document.getElementById('importFileInput').value = '';
+        }
+
+        function downloadSampleCSV() {
+            const headers = 'Purchase Order Number,Vendor Name,Date,Expected Date,Reference Number,Status,Item Name,Quantity,Unit Cost,Total Amount,Notes';
+            const sample = 'PO-00001,Sample Vendor,2026-02-22,2026-03-01,REF-001,ISSUED,Sample Item,10,100.00,1000.00,Sample notes';
+            const blob = new Blob([headers + '\n' + sample], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'purchase_orders_sample.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Sample file downloaded');
+        }
+
+        async function processImportFile() {
+            if (!importSelectedFile) {
+                showToast('Please select a file first');
+                return;
+            }
+            showToast('Processing import file...');
+
+            try {
+                const text = await importSelectedFile.text();
+                const lines = text.split('\n').filter(l => l.trim());
+                if (lines.length < 2) {
+                    showToast('File is empty or has no data rows');
+                    return;
+                }
+
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+                let importedCount = 0;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                    const row = {};
+                    headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
+
+                    const autoGen = document.getElementById('importAutoGenPO').checked;
+
+                    const poData = {
+                        supplier_name: row.vendor_name || row.supplier_name || '-',
+                        po_number: autoGen ? undefined : (row.purchase_order_number || row.po_number || undefined),
+                        date: row.date || new Date().toISOString().split('T')[0],
+                        expected_date: row.expected_date || null,
+                        reference_number: row.reference_number || '',
+                        status: row.status || 'ISSUED',
+                        total_amount: parseFloat(row.total_amount) || 0,
+                        notes: row.notes || '',
+                        items: [{
+                            item_name: row.item_name || 'Imported Item',
+                            quantity: parseFloat(row.quantity) || 1,
+                            unit_cost: parseFloat(row.unit_cost) || 0
+                        }]
+                    };
+
+                    try {
+                        const res = await fetch('/api/purchases', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(poData)
+                        });
+                        if (res.ok) importedCount++;
+                    } catch (err) {
+                        console.error('Import row error:', err);
+                    }
+                }
+
+                closeImportPO();
+                showToast(`Imported ${importedCount} purchase order(s) successfully`);
+                setTimeout(() => location.reload(), 1500);
+            } catch (err) {
+                console.error('Import error:', err);
+                showToast('Error processing import file');
+            }
+        }
+
+        function escapePOCSV(val) { return '"' + String(val || '').replace(/"/g, '""') + '"'; }
+
+        function downloadPOCSV(filename, csv) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function buildPOcsv(list) {
+            const headers = ['Date', 'Purchase Order#', 'Reference#', 'Vendor Name', 'Status', 'Amount', 'Delivery Date'];
+            let csv = headers.map(escapePOCSV).join(',') + '\n';
+            list.forEach(po => {
+                const date = po.date ? new Date(po.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                const amount = parseFloat(po.total_amount || 0).toFixed(3);
+                const expDate = po.expected_date ? new Date(po.expected_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                csv += [date, po.po_number || 'PO-' + po.id, po.reference_number || '-', po.supplier_name || '-', (po.status || 'DRAFT').toUpperCase(), amount, expDate].map(escapePOCSV).join(',') + '\n';
+            });
+            return csv;
+        }
+
+        function exportAllPO() {
+            if (allPurchasesList.length === 0) { showToast('No purchase orders to export.'); return; }
+            downloadPOCSV('GiHon_All_Purchase_Orders.csv', buildPOcsv(allPurchasesList));
+            showToast('Exported ' + allPurchasesList.length + ' purchase order(s) successfully.');
+        }
+
+        function exportCurrentPOView() {
+            let filtered = [...allPurchasesList];
+            // Apply current tab/status filter if any
+            const activeTab = document.querySelector('.status-tab.active');
+            if (activeTab) {
+                const status = activeTab.getAttribute('data-status');
+                if (status && status !== 'all') {
+                    filtered = filtered.filter(po => (po.status || '').toLowerCase() === status.toLowerCase());
+                }
+            }
+            if (filtered.length === 0) { showToast('No purchase orders in current view to export.'); return; }
+            downloadPOCSV('GiHon_Filtered_Purchase_Orders.csv', buildPOcsv(filtered));
+            showToast('Exported ' + filtered.length + ' purchase order(s) from current view.');
+        }
+
+        function openPOPreferences() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            // Load saved preferences from localStorage
+            const saved = JSON.parse(localStorage.getItem('poPreferences') || '{}');
+            if (saved.closeOption) {
+                document.querySelectorAll('input[name="poCloseOption"]').forEach(r => {
+                    r.checked = r.value === saved.closeOption;
+                });
+            }
+            if (saved.terms !== undefined) document.getElementById('poPrefTerms').value = saved.terms;
+            if (saved.notes !== undefined) document.getElementById('poPrefNotes').value = saved.notes;
+            // Show panel
+            document.getElementById('poPrefOverlay').classList.add('show');
+            document.getElementById('poPrefPanel').classList.add('show');
+        }
+
+        function closePOPreferences() {
+            document.getElementById('poPrefOverlay').classList.remove('show');
+            document.getElementById('poPrefPanel').classList.remove('show');
+        }
+
+        function switchPOPrefTab(tab, btn) {
+            document.querySelectorAll('.po-pref-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('poPrefTabPreferences').style.display = tab === 'preferences' ? 'block' : 'none';
+            document.getElementById('poPrefTabFields').style.display = tab === 'fields' ? 'block' : 'none';
+        }
+
+        function savePOPreferences() {
+            const closeOption = document.querySelector('input[name="poCloseOption"]:checked')?.value || 'bill';
+            const terms = document.getElementById('poPrefTerms').value;
+            const notes = document.getElementById('poPrefNotes').value;
+            localStorage.setItem('poPreferences', JSON.stringify({ closeOption, terms, notes }));
+            showToast('Preferences saved successfully!');
+            closePOPreferences();
+        }
+
+        function manageCustomFields() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            showToast('Manage Custom Fields — coming soon');
+        }
+
+        function refreshPOList() {
+            document.getElementById('kebabDropdown').classList.remove('show');
+            showToast('Refreshing list...');
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        }
+
+        function hideClipToast() {
+            const toast = document.getElementById('clipToast');
+            if (toast) toast.classList.remove('show');
+        }
+    </script>
+
+
+
+
+
+
+
+    <!-- Hidden file input for Import -->
+    <input type="file" id="importFileInput" accept=".csv,.tsv,.xls,.xlsx" style="display:none"
+        onchange="handleImportFile(this.files[0])">
+
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

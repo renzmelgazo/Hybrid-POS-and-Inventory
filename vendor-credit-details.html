@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Credits Details - Reports</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: #fff;
+        }
+
+        .report-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 44px;
+        }
+
+        .report-top-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #555;
+            padding: 4px 8px;
+        }
+
+        .breadcrumb-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb-category {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .breadcrumb-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .breadcrumb-date {
+            font-size: 11px;
+            color: #999;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-bar-actions button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .top-bar-actions button:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-export {
+            font-size: 12px !important;
+            font-weight: 500;
+        }
+
+        .btn-close-report {
+            color: #e53935 !important;
+            font-weight: bold;
+        }
+
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filter-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .filter-dropdown select {
+            border: none;
+            outline: none;
+            font-size: 12px;
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .btn-run-report {
+            background: #e53935;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 7px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .btn-run-report:hover {
+            background: #c62828;
+        }
+
+        .report-body {
+            padding: 30px 20px 60px;
+            overflow-x: auto;
+        }
+
+        .report-header-section {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .company-name {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .report-main-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .report-date-range {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .date-highlight {
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 700px;
+        }
+
+        .report-table thead th {
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 10px 10px;
+            border-bottom: 2px solid #ddd;
+            background: #fafafa;
+            white-space: nowrap;
+        }
+
+        .report-table tbody td {
+            padding: 10px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .report-table tfoot td {
+            padding: 10px 10px;
+            font-weight: 700;
+            border-top: 2px solid #ddd;
+            background: #fafafa;
+            color: #222;
+        }
+
+        .report-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        .align-right {
+            text-align: right !important;
+        }
+
+        .align-center {
+            text-align: center !important;
+        }
+
+        .vendor-link {
+            color: #2563eb;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .vendor-link:hover {
+            text-decoration: underline;
+        }
+
+        .credit-link {
+            color: #2563eb;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .credit-link:hover {
+            text-decoration: underline;
+        }
+
+        .amount-cell {
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-closed {
+            color: #059669;
+            background: #ecfdf5;
+        }
+
+        .status-open,
+        .status-draft {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .status-applied {
+            color: #7c3aed;
+            background: #f5f3ff;
+        }
+
+        .status-void {
+            color: #6b7280;
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+
+            <div class="report-top-bar">
+                <div class="report-top-left">
+                    <button class="hamburger-btn" onclick="window.location.href='/reports.html'">☰</button>
+                    <div class="breadcrumb-area">
+                        <span class="breadcrumb-category">Payables</span>
+                        <span class="breadcrumb-title">
+                            Vendor Credits Details
+                            <span class="breadcrumb-date" id="breadcrumbDate">•</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <button title="Schedule"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg></span></button>
+                    <button title="Refresh" onclick="runReport()"><span><svg width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10" />
+                                <polyline points="1 20 1 14 7 14" />
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg></span></button>
+                    <button title="Share"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                <polyline points="16 6 12 2 8 6" />
+                                <line x1="12" y1="2" x2="12" y2="15" />
+                            </svg></span></button>
+                    <button class="btn-export" title="Export">Export ▾</button>
+                    <button title="Print" onclick="window.print()"><span><svg width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M6 9V2h12v7" />
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                <rect x="6" y="14" width="12" height="8" />
+                            </svg></span></button>
+                    <button class="btn-close-report" title="Close"
+                        onclick="window.location.href='/reports.html'">✕</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <span class="filter-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        style="vertical-align:middle;margin-right:3px;">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                    </svg> Filters :</span>
+                <div class="filter-dropdown">
+                    <span>Date Range :</span>
+                    <select id="dateRangeSelect" onchange="handleFilterChange()" title="Date Range">
+                        <option value="this-month" selected>This Month</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last-month">Last Month</option>
+                        <option value="this-quarter">This Quarter</option>
+                        <option value="this-year">This Year</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+                <button class="btn-run-report" onclick="runReport()">Run Report</button>
+            </div>
+
+            <div class="report-body">
+                <div class="report-header-section">
+                    <div class="company-name">SOLO</div>
+                    <div class="report-main-title">Vendor Credits Details</div>
+                    <div class="report-date-range" id="reportDateRange">
+                        From <span class="date-highlight" id="fromDateDisplay">-</span>
+                        To <span class="date-highlight" id="toDateDisplay">-</span>
+                    </div>
+                </div>
+
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>STATUS</th>
+                            <th>VENDOR CREDIT DATE ↑</th>
+                            <th>CREDIT NOTE#</th>
+                            <th>VENDOR NAME</th>
+                            <th class="align-right">AMOUNT</th>
+                            <th class="align-right">BALANCE AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <tr>
+                            <td colspan="6" class="align-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                    <tfoot id="reportTableFoot" style="display:none;">
+                        <tr>
+                            <td colspan="4"><strong>Total</strong></td>
+                            <td class="align-right" id="totAmount"></td>
+                            <td class="align-right" id="totBalance"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script src="/js/report-export.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { runReport(); });
+
+        function getDateRange() {
+            const sel = document.getElementById('dateRangeSelect').value;
+            const now = new Date();
+            let from, to;
+            switch (sel) {
+                case 'this-month': from = new Date(now.getFullYear(), now.getMonth(), 1); to = new Date(now.getFullYear(), now.getMonth() + 1, 0); break;
+                case 'yesterday': { const y = new Date(now); y.setDate(y.getDate() - 1); from = new Date(y.getFullYear(), y.getMonth(), y.getDate()); to = new Date(y.getFullYear(), y.getMonth(), y.getDate()); break; }
+                case 'last-month': from = new Date(now.getFullYear(), now.getMonth() - 1, 1); to = new Date(now.getFullYear(), now.getMonth(), 0); break;
+                case 'this-quarter': { const q = Math.floor(now.getMonth() / 3); from = new Date(now.getFullYear(), q * 3, 1); to = new Date(now.getFullYear(), q * 3 + 3, 0); break; }
+                case 'this-year': from = new Date(now.getFullYear(), 0, 1); to = new Date(now.getFullYear(), 11, 31); break;
+                case 'all': return { from: null, to: null };
+            }
+            return { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
+        }
+
+        function fmtDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function fmtPHP(val) {
+            const num = parseFloat(val) || 0;
+            return 'PHP' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function getStatusClass(status) {
+            if (!status) return '';
+            const s = status.toLowerCase();
+            if (s === 'closed') return 'status-closed';
+            if (s === 'applied') return 'status-applied';
+            if (s === 'open' || s === 'draft') return 'status-open';
+            if (s === 'void') return 'status-void';
+            return 'status-open';
+        }
+
+        function getStatusLabel(status) {
+            if (!status) return '-';
+            return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        }
+
+        function handleFilterChange() { runReport(); }
+
+        async function runReport() {
+            const tbody = document.getElementById('reportTableBody');
+            const tfoot = document.getElementById('reportTableFoot');
+            tbody.innerHTML = '<tr><td colspan="6" class="align-center">Loading...</td></tr>';
+            tfoot.style.display = 'none';
+
+            const { from, to } = getDateRange();
+            if (from && to) {
+                document.getElementById('fromDateDisplay').textContent = fmtDate(from);
+                document.getElementById('toDateDisplay').textContent = fmtDate(to);
+                document.getElementById('breadcrumbDate').textContent = `• From ${fmtDate(from)} To ${fmtDate(to)}`;
+            } else {
+                document.getElementById('fromDateDisplay').textContent = 'All Time';
+                document.getElementById('toDateDisplay').textContent = '';
+                document.getElementById('breadcrumbDate').textContent = '• All Time';
+            }
+
+            try {
+                let url = '/api/vendor-credits/reports/vendor-credit-details?';
+                if (from && to) url += `from=${from}&to=${to}`;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="align-center">No vendor credit data found for this period.</td></tr>';
+                    return;
+                }
+
+                let totAmount = 0, totBalance = 0;
+
+                tbody.innerHTML = data.map(row => {
+                    const amt = parseFloat(row.total_amount) || 0;
+                    const bal = parseFloat(row.balance) || 0;
+                    totAmount += amt;
+                    totBalance += bal;
+                    const statusClass = getStatusClass(row.status);
+
+                    return `<tr>
+                        <td><span class="status-badge ${statusClass}">${getStatusLabel(row.status)}</span></td>
+                        <td>${fmtDate(row.credit_date)}</td>
+                        <td class="credit-link">${row.credit_number || '-'}</td>
+                        <td class="vendor-link">${row.supplier_name || '-'}</td>
+                        <td class="align-right amount-cell">${fmtPHP(amt)}</td>
+                        <td class="align-right amount-cell">${fmtPHP(bal)}</td>
+                    </tr>`;
+                }).join('');
+
+                document.getElementById('totAmount').innerHTML = `<span class="amount-cell">${fmtPHP(totAmount)}</span>`;
+                document.getElementById('totBalance').innerHTML = `<span class="amount-cell">${fmtPHP(totBalance)}</span>`;
+                tfoot.style.display = '';
+            } catch (e) {
+                console.error('Error:', e);
+                tbody.innerHTML = '<tr><td colspan="6" class="align-center">Error loading report data.</td></tr>';
+            }
+        }
+    </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

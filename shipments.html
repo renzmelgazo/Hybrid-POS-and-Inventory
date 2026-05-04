@@ -1,0 +1,3185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipments - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/global-search.css">
+    <link rel="stylesheet" href="/css/pagination.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ===== Page Header ===== */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            background: white;
+            border-bottom: 1px solid #e2e5ea;
+            flex-shrink: 0;
+            overflow: visible;
+            position: relative;
+            z-index: 100;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .page-title .arrow {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-link {
+            font-size: 13px;
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .header-link:hover {
+            text-decoration: underline;
+        }
+
+        .header-link .easypost {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .btn-new-split {
+            display: flex;
+            align-items: stretch;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .btn-new-main {
+            padding: 8px 16px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-new-main:hover {
+            background: #3367d6;
+        }
+
+        .btn-new-arrow {
+            padding: 8px 10px;
+            background: #3b7ddb;
+            color: white;
+            border: none;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .btn-new-arrow:hover {
+            background: #336bc9;
+        }
+
+        .btn-more-header {
+            width: 34px;
+            height: 34px;
+            border-radius: 4px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-more-header:hover {
+            background: #f5f5f5;
+        }
+
+        .ship-more-wrap {
+            position: relative;
+        }
+
+        .ship-more-dropdown {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+            width: 220px;
+            z-index: 99999;
+            padding: 8px 0;
+        }
+
+        .ship-more-dropdown.show {
+            display: block;
+        }
+
+        .ship-more-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 20px;
+            font-size: 15px;
+            color: #333;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+            transition: background 0.12s;
+        }
+
+        .ship-more-item:hover {
+            background: #f5f7fa;
+        }
+
+        .ship-more-item.sort-by-item {
+            background: #4285f4;
+            color: white;
+            border-radius: 8px;
+            margin: 4px 8px;
+            width: calc(100% - 16px);
+            padding: 14px 16px;
+        }
+
+        .ship-more-item.sort-by-item:hover {
+            background: #3b78e7;
+        }
+
+        .ship-more-icon {
+            font-size: 18px;
+            width: 22px;
+            text-align: center;
+            color: #4285f4;
+            flex-shrink: 0;
+        }
+
+        .ship-more-item.sort-by-item .ship-more-icon {
+            color: white;
+        }
+
+        .ship-more-arrow {
+            margin-left: auto;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .ship-more-item.sort-by-item .ship-more-arrow {
+            color: white;
+        }
+
+        .ship-sort-submenu {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+            width: 190px;
+            padding: 6px 0;
+            z-index: 100000;
+        }
+
+        .ship-sort-submenu.show {
+            display: block;
+        }
+
+        .ship-sort-submenu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 11px 20px;
+            font-size: 14px;
+            color: #333;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.1s;
+        }
+
+        .ship-sort-submenu button:hover {
+            background: #f0f4ff;
+            color: #4285f4;
+        }
+
+        .ship-sort-submenu button.active {
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        /* ===== Selection Action Bar ===== */
+        .ship-sel-bar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 28px;   /* exact match to .page-header — eliminates layout shift */
+            background: #f0f3f9;  /* GiHon light blue-grey selection state */
+            border-bottom: 1px solid #e2e5ea;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .ship-sel-bar.show {
+            display: flex;
+        }
+
+        .ship-sel-icon-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .ship-sel-icon-btn {
+            background: #fff;
+            border: none;
+            padding: 7px 10px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.15s;
+        }
+
+        .ship-sel-icon-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .ship-sel-icon-btn+.ship-sel-icon-btn {
+            border-left: 1px solid #d9d9d9;
+        }
+
+        .ship-sel-action-btn {
+            padding: 6px 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .ship-sel-action-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .ship-sel-count {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .ship-sel-count strong {
+            color: #8B1A1A;   /* GiHon signature maroon */
+            font-weight: 700;
+        }
+
+        .ship-sel-spacer {
+            flex: 1;
+        }
+
+        .ship-sel-dismiss {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            color: #888;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: none;
+            background: none;
+        }
+
+        .ship-sel-dismiss:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        /* ===== Filter Bar ===== */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: #f8f9fb;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .filter-select {
+            padding: 5px 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+            color: #333;
+            background: white;
+            cursor: pointer;
+        }
+
+        /* ===== Table ===== */
+        .shipments-table-wrap {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .shipments-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .shipments-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .shipments-table thead tr {
+            background: #f5f6fa;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .shipments-table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .shipments-table th:first-child {
+            padding-left: 18px;
+            width: 40px;
+        }
+
+        .shipments-table th .th-inner {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .shipments-table th .sort-icon {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .shipments-table tbody tr {
+            border-bottom: 1px solid #f0f1f5;
+            transition: background 0.15s;
+        }
+
+        .shipments-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        .shipments-table td {
+            padding: 10px 14px;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .shipments-table td:first-child {
+            padding-left: 18px;
+            width: 40px;
+        }
+
+        .shipments-table td input[type=checkbox] {
+            width: 14px;
+            height: 14px;
+        }
+
+        .shipment-link {
+            color: #4285f4;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .shipment-link:hover {
+            text-decoration: underline;
+        }
+
+        .status-shipped {
+            color: #4285f4;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .status-delivered {
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .shipping-rate {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #aaa;
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+        }
+
+        /* ===== New Shipment Form Overlay ===== */
+        .new-ship-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            bottom: 0;
+            background: #f0f1f5;
+            z-index: 5000;
+            flex-direction: column;
+        }
+
+        .new-ship-overlay.open {
+            display: flex;
+        }
+
+        .new-ship-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            background: white;
+            border-bottom: 1px solid #e2e5ea;
+            flex-shrink: 0;
+        }
+
+        .new-ship-header-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-ship-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #888;
+            border-radius: 4px;
+        }
+
+        .new-ship-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .new-ship-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .new-ship-section {
+            background: white;
+            padding: 20px 28px;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .new-ship-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .new-ship-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .new-ship-label {
+            width: 160px;
+            min-width: 160px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .new-ship-label.required {
+            color: #e74c3c;
+        }
+
+        .new-ship-select,
+        .new-ship-input {
+            width: 340px;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white;
+            color: #333;
+        }
+
+        .new-ship-select {
+            cursor: pointer;
+            appearance: auto;
+        }
+
+        .new-ship-select:focus,
+        .new-ship-input:focus {
+            border-color: #4285f4;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15);
+        }
+
+        .new-ship-input::placeholder {
+            color: #bbb;
+        }
+
+        /* Grey fields */
+        .new-ship-grey {
+            background: #f8f9fb;
+            padding: 20px 28px;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .new-ship-grey-row {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .new-ship-grey-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .new-ship-grey-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #e74c3c;
+        }
+
+        .new-ship-grey-label.normal {
+            color: #888;
+        }
+
+        .new-ship-grey-input {
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white;
+            color: #333;
+            width: 220px;
+        }
+
+        .new-ship-grey-input:focus {
+            border-color: #4285f4;
+            outline: none;
+        }
+
+        .new-ship-grey-input::placeholder {
+            color: #bbb;
+        }
+
+        /* Items section */
+        .new-ship-items {
+            background: white;
+            padding: 0 28px 20px;
+        }
+
+        .new-ship-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .new-ship-items-table th {
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .new-ship-items-table th:nth-child(n+2) {
+            text-align: center;
+            width: 120px;
+        }
+
+        .new-ship-items-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f1f5;
+            color: #333;
+        }
+
+        .new-ship-items-table td:nth-child(n+2) {
+            text-align: center;
+        }
+
+        /* Notes */
+        .new-ship-notes {
+            background: white;
+            padding: 20px 28px;
+            border-top: 1px solid #e2e5ea;
+        }
+
+        .new-ship-notes-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .new-ship-textarea {
+            width: 400px;
+            min-height: 60px;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            color: #333;
+        }
+
+        .new-ship-textarea:focus {
+            border-color: #4285f4;
+            outline: none;
+        }
+
+        /* Checkbox */
+        .new-ship-check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: white;
+            border-bottom: 1px solid #e2e5ea;
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* Footer */
+        .new-ship-footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: white;
+            border-top: 1px solid #e2e5ea;
+            flex-shrink: 0;
+        }
+
+        .new-ship-btn-save {
+            padding: 8px 22px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .new-ship-btn-save:hover {
+            background: #3367d6;
+        }
+
+        .new-ship-btn-cancel {
+            padding: 8px 22px;
+            background: white;
+            color: #333;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .new-ship-btn-cancel:hover {
+            background: #f5f5f5;
+        }
+
+        /* Currency wrap */
+        .new-ship-currency {
+            display: flex;
+            align-items: center;
+        }
+
+        .new-ship-currency-prefix {
+            padding: 8px 10px;
+            background: #f5f6fa;
+            border: 1px solid #d9d9d9;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .new-ship-currency .new-ship-input {
+            border-radius: 0 4px 4px 0;
+            width: 180px;
+        }
+
+        /* ===== Shipment Detail Overlay ===== */
+        .ship-detail-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            bottom: 0;
+            background: #f0f1f5;
+            z-index: 4000;
+        }
+
+        .ship-detail-overlay.open {
+            display: flex;
+        }
+
+        /* Left sidebar */
+        .ship-detail-left {
+            width: 210px;
+            min-width: 210px;
+            border-right: 1px solid #e2e5ea;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            overflow: visible;
+        }
+
+        .ship-detail-left-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e5ea;
+            background: #fff;
+            overflow: visible;
+            position: relative;
+            z-index: 50;
+        }
+
+        .ship-detail-left-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ship-detail-left-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .ship-detail-left-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ship-detail-left-btn.plus {
+            background: #4285f4;
+            color: white;
+            font-weight: 700;
+        }
+
+        .ship-detail-left-btn.dots {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .ship-header-kebab-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e2e5ea;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+            min-width: 240px;
+            z-index: 100;
+            padding: 8px 0;
+            overflow: visible;
+        }
+
+        .ship-header-kebab-dropdown.show {
+            display: block;
+        }
+
+        .ship-header-kebab-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 11px 18px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .ship-header-kebab-item:hover {
+            background: #f0f4ff;
+            color: #1a73e8;
+        }
+
+        .ship-header-kebab-item .kebab-icon {
+            width: 18px;
+            text-align: center;
+            font-size: 16px;
+            color: #5f6368;
+            flex-shrink: 0;
+        }
+
+        .ship-header-kebab-item:hover .kebab-icon {
+            color: #1a73e8;
+        }
+
+        .ship-header-kebab-item .kebab-arrow {
+            margin-left: auto;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .ship-header-kebab-sep {
+            height: 1px;
+            background: #e8e8e8;
+            margin: 6px 0;
+        }
+
+        .ship-header-kebab-submenu {
+            display: none;
+            padding: 2px 0;
+        }
+
+        .ship-header-kebab-submenu.open {
+            display: block;
+        }
+
+        .ship-header-kebab-submenu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 18px 10px 48px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .ship-header-kebab-submenu-item:hover,
+        .ship-header-kebab-submenu-item.active {
+            background: #4285f4;
+            color: #fff;
+        }
+
+        .ship-header-kebab-submenu-item .sort-arrow {
+            font-size: 14px;
+            margin-left: 12px;
+        }
+
+        .ship-detail-left-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .ship-detail-card {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f1f5;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .ship-detail-card:hover {
+            background: #f8f9ff;
+        }
+
+        .ship-detail-card.active {
+            background: #eef2ff;
+            border-left: 3px solid #4285f4;
+        }
+
+        .ship-detail-card-row1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .ship-detail-card-customer {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ship-detail-card-amount {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ship-detail-card-row2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+
+        .ship-detail-card-info {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .ship-detail-card-info .shipnum {
+            color: #4285f4;
+            font-weight: 500;
+        }
+
+        .ship-detail-card-row3 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ship-detail-card-status {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .ship-detail-card-status.shipped {
+            color: #4285f4;
+        }
+
+        .ship-detail-card-status.delivered {
+            color: #27ae60;
+        }
+
+        .ship-detail-card-so {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Right panel */
+        .ship-detail-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f0f1f5;
+        }
+
+        .ship-detail-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: #fff;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .ship-detail-topbar-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .ship-detail-topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ship-detail-topbar-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e2e5ea;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ship-detail-topbar-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .ship-detail-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .ship-detail-close:hover {
+            color: #333;
+        }
+
+        /* Action bar */
+        .ship-detail-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 24px;
+            background: #fff;
+            border-bottom: 1px solid #e2e5ea;
+        }
+
+        .ship-action-btn {
+            padding: 7px 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .ship-action-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .ship-action-btn svg.btn-icon {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .ship-action-btn .arrow {
+            font-size: 10px;
+            color: #888;
+        }
+
+        /* Tooltips for shipment action buttons */
+        .ship-action-btn[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+            z-index: 1000;
+            font-family: inherit;
+            letter-spacing: 0.2px;
+            line-height: 1.4;
+        }
+
+        .ship-action-btn[data-tooltip]::after {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 3px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #333;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+            z-index: 1000;
+        }
+
+        .ship-action-btn[data-tooltip]:hover::before,
+        .ship-action-btn[data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Tabs */
+        .ship-detail-tabs {
+            display: flex;
+            gap: 0;
+            background: #fff;
+            border-bottom: 1px solid #e2e5ea;
+            padding: 0 24px;
+        }
+
+        .ship-detail-tab {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+        }
+
+        .ship-detail-tab.active {
+            color: #4285f4;
+            border-bottom-color: #4285f4;
+            font-weight: 600;
+        }
+
+        .ship-detail-tab .tab-count {
+            background: #e8f0fe;
+            color: #4285f4;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+        }
+
+        /* Detail content */
+        .ship-detail-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+
+        /* Shipment details section */
+        .ship-info-section {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e5ea;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+
+        .ship-info-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ship-info-grid {
+            display: flex;
+            gap: 60px;
+        }
+
+        .ship-info-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .ship-info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ship-info-label {
+            font-size: 12px;
+            color: #888;
+            min-width: 120px;
+        }
+
+        .ship-info-value {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .ship-info-value.status-delivered {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .ship-info-value.status-shipped {
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        .ship-info-link {
+            color: #4285f4;
+            text-decoration: none;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ship-info-link:hover {
+            text-decoration: underline;
+        }
+
+        .ship-notes-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ship-notes-add {
+            color: #4285f4;
+            text-decoration: none;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Shipment order document card */
+        .ship-doc-card {
+            background: #fff;
+            border: 1px solid #e2e5ea;
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .ship-doc-ribbon {
+            position: absolute;
+            top: 20px;
+            left: -8px;
+            background: #27ae60;
+            color: white;
+            padding: 6px 18px 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transform: rotate(-45deg);
+            transform-origin: center;
+            top: 30px;
+            left: -30px;
+            width: 130px;
+            text-align: center;
+        }
+
+        .ship-doc-ribbon.shipped {
+            background: #4285f4;
+        }
+
+        .ship-doc-company {
+            margin-bottom: 4px;
+        }
+
+        .ship-doc-company-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .ship-doc-company-info {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .ship-doc-title {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .ship-doc-title h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .ship-doc-title p {
+            font-size: 12px;
+            color: #888;
+            margin: 4px 0 0;
+        }
+
+        .ship-doc-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .ship-doc-details-grid {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .ship-doc-ship-to {
+            flex: 1;
+        }
+
+        .ship-doc-ship-to-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+        .ship-doc-ship-to-value {
+            font-size: 13px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .ship-doc-meta {
+            text-align: right;
+        }
+
+        .ship-doc-meta-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .ship-doc-meta-label {
+            color: #888;
+        }
+
+        .ship-doc-meta-value {
+            color: #333;
+            font-weight: 500;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        /* Doc items table */
+        .ship-doc-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .ship-doc-items-table thead tr {
+            background: #1a3a5c;
+            color: white;
+        }
+
+        .ship-doc-items-table th {
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .ship-doc-items-table th:last-child {
+            text-align: right;
+        }
+
+        .ship-doc-items-table td {
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #333;
+            border-bottom: 1px solid #f0f1f5;
+        }
+
+        .ship-doc-items-table td:last-child {
+            text-align: right;
+        }
+
+        .ship-doc-item-desc {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* More dropdown in shipment detail */
+        .ship-more-dropdown-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .ship-pdf-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .ship-pdf-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            min-width: 180px;
+            z-index: 1000;
+            padding: 6px 0;
+        }
+
+        .ship-pdf-dropdown.show {
+            display: block;
+        }
+
+        .ship-pdf-dropdown-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            display: block;
+            white-space: nowrap;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .ship-pdf-dropdown-item:hover {
+            background: #f5f7fa;
+        }
+
+        .ship-more-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            min-width: 200px;
+            z-index: 1000;
+            padding: 6px 0;
+        }
+
+        .ship-more-dropdown.show {
+            display: block;
+        }
+
+        .ship-more-dropdown-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            display: block;
+            white-space: nowrap;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .ship-more-dropdown-item:hover {
+            background: #4285f4;
+            color: white;
+        }
+
+        .ship-more-dropdown-item.danger {
+            color: #e53935;
+        }
+
+        .ship-more-dropdown-item.danger:hover {
+            background: #e53935;
+            color: white;
+        }
+
+        .ship-more-dropdown-separator {
+            height: 1px;
+            background: #e8e8e8;
+            margin: 4px 0;
+        }
+
+        /* Toast Notifications */
+        @keyframes toastSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/list-table.css">
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">Shipments</h1>
+                <div class="global-search-container">
+                    <span class="global-search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                    <input type="text" class="global-search-input" id="shipSearchInput"
+                        placeholder="Search shipments..." oninput="searchShipments()">
+                </div>
+                <div class="header-right">
+                    <button class="btn-new-main" onclick="openNewShipmentForm()">+
+                        New</button>
+                    <div class="ship-more-wrap">
+                        <button class="btn-more-header" title="More" onclick="toggleShipMoreDrop(event)">⋯</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <span class="filter-label">Filter By :</span>
+                <select class="filter-select" id="filterType" onchange="filterShipments()">
+                    <option value="all">Type: All</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+            </div>
+
+            <!-- Selection Action Bar -->
+            <div class="ship-sel-bar" id="shipSelBar">
+                <div class="ship-sel-icon-group">
+                    <button class="ship-sel-icon-btn" onclick="bulkDownloadShipmentsPdf()"
+                        title="Download PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                    <button class="ship-sel-icon-btn" onclick="bulkPrintShipments()" title="Print"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+                </div>
+                <button class="ship-sel-action-btn" onclick="bulkDeleteShipments()">Delete</button>
+                <span class="ship-sel-count"><strong id="shipSelCount">0</strong>&nbsp; Selected</span>
+                <span class="ship-sel-spacer"></span>
+                <button class="ship-sel-dismiss" onclick="clearShipSelection()" title="Dismiss">✕</button>
+            </div>
+
+            <!-- Table -->
+            <div class="shipments-table-wrap">
+                <table class="shipments-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                            <th><span class="th-inner"><span class="sort-icon">⇵</span> DATE</span></th>
+                            <th>SHIPMENT ORDER#</th>
+                            <th>CUSTOMER NAME</th>
+                            <th>SALES ORDER#</th>
+                            <th>PACKAGE#</th>
+                            <th>CARRIER</th>
+                            <th>TRACKING#</th>
+                            <th>STATUS</th>
+                            <th>SHIPPING RATE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipmentsBody">
+                        <tr>
+                            <td colspan="10">
+                                <div class="empty-state">
+                                    <h3>Loading...</h3>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="shipPaginationContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Shipment Form Overlay -->
+    <div class="new-ship-overlay" id="newShipOverlay">
+        <div class="new-ship-header">
+            <span class="new-ship-header-title" id="newShipFormTitle"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span> New Shipment</span>
+            <button class="new-ship-close" onclick="closeNewShipmentForm()" title="Close">✕</button>
+        </div>
+        <div class="new-ship-body">
+            <div class="new-ship-section">
+                <div class="new-ship-row">
+                    <label class="new-ship-label">Customer Name</label>
+                    <select class="new-ship-select" id="newShipCustomer" onchange="onNewShipCustomerChange()">
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="new-ship-row">
+                    <label class="new-ship-label required">Package#*</label>
+                    <select class="new-ship-select" id="newShipPackage" onchange="onNewShipPkgChange()">
+                        <option value="">Select Package</option>
+                    </select>
+                </div>
+                <div class="new-ship-row">
+                    <label class="new-ship-label">Sales Order#</label>
+                    <input type="text" class="new-ship-input" id="newShipSO" readonly style="background:#f8f9fb">
+                </div>
+            </div>
+            <div class="new-ship-grey">
+                <div class="new-ship-grey-row">
+                    <div class="new-ship-grey-field">
+                        <label class="new-ship-grey-label">Shipment Order#*</label>
+                        <input type="text" class="new-ship-grey-input" id="newShipOrderNum" readonly>
+                    </div>
+                    <div class="new-ship-grey-field">
+                        <label class="new-ship-grey-label">Ship Date*</label>
+                        <input type="text" class="new-ship-grey-input" id="newShipDate" placeholder="dd MMM yyyy">
+                    </div>
+                </div>
+            </div>
+            <div class="new-ship-section">
+                <div class="new-ship-row">
+                    <label class="new-ship-label">Carrier</label>
+                    <input type="text" class="new-ship-input" id="newShipCarrier" placeholder="e.g., Lalamove, J&T, LBC"
+                        list="carrierSuggestions">
+                    <datalist id="carrierSuggestions"></datalist>
+                </div>
+                <div class="new-ship-row">
+                    <label class="new-ship-label">Tracking#</label>
+                    <input type="text" class="new-ship-input" id="newShipTracking" placeholder="">
+                </div>
+                <div class="new-ship-row">
+                    <label class="new-ship-label">Tracking URL</label>
+                    <input type="text" class="new-ship-input" id="newShipTrackingUrl" placeholder="">
+                </div>
+                <div class="new-ship-row">
+                    <label class="new-ship-label">Shipping Charges</label>
+                    <div class="new-ship-currency">
+                        <span class="new-ship-currency-prefix">PHP</span>
+                        <input type="number" class="new-ship-input" id="newShipCharges" step="0.01" value=""
+                            placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="new-ship-items">
+                <table class="new-ship-items-table">
+                    <thead>
+                        <tr>
+                            <th>Items & Description</th>
+                            <th>Ordered</th>
+                            <th>Packed</th>
+                            <th>Quantity to Pack</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newShipItemsBody">
+                        <!-- Populated when package selected -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="new-ship-check-row">
+                <input type="checkbox" id="newShipDelivered">
+                <label for="newShipDelivered">Shipment already delivered</label>
+            </div>
+            <div class="new-ship-notes">
+                <div class="new-ship-notes-label">Notes</div>
+                <textarea class="new-ship-textarea" id="newShipNotes" placeholder=""></textarea>
+            </div>
+        </div>
+        <div class="new-ship-footer">
+            <button class="new-ship-btn-save" onclick="saveNewShipment()">Save</button>
+            <button class="new-ship-btn-cancel" onclick="closeNewShipmentForm()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Shipment Detail Overlay -->
+    <div class="ship-detail-overlay" id="shipDetailOverlay">
+        <div class="ship-detail-left">
+            <div class="ship-detail-left-header">
+                <span class="ship-detail-left-title">All Shipments <span
+                        style="font-size:10px;color:#888">▾</span></span>
+                <div class="ship-detail-left-actions">
+                    <button class="ship-detail-left-btn plus" onclick="openNewShipmentForm()" title="New">+</button>
+                    <div style="position:relative">
+                        <button class="ship-detail-left-btn dots" title="More"
+                            onclick="toggleShipHeaderKebab(event)">⋯</button>
+                        <div class="ship-header-kebab-dropdown" id="shipHeaderKebab">
+                            <button class="ship-header-kebab-item" onclick="importShipments()">
+                                <span class="kebab-icon">↓</span> Import
+                            </button>
+                            <button class="ship-header-kebab-item" onclick="exportShipments()">
+                                <span class="kebab-icon">↑</span> Export Shipments
+                            </button>
+                            <div class="ship-header-kebab-sep"></div>
+                            <button class="ship-header-kebab-item"
+                                onclick="loadShipments(); closeShipHeaderKebab(); showToast('Shipments list refreshed.', 'info')">
+                                <span class="kebab-icon">↻</span> Refresh List
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-detail-left-body" id="shipDetailLeftList"></div>
+        </div>
+        <div class="ship-detail-right">
+            <div class="ship-detail-topbar">
+                <span class="ship-detail-topbar-title" id="shipDetailTitle">SHP-00001</span>
+                <div class="ship-detail-topbar-actions">
+                    <button class="ship-detail-close" onclick="closeShipmentDetail()" title="Close">✕</button>
+                </div>
+            </div>
+            <div class="ship-detail-action-bar">
+                <button class="ship-action-btn" data-tooltip="Edit" onclick="editShipmentFromDetail()"><svg
+                        class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg> Edit</button>
+                <div class="ship-pdf-wrap">
+                    <button class="ship-action-btn" data-tooltip="PDF/Print" onclick="toggleShipPdfDropdown(event)"><svg
+                            class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg> PDF/Print <span class="arrow">▾</span></button>
+                    <div class="ship-pdf-dropdown" id="shipPdfDropdown">
+                        <button class="ship-pdf-dropdown-item" onclick="downloadShipmentPdf()">Download as PDF</button>
+                        <button class="ship-pdf-dropdown-item" onclick="printShipmentDetail()">Print</button>
+                    </div>
+                </div>
+                <button class="ship-action-btn" id="shipDetailStatusBtn" onclick="toggleShipmentDeliveryStatus()"><svg
+                        class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg> <span id="shipStatusBtnText">Mark as Delivered</span></button>
+                <div class="ship-more-dropdown-wrap">
+                    <button class="ship-action-btn" data-tooltip="More"
+                        onclick="toggleShipMoreDropdown(event)">⋯</button>
+                    <div class="ship-more-dropdown" id="shipMoreDropdown">
+                        <!-- Populated dynamically based on status -->
+                    </div>
+                </div>
+            </div>
+            <div class="ship-detail-tabs">
+                <div class="ship-detail-tab active" onclick="switchShipDetailTab('packages')">Packages <span
+                        class="tab-count" id="shipDetailPkgCount">1</span>
+                </div>
+                <div class="ship-detail-tab" onclick="switchShipDetailTab('salesorders')">Associated sales orders <span
+                        class="tab-count" id="shipDetailSOCount">1</span></div>
+            </div>
+            <div class="ship-detail-content" id="shipDetailContent">
+                <!-- Populated by JS -->
+            </div>
+            <div class="ship-detail-content" id="shipDetailSOContent" style="display:none">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/js/pagination.js"></script>
+    <script src="/js/layout.js"></script>
+    <script>
+        // === Kebab More Dropdown ===
+        let sortSubTimer = null;
+
+        function toggleShipMoreDrop(e) {
+            e.stopPropagation();
+            const drop = document.getElementById('shipMoreDrop');
+            const sub = document.getElementById('shipSortSub');
+            const btn = e.currentTarget;
+            const rect = btn.getBoundingClientRect();
+            drop.style.top = (rect.bottom + 4) + 'px';
+            drop.style.right = (window.innerWidth - rect.right) + 'px';
+            drop.classList.toggle('show');
+            sub.classList.remove('show');
+        }
+
+        document.addEventListener('click', function () {
+            document.getElementById('shipMoreDrop').classList.remove('show');
+            document.getElementById('shipSortSub').classList.remove('show');
+        });
+
+        function showSortSub() {
+            clearTimeout(sortSubTimer);
+            const drop = document.getElementById('shipMoreDrop');
+            const sub = document.getElementById('shipSortSub');
+            const dropRect = drop.getBoundingClientRect();
+            // Position to the left of the dropdown
+            sub.style.top = dropRect.top + 'px';
+            sub.style.right = (window.innerWidth - dropRect.left + 4) + 'px';
+            sub.classList.add('show');
+        }
+
+        function keepSortSub() {
+            clearTimeout(sortSubTimer);
+        }
+
+        function hideSortSub() {
+            sortSubTimer = setTimeout(() => {
+                document.getElementById('shipSortSub').classList.remove('show');
+            }, 200);
+        }
+
+        let shipSortField = 'ship_date';
+        let shipSortDir = 'desc';
+
+        function sortShipBy(field) {
+            if (shipSortField === field) {
+                shipSortDir = shipSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                shipSortField = field;
+                shipSortDir = 'asc';
+            }
+
+            document.querySelectorAll('#shipSortSub button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            allShipments.sort((a, b) => {
+                let valA, valB;
+                if (field === 'shipping_charges') {
+                    valA = parseFloat(a.shipping_charges || 0);
+                    valB = parseFloat(b.shipping_charges || 0);
+                } else {
+                    valA = (a[field] || '').toString().toLowerCase();
+                    valB = (b[field] || '').toString().toLowerCase();
+                }
+                if (valA < valB) return shipSortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return shipSortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTable(allShipments);
+            document.getElementById('shipMoreDrop').classList.remove('show');
+            document.getElementById('shipSortSub').classList.remove('show');
+
+            const fieldLabels = {
+                ship_date: 'Date', customer_name: 'Customer', status: 'Status',
+                sales_order_number: 'Sales Order#', carrier: 'Carrier',
+                shipment_order_number: 'Shipment#', shipping_charges: 'Shipment Rate'
+            };
+            let dirLabel;
+            if (field === 'ship_date') {
+                dirLabel = shipSortDir === 'asc' ? 'Oldest-Newest' : 'Newest-Oldest';
+            } else if (field === 'shipping_charges') {
+                dirLabel = shipSortDir === 'asc' ? 'Lowest-Highest' : 'Highest-Lowest';
+            } else {
+                dirLabel = shipSortDir === 'asc' ? 'A-Z' : 'Z-A';
+            }
+            showToast(`Sorted by ${fieldLabels[field] || field} (${dirLabel})`, 'info');
+        }
+
+        function importShipments() {
+            document.getElementById('shipMoreDrop').classList.remove('show');
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const text = await file.text();
+                const lines = text.trim().split('\n');
+                if (lines.length < 2) { alert('CSV file is empty or has no data rows.'); return; }
+                const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+                let imported = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                    const row = {};
+                    headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
+                    try {
+                        const res = await fetch('/api/shipments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                package_id: parseInt(row['package_id']) || null,
+                                sales_order_id: parseInt(row['sales_order_id']) || null,
+                                shipment_order_number: row['shipment order#'] || row['shipment_order_number'] || '',
+                                ship_date: row['date'] || row['ship_date'] || (function () { const _d = new Date(); return _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0') })(),
+                                carrier: row['carrier'] || '',
+                                tracking_number: row['tracking#'] || row['tracking_number'] || '',
+                                tracking_url: row['tracking_url'] || '',
+                                shipping_charges: parseFloat(row['shipping rate'] || row['shipping_charges'] || 0),
+                                notes: row['notes'] || '',
+                                already_delivered: (row['status'] || '').toUpperCase() === 'DELIVERED'
+                            })
+                        });
+                        if (res.ok) imported++;
+                    } catch (err) { console.error('Import row error:', err); }
+                }
+                alert(`Imported ${imported} of ${lines.length - 1} shipments.`);
+                loadShipments();
+            };
+            input.click();
+        }
+
+        function exportShipments() {
+            document.getElementById('shipMoreDrop').classList.remove('show');
+            if (!allShipments || allShipments.length === 0) {
+                alert('No shipments to export.');
+                return;
+            }
+            const headers = ['Date', 'Shipment Order#', 'Customer Name', 'Sales Order#', 'Package#', 'Carrier', 'Tracking#', 'Status', 'Shipping Rate'];
+            const rows = allShipments.map(s => [
+                s.ship_date ? fmtDate(s.ship_date) : '',
+                s.shipment_order_number || '',
+                s.customer_name || '',
+                s.sales_order_number || '',
+                s.package_number || '',
+                s.carrier || '',
+                s.tracking_number || '',
+                (s.status || '').toUpperCase(),
+                parseFloat(s.shipping_charges || 0).toFixed(2)
+            ]);
+            let csv = headers.join(',') + '\n';
+            rows.forEach(r => {
+                csv += r.map(v => '"' + (v || '').replace(/"/g, '""') + '"').join(',') + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'shipments_export.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function refreshShipments() {
+            document.getElementById('shipMoreDrop').classList.remove('show');
+            loadShipments();
+            showToast('Shipments list refreshed.', 'info');
+        }
+
+        function searchShipments() {
+            const query = (document.getElementById('shipSearchInput').value || '').toLowerCase().trim();
+            if (!query) { renderTable(allShipments); return; }
+            const filtered = allShipments.filter(s => {
+                const searchable = [
+                    s.shipment_order_number || '',
+                    s.customer_name || '',
+                    s.carrier || '',
+                    s.status || '',
+                    s.sales_order_number || '',
+                    s.package_number || '',
+                    s.tracking_number || '',
+                    s.shipping_charges ? ('PHP' + parseFloat(s.shipping_charges).toFixed(2)) : '',
+                    s.ship_date ? fmtDate(s.ship_date) : ''
+                ].join(' ').toLowerCase();
+                return searchable.includes(query);
+            });
+            renderTable(filtered);
+        }
+
+        let allShipments = [];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadShipments().then(() => {
+                // Auto-open shipment detail if ?shipmentId=X in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const shipmentId = urlParams.get('shipmentId');
+                if (shipmentId) {
+                    const id = parseInt(shipmentId);
+                    if (id) viewShipment(id);
+                }
+            });
+        });
+
+        function fmtDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        async function loadShipments() {
+            try {
+                const [shipRes, pkgRes] = await Promise.all([
+                    fetch('/api/shipments'),
+                    fetch('/api/packages')
+                ]);
+                const shipments = shipRes.ok ? await shipRes.json() : [];
+                const packages = pkgRes.ok ? await pkgRes.json() : [];
+
+                // Get package IDs that already have shipment records
+                const shippedPkgIds = new Set(shipments.map(s => String(s.package_id)));
+
+                // Add shipped/delivered packages that do NOT have a shipment record
+                const pkgEntries = packages
+                    .filter(p => {
+                        const st = (p.status || '').toUpperCase();
+                        return (st === 'SHIPPED' || st === 'DELIVERED') && !shippedPkgIds.has(String(p.id));
+                    })
+                    .map(p => ({
+                        id: 'pkg-' + p.id,
+                        _isPkgOnly: true,
+                        package_id: p.id,
+                        ship_date: p.package_date,
+                        shipment_order_number: '',
+                        customer_name: p.customer_name || '',
+                        sales_order_number: p.sales_order_number || '',
+                        package_number: p.package_number || '',
+                        carrier: p.carrier || '',
+                        tracking_number: '',
+                        status: (p.status || '').toUpperCase(),
+                        shipping_charges: 0,
+                        created_at: p.created_at
+                    }));
+
+                allShipments = [...shipments, ...pkgEntries];
+                // Sort by date descending
+                allShipments.sort((a, b) => new Date(b.ship_date || b.created_at || 0) - new Date(a.ship_date || a.created_at || 0));
+                renderTable(allShipments);
+            } catch (err) {
+                console.error('Error loading shipments:', err);
+                document.getElementById('shipmentsBody').innerHTML = `
+                    <tr><td colspan="10"><div class="empty-state"><h3>Error loading shipments</h3></div></td></tr>
+                `;
+            }
+        }
+
+        function filterShipments() {
+            const filter = document.getElementById('filterType').value;
+            let filtered = allShipments;
+            if (filter === 'shipped') {
+                filtered = allShipments.filter(s => (s.status || '').toUpperCase() === 'SHIPPED');
+            } else if (filter === 'delivered') {
+                filtered = allShipments.filter(s => (s.status || '').toUpperCase() === 'DELIVERED');
+            }
+            renderTable(filtered);
+        }
+
+        function renderTable(shipments) {
+            const tbody = document.getElementById('shipmentsBody');
+
+            if (shipments.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="10"><div class="empty-state"><h3>No shipments found</h3><p>Create a shipment from the Packages page.</p></div></td></tr>
+                `;
+                document.getElementById('shipPaginationContainer').innerHTML = '';
+                return;
+            }
+
+            function renderShipPage(pageData) {
+                tbody.innerHTML = pageData.map(s => {
+                    const date = fmtDate(s.ship_date);
+                    const statusClass = (s.status || '').toUpperCase() === 'DELIVERED' ? 'status-delivered' : 'status-shipped';
+                    const statusText = (s.status || 'SHIPPED').toUpperCase();
+                    const rate = 'PHP' + parseFloat(s.shipping_charges || 0).toFixed(2);
+
+                    const rowClick = s._isPkgOnly
+                        ? `onclick="window.location.href='/packages.html'" style="cursor:pointer"`
+                        : `onclick="viewShipment(${s.id})" style="cursor:pointer"`;
+                    const linkCell = s._isPkgOnly
+                        ? `<span style="color:#999;font-style:italic">—</span>`
+                        : `<a class="shipment-link" href="javascript:void(0)" onclick="event.stopPropagation(); viewShipment(${s.id})">${s.shipment_order_number || ''}</a>`;
+
+                    return `
+                        <tr ${rowClick}>
+                            <td><input type="checkbox" data-ship-id="${s.id}" onclick="event.stopPropagation()" onchange="updateShipSelBar()"></td>
+                            <td>${date}</td>
+                            <td>${linkCell}</td>
+                            <td>${s.customer_name || ''}</td>
+                            <td>${s.sales_order_number || ''}</td>
+                            <td>${s.package_number || ''}</td>
+                            <td>${s.carrier || ''}</td>
+                            <td>${s.tracking_number || ''}</td>
+                            <td><span class="${statusClass}">${statusText}</span></td>
+                            <td class="shipping-rate">${rate}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            if (!window.shipPager) {
+                window.shipPager = Pagination.create({
+                    data: shipments,
+                    perPage: 14,
+                    containerId: 'shipPaginationContainer',
+                    onPageChange: function (pageData) { renderShipPage(pageData); }
+                });
+            } else {
+                window.shipPager.updateData(shipments);
+            }
+        }
+
+        let currentShipDetailId = null;
+
+        async function viewShipment(id) {
+            currentShipDetailId = id;
+            try {
+                const res = await fetch('/api/shipments/' + id);
+                if (!res.ok) return;
+                const ship = await res.json();
+
+                // Fetch package items
+                let pkgItems = [];
+                if (ship.package_id) {
+                    try {
+                        const pkgRes = await fetch('/api/packages/' + ship.package_id);
+                        if (pkgRes.ok) {
+                            const pkg = await pkgRes.json();
+                            pkgItems = pkg.items || [];
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+
+                // Populate left sidebar
+                const leftList = document.getElementById('shipDetailLeftList');
+                leftList.innerHTML = allShipments.map(s => {
+                    const date = fmtDate(s.ship_date);
+                    const statusUpper = (s.status || 'SHIPPED').toUpperCase();
+                    const statusClass = statusUpper === 'DELIVERED' ? 'delivered' : 'shipped';
+                    const rate = 'PHP' + parseFloat(s.shipping_charges || 0).toFixed(2);
+                    const activeClass = s.id === id ? 'active' : '';
+                    return `
+                        <div class="ship-detail-card ${activeClass}" onclick="viewShipment(${s.id})">
+                            <div class="ship-detail-card-row1">
+                                <span class="ship-detail-card-customer">${s.customer_name || 'Unknown'}</span>
+                                <span class="ship-detail-card-amount">${rate}</span>
+                            </div>
+                            <div class="ship-detail-card-row2">
+                                <span class="ship-detail-card-info"><span class="shipnum">${s.shipment_order_number || ''}</span>  ·  ${date}</span>
+                                <span class="ship-detail-card-info">${s.carrier || ''}</span>
+                            </div>
+                            <div class="ship-detail-card-row3">
+                                <span class="ship-detail-card-status ${statusClass}">${statusUpper}</span>
+                                <span class="ship-detail-card-so">${s.sales_order_number || ''}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Top bar title
+                document.getElementById('shipDetailTitle').textContent = ship.shipment_order_number || '';
+
+                // Tab counts
+                document.getElementById('shipDetailPkgCount').textContent = '1';
+                document.getElementById('shipDetailSOCount').textContent = ship.sales_order_number ? '1' : '0';
+
+                // Build detail content
+                const statusUpper = (ship.status || 'SHIPPED').toUpperCase();
+                const statusClass = statusUpper === 'DELIVERED' ? 'status-delivered' : 'status-shipped';
+                const ribbonClass = statusUpper === 'DELIVERED' ? '' : 'shipped';
+                const shipDate = fmtDate(ship.ship_date);
+                const deliveredDate = ship.already_delivered && ship.updated_at
+                    ? new Date(ship.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(ship.updated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                    : '';
+                const rate = 'PHP' + parseFloat(ship.shipping_charges || 0).toFixed(2);
+
+                // Items HTML
+                const itemsHTML = pkgItems.map((item, idx) => {
+                    const qty = parseFloat(item.quantity_to_pack || 0).toFixed(2);
+                    return `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${item.item_name || ''}<br><span class="ship-doc-item-desc">${item.item_sku || item.description || ''}</span></td>
+                            <td style="text-align:right">${qty}<br><span class="ship-doc-item-desc">${item.unit || 'pcs'}</span></td>
+                        </tr>
+                    `;
+                }).join('') || '<tr><td colspan="3" style="text-align:center;color:#aaa;padding:16px">No items</td></tr>';
+
+                document.getElementById('shipDetailContent').innerHTML = `
+                    <div class="ship-info-section">
+                        <div class="ship-info-title"><svg style="width:18px;height:18px;vertical-align:middle;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="#8B6914" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Shipment Details</div>
+                        <div class="ship-info-grid">
+                            <div class="ship-info-col">
+                                <div class="ship-info-row">
+                                    <span class="ship-info-label">Date of Shipment</span>
+                                    <span class="ship-info-value">${shipDate}</span>
+                                </div>
+                                ${deliveredDate ? `<div class="ship-info-row">
+                                    <span class="ship-info-label">Delivered Date</span>
+                                    <span class="ship-info-value">${deliveredDate}</span>
+                                </div>` : ''}
+                                <div class="ship-info-row">
+                                    <span class="ship-info-label">Carrier</span>
+                                    <span class="ship-info-value">${ship.carrier || 'N/A'}</span>
+                                </div>
+                                <div class="ship-info-row">
+                                    <span class="ship-info-label">Tracking Status</span>
+                                    <span class="ship-info-value ${statusClass}">${statusUpper}</span>
+                                </div>
+                                <div class="ship-info-row">
+                                    <span class="ship-info-label">Shipment Rate</span>
+                                    <span class="ship-info-value">${rate}</span>
+                                </div>
+                                ${ship.tracking_url ? `<a href="${ship.tracking_url}" target="_blank" class="ship-info-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>View Tracking Status</a>` : ''}
+                            </div>
+                            <div class="ship-info-col">
+                                <div class="ship-notes-title">Shipment Notes</div>
+                                ${ship.notes ? `<div style="font-size:13px;color:#333;margin-top:4px">${ship.notes}</div>` : `<a class="ship-notes-add" onclick="alert('Notes feature coming soon')">Add Notes</a>`}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ship-doc-card">
+                        <div class="ship-doc-ribbon ${ribbonClass}">${statusUpper}</div>
+                        <div class="ship-doc-header">
+                            <div class="ship-doc-company">
+                                <div class="ship-doc-company-name">GOLO</div>
+                                <div class="ship-doc-company-info">Philippines<br>glojetfra1357@gmail.com</div>
+                            </div>
+                            <div class="ship-doc-title">
+                                <h2>SHIPMENT ORDER</h2>
+                                <p>Shipment Order# ${ship.shipment_order_number || ''}</p>
+                            </div>
+                        </div>
+                        <div class="ship-doc-details-grid">
+                            <div class="ship-doc-ship-to">
+                                <div class="ship-doc-ship-to-label">Ship To</div>
+                                <div class="ship-doc-ship-to-value">
+                                    ${ship.customer_name || 'N/A'}
+                                </div>
+                            </div>
+                            <div class="ship-doc-meta">
+                                <div class="ship-doc-meta-row">
+                                    <span class="ship-doc-meta-label">Sales Order#:</span>
+                                    <span class="ship-doc-meta-value">${ship.sales_order_number || 'N/A'}</span>
+                                </div>
+                                <div class="ship-doc-meta-row">
+                                    <span class="ship-doc-meta-label">Order Date:</span>
+                                    <span class="ship-doc-meta-value">${shipDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="ship-doc-items-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px">#</th>
+                                    <th>Item & Description</th>
+                                    <th style="text-align:right">Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHTML}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Update status button text based on status
+                const shipStatus = (ship.status || 'SHIPPED').toUpperCase();
+                const statusBtnText = document.getElementById('shipStatusBtnText');
+                if (shipStatus === 'DELIVERED') {
+                    statusBtnText.textContent = 'Mark as Undelivered';
+                } else {
+                    statusBtnText.textContent = 'Mark as Delivered';
+                }
+
+                // Store current ship data for use in functions
+                window._currentShipData = ship;
+
+                // Update More dropdown based on status
+                const moreDropdown = document.getElementById('shipMoreDropdown');
+                moreDropdown.innerHTML = `
+                    <button class="ship-more-dropdown-item danger" onclick="deleteShipmentFromDetail()">Delete Shipment</button>
+                `;
+
+                // Populate Associated Sales Orders tab content
+                const soContent = document.getElementById('shipDetailSOContent');
+                if (ship.sales_order_id) {
+                    try {
+                        const soRes = await fetch('/api/sales-orders/' + ship.sales_order_id);
+                        if (soRes.ok) {
+                            const so = await soRes.json();
+                            const soDate = fmtDate(so.created_at || so.date);
+                            const soStatus = (so.status || '').toUpperCase();
+                            const statusColor = soStatus === 'DELIVERED' ? '#1e8e3e' : soStatus === 'SHIPPED' ? '#1967d2' : '#e37400';
+                            const shipmentDate = fmtDate(ship.ship_date);
+
+                            soContent.innerHTML = `
+                                <div style="padding:0">
+                                    <table style="width:100%;border-collapse:collapse">
+                                        <thead>
+                                            <tr style="border-bottom:2px solid #4285f4">
+                                                <th style="padding:12px 20px;text-align:left;font-size:12px;font-weight:500;color:#888">Date</th>
+                                                <th style="padding:12px 20px;text-align:left;font-size:12px;font-weight:500;color:#888">Sales Order#</th>
+                                                <th style="padding:12px 20px;text-align:left;font-size:12px;font-weight:500;color:#888">Status</th>
+                                                <th style="padding:12px 20px;text-align:left;font-size:12px;font-weight:500;color:#888">Shipment Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer" onclick="window.location.href='/sales-orders.html?id=${so.id}'">
+                                                <td style="padding:14px 20px;font-size:13px;color:#333">${soDate}</td>
+                                                <td style="padding:14px 20px;font-size:13px"><a href="/sales-orders.html?id=${so.id}" style="color:#4285f4;text-decoration:none;font-weight:500">${so.sales_order_number || ship.sales_order_number || ''}</a></td>
+                                                <td style="padding:14px 20px;font-size:13px;color:${statusColor};font-weight:600">${soStatus}</td>
+                                                <td style="padding:14px 20px;font-size:13px;color:#333">${shipmentDate}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                        } else {
+                            soContent.innerHTML = '<div style="padding:40px;text-align:center;color:#999">Sales order not found.</div>';
+                        }
+                    } catch (e) {
+                        soContent.innerHTML = '<div style="padding:40px;text-align:center;color:#999">Error loading sales order.</div>';
+                    }
+                } else {
+                    soContent.innerHTML = '<div style="padding:40px;text-align:center;color:#999">No associated sales order.</div>';
+                }
+
+                // Reset to Packages tab
+                switchShipDetailTab('packages');
+
+                document.getElementById('shipDetailOverlay').classList.add('open');
+
+                // Update URL with shipmentId for refresh persistence
+                const sUrl = new URL(window.location);
+                sUrl.searchParams.set('shipmentId', id);
+                history.replaceState(null, '', sUrl);
+            } catch (err) {
+                console.error('Error loading shipment detail:', err);
+                alert('Error loading shipment details.');
+            }
+        }
+
+        function closeShipmentDetail() {
+            document.getElementById('shipDetailOverlay').classList.remove('open');
+            currentShipDetailId = null;
+
+            // Remove shipmentId from URL
+            const sUrl = new URL(window.location);
+            sUrl.searchParams.delete('shipmentId');
+            history.replaceState(null, '', sUrl.pathname + sUrl.search);
+        }
+
+        function switchShipDetailTab(tab) {
+            const tabs = document.querySelectorAll('.ship-detail-tab');
+            const pkgContent = document.getElementById('shipDetailContent');
+            const soContent = document.getElementById('shipDetailSOContent');
+            if (tab === 'packages') {
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+                pkgContent.style.display = '';
+                soContent.style.display = 'none';
+            } else {
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+                pkgContent.style.display = 'none';
+                soContent.style.display = '';
+            }
+        }
+
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.shipments-table tbody input[type=checkbox]').forEach(cb => {
+                cb.checked = checked;
+            });
+            updateShipSelBar();
+        }
+
+        function updateShipSelBar() {
+            const checkboxes = document.querySelectorAll('.shipments-table tbody input[type=checkbox]:checked');
+            const bar = document.getElementById('shipSelBar');
+            const count = document.getElementById('shipSelCount');
+
+            // ── Header-swap: replaces only the title/search row ──
+            // ── The filter bar always stays visible below.        ──
+            const header = document.querySelector('.page-header');
+            if (bar && header && header.parentNode && bar.parentNode === header.parentNode) {
+                header.parentNode.insertBefore(bar, header);
+            }
+
+            if (checkboxes.length > 0) {
+                bar.classList.add('show');
+                count.textContent = checkboxes.length;
+                if (header) header.style.display = 'none';
+            } else {
+                bar.classList.remove('show');
+                if (header) header.style.display = '';
+            }
+        }
+
+        function clearShipSelection() {
+            document.querySelectorAll('.shipments-table tbody input[type=checkbox]').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            document.getElementById('shipSelBar').classList.remove('show');
+            const header = document.querySelector('.page-header');
+            if (header) header.style.display = '';
+        }
+
+        function getSelectedShipIds() {
+            const ids = [];
+            document.querySelectorAll('.shipments-table tbody input[type=checkbox]:checked').forEach(cb => {
+                const id = cb.getAttribute('data-ship-id');
+                if (id && !id.startsWith('pkg-')) ids.push(id);
+            });
+            return ids;
+        }
+
+        async function bulkDeleteShipments() {
+            const ids = getSelectedShipIds();
+            if (ids.length === 0) { alert('No shipments selected.'); return; }
+            if (!confirm('Are you sure you want to delete ' + ids.length + ' selected shipment(s)?')) return;
+            for (const id of ids) {
+                try {
+                    await fetch('/api/shipments/' + id, { method: 'DELETE' });
+                } catch (err) { console.error('Error deleting shipment:', err); }
+            }
+            clearShipSelection();
+            loadShipments();
+        }
+
+        function bulkDownloadShipmentsPdf() {
+            const ids = getSelectedShipIds();
+            if (ids.length === 0) { alert('No shipments selected.'); return; }
+            const selected = allShipments.filter(s => ids.includes(String(s.id)));
+            // Build HTML content for PDF
+            const container = document.createElement('div');
+            container.style.fontFamily = 'Inter, sans-serif';
+            container.style.padding = '20px';
+            selected.forEach(s => {
+                container.innerHTML += `
+                    <div style="font-size:16px;font-weight:700;margin-bottom:10px">Shipment: ${s.shipment_order_number || 'N/A'}</div>
+                    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+                        <tr><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Date</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${fmtDate(s.ship_date)}</td><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Customer</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${s.customer_name || ''}</td></tr>
+                        <tr><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Sales Order#</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${s.sales_order_number || ''}</td><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Package#</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${s.package_number || ''}</td></tr>
+                        <tr><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Carrier</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${s.carrier || ''}</td><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Tracking#</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${s.tracking_number || ''}</td></tr>
+                        <tr><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Status</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">${(s.status || '').toUpperCase()}</td><th style="border:1px solid #ddd;padding:8px;text-align:left;font-size:12px;background:#f5f5f5;font-weight:600">Shipping Rate</th><td style="border:1px solid #ddd;padding:8px;font-size:12px">PHP${parseFloat(s.shipping_charges || 0).toFixed(2)}</td></tr>
+                    </table><hr>
+                `;
+            });
+            html2pdf().set({
+                margin: 10,
+                filename: 'Shipments.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(container).save();
+        }
+
+        function bulkPrintShipments() {
+            const ids = getSelectedShipIds();
+            if (ids.length === 0) { alert('No shipments selected.'); return; }
+            const selected = allShipments.filter(s => ids.includes(String(s.id)));
+            let html = `<html><head><title>Print Shipments</title>
+                <style>body{font-family:Inter,sans-serif;padding:20px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f5f5f5;font-weight:600}.title{font-size:16px;font-weight:700;margin-bottom:10px}</style>
+            </head><body>`;
+            selected.forEach(s => {
+                html += `<div class="title">Shipment: ${s.shipment_order_number || 'N/A'}</div>`;
+                html += '<table>';
+                html += `<tr><th>Date</th><td>${fmtDate(s.ship_date)}</td><th>Customer</th><td>${s.customer_name || ''}</td></tr>`;
+                html += `<tr><th>Sales Order#</th><td>${s.sales_order_number || ''}</td><th>Package#</th><td>${s.package_number || ''}</td></tr>`;
+                html += `<tr><th>Carrier</th><td>${s.carrier || ''}</td><th>Tracking#</th><td>${s.tracking_number || ''}</td></tr>`;
+                html += `<tr><th>Status</th><td>${(s.status || '').toUpperCase()}</td><th>Shipping Rate</th><td>PHP${parseFloat(s.shipping_charges || 0).toFixed(2)}</td></tr>`;
+                html += '</table><hr>';
+            });
+            html += '</body></html>';
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => { w.print(); }, 300);
+        }
+
+        // ===== Header Kebab Dropdown =====
+        function toggleShipHeaderKebab(e) {
+            e.stopPropagation();
+            document.getElementById('shipHeaderKebab').classList.toggle('show');
+        }
+
+        function closeShipHeaderKebab() {
+            document.getElementById('shipHeaderKebab').classList.remove('show');
+        }
+
+        // Toast notification function
+        function toggleSortSubmenu(e) {
+            e.stopPropagation();
+            document.getElementById('shipSortSubmenu').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.ship-detail-left-btn.dots') && !e.target.closest('.ship-header-kebab-dropdown')) {
+                closeShipHeaderKebab();
+            }
+        });
+
+        let currentShipSort = 'date-desc';
+        function applySortShipments(key) {
+            closeShipHeaderKebab();
+            currentShipSort = key;
+            switch (key) {
+                case 'date-desc': allShipments.sort((a, b) => new Date(b.ship_date) - new Date(a.ship_date)); break;
+                case 'date-asc': allShipments.sort((a, b) => new Date(a.ship_date) - new Date(b.ship_date)); break;
+                case 'customer': allShipments.sort((a, b) => (a.customer_name || '').localeCompare(b.customer_name || '')); break;
+                case 'status': allShipments.sort((a, b) => (a.status || '').localeCompare(b.status || '')); break;
+                case 'so-number': allShipments.sort((a, b) => (a.sales_order_number || '').localeCompare(b.sales_order_number || '')); break;
+                case 'carrier': allShipments.sort((a, b) => (a.carrier || '').localeCompare(b.carrier || '')); break;
+                case 'rate': allShipments.sort((a, b) => parseFloat(b.shipping_charges || 0) - parseFloat(a.shipping_charges || 0)); break;
+            }
+            // Re-render the main table
+            renderTable(allShipments);
+            // Re-render the left sidebar list if detail view is open
+            const leftList = document.getElementById('shipDetailLeftList');
+            if (leftList && leftList.innerHTML) {
+                leftList.innerHTML = allShipments.map(s => {
+                    const date = fmtDate(s.ship_date);
+                    const statusUpper = (s.status || 'SHIPPED').toUpperCase();
+                    const statusClass = statusUpper === 'DELIVERED' ? 'delivered' : 'shipped';
+                    const rate = 'PHP' + parseFloat(s.shipping_charges || 0).toFixed(2);
+                    const activeClass = s.id === currentShipDetailId ? 'active' : '';
+                    return `
+                        <div class="ship-detail-card ${activeClass}" onclick="viewShipment(${s.id})">
+                            <div class="ship-detail-card-row1">
+                                <span class="ship-detail-card-customer">${s.customer_name || 'Unknown'}</span>
+                                <span class="ship-detail-card-amount">${rate}</span>
+                            </div>
+                            <div class="ship-detail-card-row2">
+                                <span class="ship-detail-card-info"><span class="shipnum">${s.shipment_order_number || ''}</span>  ·  ${date}</span>
+                                <span class="ship-detail-card-info">${s.carrier || ''}</span>
+                            </div>
+                            <div class="ship-detail-card-row3">
+                                <span class="ship-detail-card-status ${statusClass}">${statusUpper}</span>
+                                <span class="ship-detail-card-so">${s.sales_order_number || ''}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function importShipments() {
+            closeShipHeaderKebab();
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const text = await file.text();
+                const lines = text.split('\n').filter(l => l.trim());
+                if (lines.length < 2) { showToast('CSV file is empty or has no data rows.', 'error'); return; }
+                const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+                let imported = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].match(/(".*?"|[^,]+)/g)?.map(c => c.replace(/^"|"$/g, '').trim()) || [];
+                    const row = {};
+                    headers.forEach((h, idx) => { row[h] = cols[idx] || ''; });
+                    try {
+                        await fetch('/api/shipments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                shipment_order_number: row['shipment order#'] || row['shipment_order_number'] || '',
+                                carrier: row['carrier'] || '',
+                                tracking_number: row['tracking#'] || row['tracking_number'] || '',
+                                ship_date: row['ship date'] || row['ship_date'] || (function () { const _d = new Date(); return _d.getFullYear() + '-' + String(_d.getMonth() + 1).padStart(2, '0') + '-' + String(_d.getDate()).padStart(2, '0') })(),
+                                shipping_charges: parseFloat(row['shipping charges'] || row['shipping_charges'] || 0),
+                                notes: row['notes'] || '',
+                                status: row['status'] || 'SHIPPED'
+                            })
+                        });
+                        imported++;
+                    } catch (err) { console.error('Error importing row:', err); }
+                }
+                showToast(`Imported ${imported} shipment(s) successfully.`, 'success');
+                loadShipments();
+            };
+            input.click();
+        }
+
+        function exportShipments() {
+            closeShipHeaderKebab();
+            if (allShipments.length === 0) { showToast('No shipments to export.', 'error'); return; }
+            const headers = ['Shipment Order#', 'Customer', 'Sales Order#', 'Package#', 'Carrier', 'Tracking#', 'Status', 'Ship Date', 'Shipping Charges'];
+            const rows = allShipments.map(s => [
+                s.shipment_order_number || '',
+                s.customer_name || '',
+                s.sales_order_number || '',
+                s.package_number || '',
+                s.carrier || '',
+                s.tracking_number || '',
+                (s.status || '').toUpperCase(),
+                fmtDate(s.ship_date),
+                parseFloat(s.shipping_charges || 0).toFixed(2)
+            ]);
+            let csv = headers.join(',') + '\n';
+            rows.forEach(r => { csv += r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n'; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Shipments.csv';
+            a.click();
+            showToast('Shipments exported successfully.', 'success');
+        }
+
+        // ===== New Shipment Form =====
+        let newShipAllPackages = [];
+        let newShipAllCustomers = [];
+        let newShipSelectedPkgItems = [];
+
+        async function openNewShipmentForm() {
+            try {
+                // Fetch NOT SHIPPED packages
+                const pkgRes = await fetch('/api/packages');
+                const allPkgs = pkgRes.ok ? await pkgRes.json() : [];
+                newShipAllPackages = allPkgs.filter(p => (p.status || '').toUpperCase() === 'NOT SHIPPED');
+
+                // Fetch customers
+                const custRes = await fetch('/api/customers');
+                newShipAllCustomers = custRes.ok ? await custRes.json() : [];
+
+                // Next shipment number
+                const numRes = await fetch('/api/shipments/next-number');
+                const numData = numRes.ok ? await numRes.json() : { shipment_order_number: 'SHP-00001' };
+
+                // Populate customer dropdown
+                const custSelect = document.getElementById('newShipCustomer');
+                custSelect.innerHTML = '<option value="">Select Customer</option>';
+                newShipAllCustomers.forEach(c => {
+                    custSelect.innerHTML += `<option value="${c.id}" data-name="${c.display_name || c.first_name || ''}">${c.display_name || c.first_name || 'Unknown'}</option>`;
+                });
+
+                // Populate package dropdown
+                const pkgSelect = document.getElementById('newShipPackage');
+                pkgSelect.innerHTML = '<option value="">Select Package</option>';
+                newShipAllPackages.forEach(p => {
+                    pkgSelect.innerHTML += `<option value="${p.id}" data-number="${p.package_number || ''}" data-customer="${p.customer_name || ''}" data-so-id="${p.sales_order_id || ''}" data-so-num="${p.sales_order_number || ''}">${p.package_number} - ${p.customer_name || ''}</option>`;
+                });
+
+                // Set shipment order number
+                document.getElementById('newShipOrderNum').value = numData.shipment_order_number;
+
+                // Set today's date
+                const today = new Date();
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                document.getElementById('newShipDate').value = `${String(today.getDate()).padStart(2, '0')} ${months[today.getMonth()]} ${today.getFullYear()}`;
+
+                // Clear fields
+                document.getElementById('newShipSO').value = '';
+                document.getElementById('newShipCarrier').value = '';
+
+                // Populate carrier suggestions from existing shipments
+                const carrierSet = new Set(allShipments.map(s => s.carrier).filter(c => c && c.trim()));
+                const datalist = document.getElementById('carrierSuggestions');
+                datalist.innerHTML = Array.from(carrierSet).sort().map(c => `<option value="${c}">`).join('');
+                document.getElementById('newShipTracking').value = '';
+                document.getElementById('newShipTrackingUrl').value = '';
+                document.getElementById('newShipCharges').value = '';
+                document.getElementById('newShipNotes').value = '';
+                document.getElementById('newShipDelivered').checked = false;
+                document.getElementById('newShipItemsBody').innerHTML = '';
+                newShipSelectedPkgItems = [];
+
+                document.getElementById('newShipFormTitle').innerHTML = '<span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span> New Shipment';
+                window._editingShipmentId = null;
+                document.getElementById('newShipOverlay').classList.add('open');
+            } catch (err) {
+                console.error('Error opening new shipment form:', err);
+                alert('Error opening form.');
+            }
+        }
+
+        function closeNewShipmentForm() {
+            document.getElementById('newShipOverlay').classList.remove('open');
+        }
+
+        function onNewShipCustomerChange() {
+            const custSelect = document.getElementById('newShipCustomer');
+            const pkgSelect = document.getElementById('newShipPackage');
+            const selectedName = custSelect.options[custSelect.selectedIndex]?.getAttribute('data-name') || '';
+
+            pkgSelect.innerHTML = '<option value="">Select Package</option>';
+            const filtered = selectedName
+                ? newShipAllPackages.filter(p => p.customer_name === selectedName)
+                : newShipAllPackages;
+
+            filtered.forEach(p => {
+                pkgSelect.innerHTML += `<option value="${p.id}" data-number="${p.package_number || ''}" data-customer="${p.customer_name || ''}" data-so-id="${p.sales_order_id || ''}" data-so-num="${p.sales_order_number || ''}">${p.package_number} - ${p.customer_name || ''}</option>`;
+            });
+
+            document.getElementById('newShipSO').value = '';
+            document.getElementById('newShipItemsBody').innerHTML = '';
+        }
+
+        async function onNewShipPkgChange() {
+            const pkgSelect = document.getElementById('newShipPackage');
+            const pkgId = pkgSelect.value;
+
+            if (!pkgId) {
+                document.getElementById('newShipSO').value = '';
+                document.getElementById('newShipItemsBody').innerHTML = '';
+                newShipSelectedPkgItems = [];
+                return;
+            }
+
+            const selectedOpt = pkgSelect.options[pkgSelect.selectedIndex];
+            const soNum = selectedOpt.getAttribute('data-so-num') || '';
+            const customerName = selectedOpt.getAttribute('data-customer') || '';
+            document.getElementById('newShipSO').value = soNum;
+
+            // Auto-select customer
+            const custSelect = document.getElementById('newShipCustomer');
+            for (let i = 0; i < custSelect.options.length; i++) {
+                if (custSelect.options[i].getAttribute('data-name') === customerName) {
+                    custSelect.selectedIndex = i;
+                    break;
+                }
+            }
+
+            // Fetch package items
+            try {
+                const res = await fetch('/api/packages/' + pkgId);
+                if (!res.ok) return;
+                const pkg = await res.json();
+                newShipSelectedPkgItems = pkg.items || [];
+
+                const tbody = document.getElementById('newShipItemsBody');
+                if (newShipSelectedPkgItems.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:16px">No items in this package</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = newShipSelectedPkgItems.map(item => {
+                    const ordered = parseFloat(item.ordered_quantity || 0).toFixed(2);
+                    const packed = parseFloat(item.packed_quantity || 0).toFixed(2);
+                    const toPack = parseFloat(item.quantity_to_pack || 0).toFixed(2);
+                    return `
+                        <tr>
+                            <td>${item.item_name || ''}</td>
+                            <td>${ordered}</td>
+                            <td>${packed}</td>
+                            <td>${toPack}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Error loading package items:', err);
+            }
+        }
+
+        async function saveNewShipment() {
+            const pkgSelect = document.getElementById('newShipPackage');
+            const pkgId = pkgSelect.value;
+            if (!pkgId) {
+                alert('Please select a Package.');
+                return;
+            }
+
+            const selectedOpt = pkgSelect.options[pkgSelect.selectedIndex];
+            const soId = selectedOpt.getAttribute('data-so-id') || null;
+            const shipmentOrderNum = document.getElementById('newShipOrderNum').value;
+            const dateStr = document.getElementById('newShipDate').value;
+            const carrier = document.getElementById('newShipCarrier').value;
+            const trackingNum = document.getElementById('newShipTracking').value;
+            const trackingUrl = document.getElementById('newShipTrackingUrl').value;
+            const charges = document.getElementById('newShipCharges').value || '0';
+            const notes = document.getElementById('newShipNotes').value;
+            const alreadyDelivered = document.getElementById('newShipDelivered').checked;
+
+            // Parse date
+            let shipDate = new Date();
+            if (dateStr) {
+                const parts = dateStr.split(' ');
+                if (parts.length === 3) {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const mIdx = months.indexOf(parts[1]);
+                    if (mIdx !== -1) {
+                        shipDate = new Date(parseInt(parts[2]), mIdx, parseInt(parts[0]));
+                    }
+                }
+            }
+
+            try {
+                const isEditing = !!window._editingShipmentId;
+                const url = isEditing ? '/api/shipments/' + window._editingShipmentId : '/api/shipments';
+                const method = isEditing ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        package_id: parseInt(pkgId),
+                        sales_order_id: soId ? parseInt(soId) : null,
+                        shipment_order_number: shipmentOrderNum,
+                        ship_date: shipDate.getFullYear() + '-' + String(shipDate.getMonth() + 1).padStart(2, '0') + '-' + String(shipDate.getDate()).padStart(2, '0'),
+                        carrier: carrier,
+                        tracking_number: trackingNum,
+                        tracking_url: trackingUrl,
+                        shipping_charges: parseFloat(charges) || 0,
+                        notes: notes,
+                        already_delivered: alreadyDelivered
+                    })
+                });
+
+                if (res.ok) {
+                    closeNewShipmentForm();
+                    loadShipments();
+                    if (isEditing) viewShipment(window._editingShipmentId);
+                    window._editingShipmentId = null;
+                } else {
+                    const errData = await res.json();
+                    alert('Failed to save shipment: ' + (errData.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error saving shipment:', err);
+                alert('Error saving shipment.');
+            }
+        }
+
+        // === Edit Shipment ===
+        async function editShipmentFromDetail() {
+            if (!currentShipDetailId || !window._currentShipData) return;
+            const ship = window._currentShipData;
+
+            try {
+                // Fetch ALL packages (not just NOT SHIPPED, since this one is already shipped)
+                const pkgRes = await fetch('/api/packages');
+                const allPkgs = pkgRes.ok ? await pkgRes.json() : [];
+
+                // Fetch customers
+                const custRes = await fetch('/api/customers');
+                newShipAllCustomers = custRes.ok ? await custRes.json() : [];
+
+                // Populate customer dropdown
+                const custSelect = document.getElementById('newShipCustomer');
+                custSelect.innerHTML = '<option value="">Select Customer</option>';
+                newShipAllCustomers.forEach(c => {
+                    custSelect.innerHTML += `<option value="${c.id}" data-name="${c.display_name || c.first_name || ''}">${c.display_name || c.first_name || 'Unknown'}</option>`;
+                });
+
+                // Populate package dropdown - include this shipment's package even if already shipped
+                const pkgSelect = document.getElementById('newShipPackage');
+                pkgSelect.innerHTML = '<option value="">Select Package</option>';
+                // Add unshipped packages
+                const unshippedPkgs = allPkgs.filter(p => (p.status || '').toUpperCase() === 'NOT SHIPPED');
+                // Also include the current shipment's package if not already in list
+                const currentPkg = allPkgs.find(p => p.id === ship.package_id);
+                const pkgsToShow = [...unshippedPkgs];
+                if (currentPkg && !unshippedPkgs.find(p => p.id === currentPkg.id)) {
+                    pkgsToShow.unshift(currentPkg);
+                }
+                newShipAllPackages = pkgsToShow;
+                pkgsToShow.forEach(p => {
+                    pkgSelect.innerHTML += `<option value="${p.id}" data-number="${p.package_number || ''}" data-customer="${p.customer_name || ''}" data-so-id="${p.sales_order_id || ''}" data-so-num="${p.sales_order_number || ''}">${p.package_number} - ${p.customer_name || ''}</option>`;
+                });
+
+                // Carrier suggestions
+                const carrierSet = new Set(allShipments.map(s => s.carrier).filter(c => c && c.trim()));
+                const datalist = document.getElementById('carrierSuggestions');
+                datalist.innerHTML = Array.from(carrierSet).sort().map(c => `<option value="${c}">`).join('');
+
+                // Now set all values
+                document.getElementById('newShipOrderNum').value = ship.shipment_order_number || '';
+
+                if (ship.ship_date) {
+                    const d = new Date(ship.ship_date);
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    document.getElementById('newShipDate').value = `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                }
+
+                // Set customer
+                if (ship.customer_id) {
+                    custSelect.value = String(ship.customer_id);
+                } else if (ship.customer_name) {
+                    // Find by name
+                    for (let i = 0; i < custSelect.options.length; i++) {
+                        if (custSelect.options[i].textContent === ship.customer_name) {
+                            custSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                // Set package
+                if (ship.package_id) {
+                    pkgSelect.value = String(ship.package_id);
+                }
+
+                // Set SO number
+                document.getElementById('newShipSO').value = ship.sales_order_number || '';
+
+                // Set other fields
+                document.getElementById('newShipCarrier').value = ship.carrier || '';
+                document.getElementById('newShipTracking').value = ship.tracking_number || '';
+                document.getElementById('newShipTrackingUrl').value = ship.tracking_url || '';
+                document.getElementById('newShipCharges').value = ship.shipping_charges || '';
+                document.getElementById('newShipNotes').value = ship.notes || '';
+                document.getElementById('newShipDelivered').checked = ship.already_delivered || false;
+
+                // Fetch and populate package items
+                if (ship.package_id) {
+                    try {
+                        const itemsRes = await fetch('/api/packages/' + ship.package_id);
+                        if (itemsRes.ok) {
+                            const pkg = await itemsRes.json();
+                            newShipSelectedPkgItems = pkg.items || [];
+                            const tbody = document.getElementById('newShipItemsBody');
+                            tbody.innerHTML = newShipSelectedPkgItems.map((item, idx) => `
+                                <tr>
+                                    <td>${idx + 1}</td>
+                                    <td>${item.item_name || ''}</td>
+                                    <td>${parseFloat(item.quantity_to_pack || 0).toFixed(2)}</td>
+                                </tr>
+                            `).join('');
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+
+                // Set editing state and title
+                window._editingShipmentId = currentShipDetailId;
+                document.getElementById('newShipFormTitle').innerHTML = '<span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span> Edit Shipment';
+                document.getElementById('newShipOverlay').classList.add('open');
+
+            } catch (err) {
+                console.error('Error opening edit shipment form:', err);
+                alert('Error opening edit form.');
+            }
+        }
+
+        // === PDF/Print Dropdown ===
+        function toggleShipPdfDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('shipPdfDropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.ship-pdf-wrap')) {
+                const d = document.getElementById('shipPdfDropdown');
+                if (d) d.classList.remove('show');
+            }
+        });
+
+        function getShipmentPrintHTML() {
+            const card = document.querySelector('.ship-doc-card');
+            if (!card) return null;
+            return `<html><head><title>Shipment</title>
+                <style>body{font-family:Inter,sans-serif;padding:20px}.ship-doc-card{max-width:700px;margin:0 auto;border:1px solid #ddd;padding:30px}table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;font-size:12px}.ship-doc-table thead th{background:#1a2840;color:white;padding:10px}.ship-doc-table tbody td{border-bottom:1px solid #eee}.ship-doc-ribbon{display:none}</style>
+            </head><body>${card.outerHTML}
+</body></html>`;
+        }
+
+        function downloadShipmentPdf() {
+            document.getElementById('shipPdfDropdown').classList.remove('show');
+            const html = getShipmentPrintHTML();
+            if (!html) { alert('No shipment document to download.'); return; }
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => { w.print(); }, 300);
+        }
+
+        function printShipmentDetail() {
+            document.getElementById('shipPdfDropdown').classList.remove('show');
+            const html = getShipmentPrintHTML();
+            if (!html) { alert('No shipment document to print.'); return; }
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => { w.print(); }, 300);
+        }
+
+        // === Toggle Delivery Status ===
+        async function toggleShipmentDeliveryStatus() {
+            if (!currentShipDetailId || !window._currentShipData) return;
+            const ship = window._currentShipData;
+            const isDelivered = (ship.status || '').toUpperCase() === 'DELIVERED';
+
+            if (isDelivered) {
+                if (!confirm('Mark this shipment as undelivered? It will return to Shipped status.')) return;
+                try {
+                    const res = await fetch('/api/shipments/mark-undelivered/' + ship.package_id, { method: 'PATCH' });
+                    if (res.ok) { loadShipments(); viewShipment(currentShipDetailId); }
+                    else { alert('Failed to mark as undelivered.'); }
+                } catch (err) { console.error(err); alert('Error marking as undelivered.'); }
+            } else {
+                if (!confirm('Mark this shipment as delivered?')) return;
+                try {
+                    const res = await fetch('/api/shipments/mark-delivered/' + ship.package_id, { method: 'PATCH' });
+                    if (res.ok) { loadShipments(); viewShipment(currentShipDetailId); }
+                    else { alert('Failed to mark as delivered.'); }
+                } catch (err) { console.error(err); alert('Error marking as delivered.'); }
+            }
+        }
+
+        // ===== More Dropdown in Shipment Detail =====
+        function toggleShipMoreDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('shipMoreDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.ship-more-dropdown-wrap')) {
+                const dropdown = document.getElementById('shipMoreDropdown');
+                if (dropdown) dropdown.classList.remove('show');
+            }
+        });
+
+        async function markShipmentUndelivered() {
+            document.getElementById('shipMoreDropdown').classList.remove('show');
+            if (!currentShipDetailId) { alert('No shipment selected.'); return; }
+
+            // Get the package_id from the current shipment
+            try {
+                const res = await fetch('/api/shipments/' + currentShipDetailId);
+                if (!res.ok) { alert('Failed to get shipment info.'); return; }
+                const ship = await res.json();
+
+                if ((ship.status || '').toUpperCase() !== 'DELIVERED') {
+                    alert('This shipment is not delivered yet.');
+                    return;
+                }
+
+                if (!confirm('Mark this shipment as undelivered? It will return to Shipped status.')) return;
+
+                const patchRes = await fetch('/api/shipments/mark-undelivered/' + ship.package_id, { method: 'PATCH' });
+                if (patchRes.ok) {
+                    loadShipments();
+                    viewShipment(currentShipDetailId);
+                } else {
+                    alert('Failed to mark as undelivered.');
+                }
+            } catch (err) {
+                console.error('Error marking as undelivered:', err);
+                alert('Error marking as undelivered.');
+            }
+        }
+
+        async function deleteShipmentFromDetail() {
+            document.getElementById('shipMoreDropdown').classList.remove('show');
+            if (!currentShipDetailId) { alert('No shipment selected.'); return; }
+
+            if (!confirm('Are you sure you want to delete this shipment? The package will return to Not Shipped.')) return;
+
+            try {
+                const res = await fetch('/api/shipments/' + currentShipDetailId, { method: 'DELETE' });
+                if (res.ok) {
+                    closeShipmentDetail();
+                    loadShipments();
+                } else {
+                    alert('Failed to delete shipment.');
+                }
+            } catch (err) {
+                console.error('Error deleting shipment:', err);
+                alert('Error deleting shipment.');
+            }
+        }
+    </script>
+    <!-- Kebab More Dropdown -->
+    <div class="ship-more-dropdown" id="shipMoreDrop">
+        <button class="ship-more-item sort-by-item" onmouseenter="showSortSub()" onmouseleave="hideSortSub()">
+            <span class="ship-more-icon">⇅</span> Sort by <span class="ship-more-arrow">›</span>
+        </button>
+        <button class="ship-more-item" onclick="importShipments()">
+            <span class="ship-more-icon">⬇</span> Import
+        </button>
+        <button class="ship-more-item" onclick="exportShipments()">
+            <span class="ship-more-icon">⬆</span> Export
+        </button>
+        <button class="ship-more-item" onclick="refreshShipments()">
+            <span class="ship-more-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span> Refresh List
+        </button>
+    </div>
+
+    <!-- Sort Submenu -->
+    <div class="ship-sort-submenu" id="shipSortSub" onmouseenter="keepSortSub()" onmouseleave="hideSortSub()">
+        <button onclick="sortShipBy('ship_date')" class="active">Date</button>
+        <button onclick="sortShipBy('shipment_order_number')">Shipment Order#</button>
+        <button onclick="sortShipBy('customer_name')">Customer Name</button>
+        <button onclick="sortShipBy('sales_order_number')">Sales Order#</button>
+        <button onclick="sortShipBy('carrier')">Carrier</button>
+        <button onclick="sortShipBy('status')">Status</button>
+        <button onclick="sortShipBy('shipping_charges')">Shipping Rate</button>
+    </div>
+
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Management - GIHON</title>
+  <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+  <link rel="stylesheet" href="/css/sidebar.css">
+  <link rel="stylesheet" href="/css/alert-dialog.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/css/sales.css">
+
+  <link rel="stylesheet" href="/css/utilities.css">
+</head>
+
+<body>
+  <!-- Sidebar Container -->
+  <div id="sidebarContainer"></div>
+
+  <!-- Header Container -->
+  <div id="headerContainer"></div>
+
+  <!-- Page Configuration -->
+  <script>
+    window.pageConfig = {
+      // searchPlaceholder: 'Search sales, customers, invoices...',
+      // searchId: 'searchSales'
+    };
+  </script>
+
+  <!-- Main Content -->
+  <div class="main-layout">
+    <div class="content" id="content">
+      <div class="page-title">Sales Management</div>
+
+      <!-- Revenue Overview -->
+      <div class="revenue-grid">
+        <div class="revenue-card">
+          <div class="revenue-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="revenue-label">Today's Revenue</div>
+          <div class="revenue-value" id="todayRevenue">$0</div>
+          <div class="revenue-subtitle">Sales completed today</div>
+        </div>
+        <div class="revenue-card">
+          <div class="revenue-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="revenue-label">This Month</div>
+          <div class="revenue-value" id="monthRevenue">$0</div>
+          <div class="revenue-subtitle">Monthly revenue</div>
+        </div>
+        <div class="revenue-card">
+          <div class="revenue-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+          <div class="revenue-label">Total Sales</div>
+          <div class="revenue-value" id="totalSales">0</div>
+          <div class="revenue-subtitle">All time orders</div>
+        </div>
+        <div class="revenue-card">
+          <div class="revenue-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="revenue-label">Pending Orders</div>
+          <div class="revenue-value" id="pendingOrders">0</div>
+          <div class="revenue-subtitle">Awaiting fulfillment</div>
+        </div>
+      </div>
+
+      <!-- Order Tabs -->
+      <div class="tabs-container">
+        <button class="tab-button active" onclick="switchTab('all')">
+          <span>All Orders</span>
+          <span class="tab-badge" id="allCount">0</span>
+        </button>
+        <button class="tab-button" onclick="switchTab('completed')">
+          <span>Completed</span>
+          <span class="tab-badge" id="completedCount">0</span>
+        </button>
+        <button class="tab-button" onclick="switchTab('pending')">
+          <span>Pending</span>
+          <span class="tab-badge" id="pendingCount">0</span>
+        </button>
+        <button class="tab-button" onclick="switchTab('cancelled')">
+          <span>Cancelled</span>
+          <span class="tab-badge" id="cancelledCount">0</span>
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-container">
+        <div class="search-wrapper">
+          <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" class="search-input" id="salesSearchInput"
+            placeholder="Search orders, customers, or amount...">
+        </div>
+      </div>
+
+      <!-- All Orders Tab -->
+      <div id="tab-all" class="tab-content active">
+        <div class="sales-table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total Amount</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="allSalesTableBody">
+              <tr>
+                <td colspan="8" class="loading loading-cell">
+                  <div class="spinner"></div>
+                  Loading sales...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Completed Orders Tab -->
+      <div id="tab-completed" class="tab-content">
+        <div class="sales-table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total Amount</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="completedSalesTableBody">
+              <tr>
+                <td colspan="8" class="loading loading-cell">
+                  <div class="spinner"></div>
+                  Loading completed orders...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pending Orders Tab -->
+      <div id="tab-pending" class="tab-content">
+        <div class="sales-table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total Amount</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pendingSalesTableBody">
+              <tr>
+                <td colspan="8" class="loading loading-cell">
+                  <div class="spinner"></div>
+                  Loading pending orders...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cancelled Orders Tab -->
+      <div id="tab-cancelled" class="tab-content">
+        <div class="sales-table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Total Amount</th>
+                <th>Cancelled Date</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cancelledSalesTableBody">
+              <tr>
+                <td colspan="7" class="loading loading-cell">
+                  <div class="spinner"></div>
+                  Loading cancelled orders...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- New Sale Modal -->
+  <div id="newSaleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Sale</h2>
+        <button onclick="closeNewSaleModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="newSaleForm">
+          <!-- Customer Information -->
+          <div class="sale-form-section">
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Customer Information</h3>
+            <div class="customer-card">
+              <div class="customer-info">
+                <div class="customer-field">
+                  <label>Customer Name</label>
+                  <input type="text" class="form-input" id="saleCustomerName" placeholder="Walk-in Customer">
+                </div>
+                <div class="customer-field">
+                  <label>Email</label>
+                  <input type="email" class="form-input" id="saleCustomerEmail" placeholder="customer@email.com">
+                </div>
+                <div class="customer-field">
+                  <label>Phone</label>
+                  <input type="tel" class="form-input" id="saleCustomerPhone" placeholder="+1 234 567 8900">
+                </div>
+                <div class="customer-field">
+                  <label>Address</label>
+                  <input type="text" class="form-input" id="saleCustomerAddress" placeholder="Customer address">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Items -->
+          <div class="sale-form-section">
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Add Items</h3>
+            <div class="form-row-flex">
+              <select class="form-select" id="saleItemSelect" title="Select Item" aria-label="Select Item">
+                <option value="">Select Item</option>
+              </select>
+              <input type="text" class="form-input" id="saleQuantity" placeholder="Quantity"
+                oninput="formatNumberInput(this)">
+              <input type="text" class="form-input" id="salePrice" placeholder="Price"
+                oninput="formatNumberInput(this)">
+              <button type="button" class="btn btn-primary" onclick="addSaleItem()">Add</button>
+            </div>
+
+            <table class="items-list-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="saleItemsList">
+                <tr>
+                  <td colspan="5" class="empty-table-cell">No items added yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Order Summary -->
+          <div class="sale-form-section">
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Order Summary</h3>
+            <div>
+              <div class="summary-row">
+                <span>Subtotal:</span>
+                <strong id="saleSubtotal">$0.00</strong>
+              </div>
+
+              <div class="summary-row">
+                <span>Discount:</span>
+                <div class="discount-input-group">
+                  <label for="saleDiscountValue" class="sr-only">Discount Value</label>
+                  <input type="number" step="0.01" class="form-input input-small" id="saleDiscountValue" value="0"
+                    onchange="calculateSaleTotal()" title="Discount Value" aria-label="Discount Value">
+                  <label for="saleDiscountType" class="sr-only">Discount Type</label>
+                  <select class="form-select" id="saleDiscountType" onchange="calculateSaleTotal()"
+                    title="Discount Type" aria-label="Discount Type">
+                    <option value="amount">$</option>
+                    <option value="percent">%</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="summary-row">
+                <span>Tax (%):</span>
+                <label for="saleTaxRate" class="sr-only">Tax Rate</label>
+                <input type="number" step="0.01" class="form-input input-small" id="saleTaxRate" value="0"
+                  onchange="calculateSaleTotal()" title="Tax Rate (%)" aria-label="Tax Rate">
+              </div>
+
+              <div class="summary-row">
+                <span>Tax Amount:</span>
+                <strong id="saleTaxAmount">$0.00</strong>
+              </div>
+
+              <div class="summary-row total">
+                <span>Total Amount:</span>
+                <span id="saleTotalAmount">$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment & Terms -->
+          <div class="sale-form-section">
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payment & Terms</h3>
+            <div class="form-row-grid">
+              <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select class="form-select" id="salePaymentMethod" title="Payment Method" aria-label="Payment Method">
+                  <option value="">Select</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Credit">Credit</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="saleStatus" title="Sale Status" aria-label="Sale Status">
+                  <option value="completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group mt-16">
+              <label class="form-label">Notes</label>
+              <textarea class="form-input" id="saleNotes" rows="3" placeholder="Additional notes..."></textarea>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeNewSaleModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Sale</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Sale Modal -->
+  <div id="editSaleModal" class="modal">
+    <div class="modal-content modal-content-small">
+      <div class="modal-header">
+        <h2>Edit Sale</h2>
+        <button onclick="closeEditSaleModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="editSaleForm">
+          <input type="hidden" id="editSaleId">
+          <div class="form-group">
+            <label class="form-label">Receipt Number</label>
+            <input type="text" class="form-input input-readonly" id="editReceiptNumber" readonly title="Receipt Number"
+              aria-label="Receipt Number">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Customer Name</label>
+            <input type="text" class="form-input" id="editCustomerName" title="Customer Name"
+              aria-label="Customer Name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <select class="form-select" id="editPaymentMethod" title="Payment Method" aria-label="Payment Method">
+              <option value="">Select</option>
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Credit">Credit</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editSaleStatus" title="Sale Status" aria-label="Sale Status">
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="editSaleNotes" rows="3" placeholder="Add notes..."></textarea>
+          </div>
+          <div class="action-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeEditSaleModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Sale Confirmation Modal -->
+  <div id="deleteSaleModal" class="modal">
+    <div class="modal-content delete-modal-content">
+      <div class="delete-modal-header">
+        <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete Sale</h2>
+        <button onclick="closeDeleteSaleModal()">×</button>
+      </div>
+      <div class="delete-modal-body">
+        <div class="delete-modal-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="delete-modal-title">Are you sure you want to delete this sale?</div>
+        <div class="delete-modal-order" id="deleteSaleOrderNumber">ORD-0000</div>
+        <div class="delete-modal-message" id="deleteSaleMessage">
+          This action cannot be undone.
+        </div>
+        <div class="delete-modal-warning d-none" id="deleteSaleWarning">
+          <span class="delete-modal-warning-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <span class="delete-modal-warning-text" id="deleteSaleWarningText">
+            Warning message here
+          </span>
+        </div>
+        <div class="delete-modal-actions">
+          <button class="btn btn-cancel-delete" onclick="closeDeleteSaleModal()">Cancel</button>
+          <button class="btn btn-confirm-delete" onclick="confirmDeleteSale()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete Sale</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Receipt Confirmation Modal -->
+  <div id="viewReceiptModal" class="modal">
+    <div class="modal-content receipt-modal-content">
+      <div class="receipt-modal-header">
+        <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Sale Complete !</h2>
+        <button onclick="closeViewReceiptModal()">×</button>
+      </div>
+      <div class="receipt-modal-body">
+        <div class="receipt-modal-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="receipt-modal-title">Sale Created Successfully !</div>
+        <div class="receipt-modal-subtitle" id="receiptOrderNumber">Order #ORD-0000</div>
+        <div class="receipt-modal-message">
+          Would you like to view and print the receipt?
+        </div>
+        <div class="receipt-modal-actions">
+          <button class="btn btn-skip-receipt" onclick="closeViewReceiptModal()">Skip</button>
+          <button class="btn btn-view-receipt" onclick="confirmViewReceipt()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>View Receipt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sale Items Modal -->
+  <div id="saleItemsModal" class="modal">
+    <div class="modal-content modal-content-medium">
+      <div class="modal-header">
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Items in Order</h2>
+        <button onclick="closeSaleItemsModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-box">
+          <div class="info-box-header">
+            <div>
+              <div class="info-box-label">Order Number</div>
+              <div class="info-box-value" id="itemsModalOrderNumber">-</div>
+            </div>
+            <div class="text-right">
+              <div class="info-box-label">Customer</div>
+              <div class="info-box-value-small" id="itemsModalCustomer">-</div>
+            </div>
+          </div>
+        </div>
+
+        <table class="items-list-table w-full">
+          <thead>
+            <tr class="table-header-gradient">
+              <th>Item Name</th>
+              <th class="text-center">Qty</th>
+              <th class="text-right">Unit Price</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="saleItemsModalBody">
+            <tr>
+              <td colspan="4" class="empty-table-cell">Loading items...</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-footer-light">
+            <tr>
+              <td colspan="3" class="text-right p-12 text-bold">Total Amount:</td>
+              <td class="table-footer-total" id="itemsModalTotal">₱0.00</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="mt-20 text-center">
+          <button class="btn btn-secondary btn-large" onclick="closeSaleItemsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/layout.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/alert-dialog.js"></script>
+  <script src="/js/global-features.js"></script>
+  <script src="/js/sales.js"></script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

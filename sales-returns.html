@@ -1,0 +1,2820 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Returns - Inventory Management</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/global-search.css">
+    <link rel="stylesheet" href="/css/pagination.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+            font-size: 13px;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 0;
+            background: white;
+        }
+
+        /* ===== LIST VIEW ===== */
+        #listView {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 56px);
+            overflow: hidden;
+        }
+
+        .sr-table-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+            flex-shrink: 0;
+            top: 0 !important; /* beat main.css "top: 56px !important" — prevents 56px downward offset that covers the column headers */
+        }
+
+        .page-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .returns-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .returns-table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e9ecef;
+            background: #f9fafb;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .returns-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .returns-table tr:hover td {
+            background: #f8f9ff;
+        }
+
+        .rma-link {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .rma-link:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== STATUS BADGES ===== */
+        .status-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.draft {
+            color: #555;
+        }
+
+        .status-badge.approved {
+            color: #1a73e8;
+        }
+
+        .status-badge.closed {
+            color: #16a34a;
+        }
+
+        .status-badge.declined {
+            color: #dc2626;
+        }
+
+        .status-badge.received {
+            color: #16a34a;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 150px 24px;
+            text-align: center;
+            min-height: calc(100vh - 100px);
+        }
+
+        .empty-state-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 16px 0;
+        }
+
+        .empty-state-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin: 0 0 32px 0;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .btn-sales-orders {
+            padding: 12px 28px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-sales-orders:hover {
+            background: #3367d6;
+        }
+
+        /* ===== DETAIL VIEW (SPLIT LAYOUT) ===== */
+        .detail-view {
+            display: none;
+            height: 100vh;
+        }
+
+        .detail-view.active {
+            display: flex;
+        }
+
+        /* Left sidebar */
+        .sr-left-panel {
+            width: 210px;
+            border-right: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            background: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sr-left-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .sr-left-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sr-left-title:hover {
+            color: #4285f4;
+        }
+
+        .sr-left-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sr-left-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sr-left-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .sr-left-btn.primary {
+            background: linear-gradient(135deg, #a52222 0%, #800000 100%);
+            color: white;
+            transition: background 0.15s;
+        }
+
+        .sr-left-btn.primary:hover {
+            background: linear-gradient(135deg, #b52828 0%, #8e0000 100%);
+        }
+
+        .sr-left-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sr-left-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .sr-left-item:hover {
+            background: #f8f9ff;
+        }
+
+        .sr-left-item.active {
+            background: #e8f0fe;
+            border-left: 3px solid #4285f4;
+        }
+
+        .sr-left-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .sr-left-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sr-left-item-amount {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sr-left-item-bottom {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .sr-left-item-status {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .sr-left-item-status.approved {
+            color: #16a34a;
+        }
+
+        .sr-left-item-status.draft {
+            color: #888;
+        }
+
+        .sr-left-item-status.closed {
+            color: #dc2626;
+        }
+
+        /* Right panel */
+        .sr-right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f9fafb;
+        }
+
+        .sr-right-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .sr-right-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sr-right-rma {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .sr-right-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sr-right-header-actions button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sr-right-header-actions button:hover {
+            background: #f0f0f0;
+        }
+
+        /* Action bar */
+        .sr-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .sr-action-btn {
+            padding: 6px 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .sr-action-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .sr-action-separator {
+            width: 1px;
+            height: 20px;
+            background: #e0e0e0;
+            margin: 0 4px;
+        }
+
+        /* Tabs */
+        .sr-tabs {
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .sr-tab {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sr-tab:hover {
+            color: #333;
+        }
+
+        .sr-tab.active {
+            color: #4285f4;
+            border-bottom-color: #4285f4;
+            font-weight: 500;
+        }
+
+        .sr-tab-count {
+            display: inline-block;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: #4285f4;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 18px;
+            margin-left: 4px;
+        }
+
+        /* PDF toggle */
+        .sr-pdf-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            padding: 8px 24px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .sr-pdf-toggle input[type="checkbox"] {
+            width: 36px;
+            height: 18px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ccc;
+            border-radius: 9px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .sr-pdf-toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+
+        .sr-pdf-toggle input[type="checkbox"]:checked {
+            background: #4285f4;
+        }
+
+        .sr-pdf-toggle input[type="checkbox"]:checked::before {
+            left: 20px;
+        }
+
+        /* Detail scroll area */
+        .sr-detail-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Document card */
+        .sr-document-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 40px 48px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .sr-doc-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .sr-doc-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 4px 0;
+        }
+
+        .sr-doc-subtitle {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+
+        .sr-doc-subtitle strong {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sr-bill-to-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .sr-bill-to-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4285f4;
+        }
+
+        /* Status section */
+        .sr-status-section {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding: 16px 0;
+            border-left: 3px solid #ffc107;
+            padding-left: 16px;
+        }
+
+        .sr-status-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sr-status-label {
+            font-size: 13px;
+            color: #666;
+            min-width: 100px;
+        }
+
+        .sr-status-value {
+            font-size: 13px;
+        }
+
+        .sr-receive-status {
+            color: #16a34a;
+            font-weight: 500;
+        }
+
+        /* Date section */
+        .sr-date-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 30px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .sr-date-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            min-width: 80px;
+        }
+
+        .sr-date-value {
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* Items table in detail */
+        .sr-doc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .sr-doc-table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border-bottom: 2px solid #e9ecef;
+            background: #f9fafb;
+        }
+
+        .sr-doc-table td {
+            padding: 14px 12px;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+        }
+
+        .sr-doc-table th:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
+        .sr-doc-table td:first-child {
+            text-align: center;
+            color: #888;
+        }
+
+        .sr-doc-table th:nth-child(4),
+        .sr-doc-table td:nth-child(4) {
+            width: 180px;
+        }
+
+        .sr-doc-table th:nth-child(5),
+        .sr-doc-table td:nth-child(5),
+        .sr-doc-table th:nth-child(6),
+        .sr-doc-table td:nth-child(6) {
+            text-align: right;
+            width: 100px;
+        }
+
+        .sr-qty-returned {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .sr-qty-received {
+            color: #888;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .sr-item-img {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 16px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Footer */
+        .sr-left-footer {
+            padding: 10px 16px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+            flex-shrink: 0;
+        }
+
+        /* === Filter Dropdown === */
+        .sr-filter-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sr-filter-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        .sr-filter-btn:hover {
+            color: #4285f4;
+        }
+
+        .sr-filter-arrow {
+            font-size: 10px;
+            color: #8B1A1A;
+            transition: transform 0.2s;
+        }
+
+        .sr-filter-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .sr-filter-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 6px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            min-width: 240px;
+            z-index: 100;
+            padding: 8px 0;
+        }
+
+        .sr-filter-dropdown.open {
+            display: block;
+        }
+
+        .sr-filter-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: background 0.15s;
+        }
+
+        .sr-filter-option:hover {
+            background: #f5f8ff;
+        }
+
+        .sr-filter-option.active {
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        .sr-filter-star {
+            font-size: 18px;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        .sr-filter-star:hover {
+            color: #f5c518;
+        }
+
+        /* === Hamburger Menu === */
+        .sr-hamburger-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .cust-filter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 6px;
+            border-radius: 4px;
+            background: #f0f5ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .cust-filter-icon:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .cust-filter-icon svg {
+            transition: all 0.2s ease;
+        }
+
+        .cust-filter-icon:hover svg {
+            fill: #6d1515;
+        }
+
+        .sr-hamburger-menu {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 200px;
+            z-index: 9999;
+            padding: 8px 0;
+            overflow: visible;
+        }
+
+        .sr-hamburger-menu.open {
+            display: block;
+            animation: srHbFadeIn 0.15s ease-out;
+        }
+
+        @keyframes srHbFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .sr-hamburger-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .sr-hamburger-item:first-child {
+            background: #8B1A1A;
+            color: white;
+            margin: 4px 8px 8px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            width: calc(100% - 16px);
+        }
+
+        .sr-hamburger-item:first-child:hover {
+            background: #6d1515;
+        }
+
+        .sr-hamburger-item:first-child .sr-hamburger-item-icon {
+            color: white;
+        }
+
+        .sr-hamburger-item:hover {
+            background: #f3f4f6;
+            color: #1a1f3a;
+        }
+
+        .sr-hamburger-item-icon {
+            font-size: 16px;
+            color: #6b7280;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* === Customize Columns Modal === */
+        .cc-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 1300;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cc-overlay.open {
+            display: flex;
+        }
+
+        .cc-modal {
+            background: #fff;
+            border-radius: 4px;
+            width: 500px;
+            max-width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .cc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .cc-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cc-header-left .cc-icon {
+            font-size: 16px;
+            color: #888;
+        }
+
+        .cc-header-left h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .cc-header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .cc-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #e53935;
+            cursor: pointer;
+        }
+
+        .cc-search-wrap {
+            padding: 16px 24px;
+        }
+
+        .cc-search {
+            width: 100%;
+            padding: 10px 14px 10px 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+        }
+
+        .cc-search:focus {
+            border-color: #8B1A1A;
+            box-shadow: 0 0 0 2px rgba(139, 26, 26, 0.1);
+        }
+
+        .cc-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+            min-height: 0;
+        }
+
+        .cc-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            margin: 4px 0;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: default;
+            transition: all 0.15s;
+            background: #f8fafc;
+        }
+
+        .cc-item.checked {
+            background: #e6f4ff;
+            border-color: #91caff;
+        }
+
+        .cc-item.locked {
+            background: #f5f5f5;
+        }
+
+        .cc-item:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .cc-drag {
+            color: #ccc;
+            cursor: grab;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .cc-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .cc-checkbox.checked {
+            background: #8B1A1A;
+            border-color: #8B1A1A;
+            color: white;
+            font-size: 12px;
+        }
+
+        .cc-lock {
+            color: #f5c518;
+            font-size: 14px;
+        }
+
+        .cc-label {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .cc-footer {
+            display: flex;
+            gap: 10px;
+            padding: 16px 24px;
+            border-top: 1px solid #e8e8e8;
+        }
+
+        .cc-btn-save {
+            padding: 9px 22px;
+            background: #8B1A1A;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .cc-btn-save:hover {
+            background: #6d1515;
+        }
+
+        .cc-btn-cancel {
+            padding: 9px 22px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .cc-btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        /* ===== PDF/Print Dropdown ===== */
+        .sr-pdf-dropdown-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sr-pdf-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            z-index: 9999;
+            padding: 6px 0;
+            animation: srDropFadeIn 0.18s ease;
+        }
+
+        @keyframes srDropFadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .sr-pdf-dropdown.show {
+            display: block;
+        }
+
+        .sr-pdf-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 18px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .sr-pdf-dropdown-item:first-child {
+            border-radius: 10px 10px 0 0;
+        }
+
+        .sr-pdf-dropdown-item:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+
+        .sr-pdf-dropdown-item:hover {
+            background: #f0f5ff;
+            color: #1a73e8;
+        }
+
+        .sr-pdf-dropdown-item .sr-pdf-icon {
+            width: 20px;
+            text-align: center;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .sr-pdf-dropdown-item:hover .sr-pdf-icon {
+            color: #1a73e8;
+        }
+
+        /* ===== Kebab Menu (Main Page) ===== */
+        .sr-main-kebab-wrap {
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .sr-main-kebab-btn {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sr-main-kebab-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .sr-main-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 240px;
+            z-index: 9999;
+            padding: 8px 0;
+        }
+
+        .sr-main-menu.show {
+            display: block;
+        }
+
+        .sr-main-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        .sr-main-menu-item:hover {
+            background: #f5f7fa;
+        }
+
+        .sr-main-menu-item .sr-mi-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            color: #555;
+        }
+
+        .sr-main-menu-item .sr-mi-arrow {
+            margin-left: auto;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .sr-main-menu-sep {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 6px 0;
+        }
+
+        /* Sort By submenu */
+        .sr-sort-wrap {
+            position: relative;
+        }
+
+        .sr-sort-sub {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: -8px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 210px;
+            z-index: 10000;
+            padding: 8px 0;
+        }
+
+        .sr-sort-wrap:hover .sr-sort-sub {
+            display: block;
+        }
+
+        .sr-sort-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .sr-sort-item:hover {
+            background: #f5f7fa;
+        }
+
+        .sr-sort-item.active {
+            background: #4285f4;
+            color: #fff;
+            border-radius: 4px;
+            margin: 2px 6px;
+            padding: 10px 12px;
+        }
+
+        .sr-sort-item.active:hover {
+            background: #3367d6;
+        }
+
+        .sr-sort-arrow {
+            font-size: 14px;
+        }    </style>
+    <link rel="stylesheet" href="/css/list-table.css">
+</head>
+
+<body>
+    <!-- Sidebar Container -->
+    <div id="sidebarContainer"></div>
+
+    <div class="main-layout">
+        <div class="content" id="content">
+
+            <!-- LIST VIEW -->
+            <div id="listView">
+                <div class="page-header" id="pageHeader" style="display:none;">
+                    <div class="page-title-wrapper">
+                        <div class="sr-filter-wrap">
+                            <button class="sr-filter-btn" onclick="toggleSrFilterDropdown()">
+                                <span id="srFilterTitle">All Sales Returns</span>
+                                <span class="sr-filter-arrow" id="srFilterArrow">▼</span>
+                            </button>
+                            <div class="sr-filter-dropdown" id="srFilterDropdown">
+                                <div class="sr-filter-option active" onclick="applySrFilter('all')">All <span
+                                        class="sr-filter-star">☆</span></div>
+                                <div class="sr-filter-option" onclick="applySrFilter('DECLINED')">Declined <span
+                                        class="sr-filter-star">☆</span></div>
+                                <div class="sr-filter-option" onclick="applySrFilter('DRAFT')">Draft <span
+                                        class="sr-filter-star">☆</span></div>
+                                <div class="sr-filter-option" onclick="applySrFilter('APPROVED')">Approved <span
+                                        class="sr-filter-star">☆</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="global-search-container" style="position:absolute;left:50%;transform:translateX(-50%);">
+                        <span class="global-search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="text" class="global-search-input" id="retSearchInput"
+                            placeholder="Search returns..." oninput="searchReturns()">
+                    </div>
+                    <div class="sr-main-kebab-wrap">
+                        <button class="sr-main-kebab-btn" onclick="toggleSrMainMenu(event)">⋯</button>
+                        <div class="sr-main-menu" id="srMainMenu">
+                            <div class="sr-sort-wrap sr-main-menu-item">
+                                <span class="sr-mi-icon">↑↓</span> Sort by <span class="sr-mi-arrow">›</span>
+                                <div class="sr-sort-sub" id="srSortSub">
+                                    <div class="sr-sort-item" onclick="sortReturnsBy('return_date', this)">Date</div>
+                                    <div class="sr-sort-item" onclick="sortReturnsBy('rma_number', this)">RMA#</div>
+                                    <div class="sr-sort-item" onclick="sortReturnsBy('sales_order_number', this)">Sales Order#</div>
+                                    <div class="sr-sort-item" onclick="sortReturnsBy('customer_name', this)">Customer Name</div>
+                                    <div class="sr-sort-item" onclick="sortReturnsBy('status', this)">Status</div>
+                                    <div class="sr-sort-item" onclick="sortReturnsBy('total_return_qty', this)">Returned</div>
+                                </div>
+                            </div>
+                            <div class="sr-main-menu-sep"></div>
+                            <div class="sr-main-menu-item" onclick="srExportCSV()">
+                                <span class="sr-mi-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span> Export
+                            </div>
+                            <div class="sr-main-menu-sep"></div>
+                            <div class="sr-main-menu-item" onclick="srRefreshList()">
+                                <span class="sr-mi-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span> Refresh List
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sr-table-scroll">
+                <table class="returns-table" id="returnsTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th style="width:30px;padding:12px 4px 12px 12px;">
+                                <div class="sr-hamburger-wrap">
+                                    <span class="cust-filter-icon"
+                                        onclick="event.stopPropagation();toggleHamburgerMenu(event)"
+                                        title="Table options"><svg width="16" height="16" viewBox="0 0 24 24" fill="#8B1A1A"><path d="M3 5h2v2H3V5zm4 0h14v2H7V5zm-4 6h2v2H3v-2zm4 0h14v2H7v-2zm-4 6h2v2H3v-2zm4 0h14v2H7v-2z"/></svg></span>
+                                    <div class="sr-hamburger-menu" id="srHamburgerMenu">
+                                        <div class="sr-hamburger-item" onclick="openCustomizeColumns()"><span
+                                                class="sr-hamburger-item-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Customize Columns</div>
+                                        <div class="sr-hamburger-item" onclick="toggleWrapText()"><span
+                                                class="sr-hamburger-item-icon" id="srClipIcon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span> <span id="wrapTextLabel">Clip Text</span></div>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>DATE</th>
+                            <th>RMA#</th>
+                            <th>SALES ORDER#</th>
+                            <th>CUSTOMER NAME</th>
+                            <th>STATUS</th>
+                            <th>RECEIVE STATUS</th>
+                            <th>REFUND STATUS</th>
+                            <th>RETURNED</th>
+                            <th>AMOUNT REFUNDED</th>
+                            <th>LOCATION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="returnsBody">
+                    </tbody>
+                </table>
+                <div id="retPaginationContainer"></div>
+
+                <div class="empty-state" id="emptyState" style="display:none;">
+                    <h2 class="empty-state-title">Sales Returns</h2>
+                    <p class="empty-state-subtitle">Process your product returns in few simple steps and get your
+                        inventory automatically sorted out.<br>Start creating sales returns from sales orders</p>
+                    <button class="btn-sales-orders" onclick="goToSalesOrders()">GO TO SALES ORDERS</button>
+                </div>
+                </div><!-- end .sr-table-scroll -->
+            </div>
+
+            <!-- DETAIL VIEW -->
+            <div class="detail-view" id="detailView">
+                <!-- Left panel -->
+                <div class="sr-left-panel">
+                    <div class="sr-left-header">
+                        <span class="sr-left-title" onclick="backToList()">All Sales Returns ▾</span>
+                        <div class="sr-left-actions">
+                            <button class="sr-left-btn primary">+</button>
+                        </div>
+                    </div>
+                    <div class="sr-left-list" id="srLeftList">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="sr-left-footer">
+                        <span>Total Count: <a href="#" style="color:#4285f4;text-decoration:none;">View</a></span>
+                    </div>
+                </div>
+                <!-- Right panel -->
+                <div class="sr-right-panel" id="srRightPanel">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Script -->
+    <script src="/js/pagination.js"></script>
+    <script src="/js/layout.js"></script>
+    <script>
+        let allReturns = [];
+        let selectedReturnId = null;
+        let currentDetail = null;
+
+        function goToSalesOrders() {
+            window.location.href = '/sales-orders.html';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function formatCurrency(val) {
+            const num = parseFloat(val || 0);
+            return 'PHP' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        let currentSrFilter = 'all';
+
+        function toggleSrFilterDropdown() {
+            const dd = document.getElementById('srFilterDropdown');
+            const arrow = document.getElementById('srFilterArrow');
+            dd.classList.toggle('open');
+            arrow.classList.toggle('open');
+        }
+
+        function applySrFilter(status) {
+            currentSrFilter = status;
+            const titleEl = document.getElementById('srFilterTitle');
+            if (status === 'all') {
+                titleEl.textContent = 'All Sales Returns';
+            } else {
+                titleEl.textContent = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() + ' Sales Returns';
+            }
+            // Update active state
+            document.querySelectorAll('.sr-filter-option').forEach(opt => opt.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            // Close dropdown
+            document.getElementById('srFilterDropdown').classList.remove('open');
+            document.getElementById('srFilterArrow').classList.remove('open');
+            // Apply filter
+            filterAndRenderReturns();
+        }
+
+        // ─── Shared row renderer used by ALL pagers ─────────────────────────────
+        // Ensures applyColumnVisibility() is re-applied after every page change,
+        // filter, search, or sort — preventing hidden columns from reappearing.
+        function srRenderReturnRows(pageData) {
+            const tbody = document.getElementById('returnsBody');
+            tbody.innerHTML = pageData.map(ret => {
+                const retAmt = parseFloat(ret.total_return_qty || 0);
+                const receiveColor = (ret.receive_status || '').toUpperCase() === 'RECEIVED' ? '#16a34a' : '#e37400';
+                const refundStatus = (ret.refund_status || '').toUpperCase();
+                const refundColor = refundStatus === 'REFUNDED' || refundStatus === 'CREDIT APPLIED' ? '#16a34a'
+                    : refundStatus === 'N/A' ? '#999' : '#e37400';
+                return `<tr onclick="viewReturn(${ret.id})" style="cursor:pointer;">
+                    <td></td>
+                    <td>${formatDate(ret.return_date)}</td>
+                    <td><a class="rma-link" href="#" onclick="event.preventDefault();viewReturn(${ret.id})">${ret.rma_number}</a></td>
+                    <td>${ret.sales_order_number || 'N/A'}</td>
+                    <td>${ret.customer_name || 'N/A'}</td>
+                    <td><span class="status-badge ${(ret.status || '').toLowerCase()}">${ret.status || 'DRAFT'}</span></td>
+                    <td>${ret.receive_status ? '<span style="color:' + receiveColor + ';font-weight:500;">' + ret.receive_status + '</span>' : ''}</td>
+                    <td>${ret.refund_status ? '<span style="color:' + refundColor + ';font-weight:500;">' + ret.refund_status + '</span>' : ''}</td>
+                    <td>${retAmt.toFixed(2)}</td>
+                    <td>${formatCurrency(0)}</td>
+                    <td>${ret.warehouse_location || ''}</td>
+                </tr>`;
+            }).join('');
+            // Re-apply column visibility so hidden columns stay hidden on every page change
+            if (typeof applyColumnVisibility === 'function') applyColumnVisibility();
+        }
+
+        function filterAndRenderReturns() {
+            let filtered = allReturns;
+            if (currentSrFilter !== 'all') {
+                filtered = allReturns.filter(r => (r.status || '').toUpperCase() === currentSrFilter.toUpperCase());
+            }
+            if (filtered.length === 0) {
+                document.getElementById('returnsTable').style.display = 'none';
+                document.getElementById('retPaginationContainer').innerHTML = '<div style="text-align:center;padding:40px;color:#888;">No sales returns found.</div>';
+                return;
+            }
+            document.getElementById('returnsTable').style.display = 'table';
+            window.retPager = Pagination.create({
+                data: filtered, perPage: 14, containerId: 'retPaginationContainer',
+                onPageChange: function (pageData) { srRenderReturnRows(pageData); }
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const wrap = document.querySelector('.sr-filter-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                document.getElementById('srFilterDropdown').classList.remove('open');
+                document.getElementById('srFilterArrow').classList.remove('open');
+            }
+        });
+
+        function searchReturns() {
+            const query = (document.getElementById('retSearchInput').value || '').toLowerCase();
+            if (!query) { loadReturns(); return; }
+            const filtered = allReturns.filter(r => {
+                return (r.rma_number || '').toLowerCase().includes(query) ||
+                    (r.customer_name || '').toLowerCase().includes(query) ||
+                    (r.sales_order_number || '').toLowerCase().includes(query) ||
+                    (r.status || '').toLowerCase().includes(query) ||
+                    (r.receive_status || '').toLowerCase().includes(query) ||
+                    (r.refund_status || '').toLowerCase().includes(query) ||
+                    (r.reason || '').toLowerCase().includes(query) ||
+                    (r.warehouse_location || '').toLowerCase().includes(query) ||
+                    formatDate(r.return_date).toLowerCase().includes(query) ||
+                    String(r.total_return_qty || '').includes(query);
+            });
+            if (filtered.length === 0) {
+                document.getElementById('returnsTable').style.display = 'none';
+                document.getElementById('retPaginationContainer').innerHTML = '';
+                return;
+            }
+            document.getElementById('returnsTable').style.display = 'table';
+            window.retPager = Pagination.create({
+                data: filtered, perPage: 14, containerId: 'retPaginationContainer',
+                onPageChange: function (pageData) { srRenderReturnRows(pageData); }
+            });
+        }
+
+        async function loadReturns() {
+            const emptyEl = document.getElementById('emptyState');
+            const tableEl = document.getElementById('returnsTable');
+            const headerEl = document.getElementById('pageHeader');
+            if (emptyEl) emptyEl.style.display = 'none';
+            if (tableEl) tableEl.style.display = 'none';
+            if (headerEl) headerEl.style.display = 'none';
+            try {
+                const res = await fetch('/api/sales-returns');
+                if (!res.ok) { console.error('Sales Returns API error:', res.status); if (emptyEl) emptyEl.style.display = 'flex'; return; }
+                allReturns = await res.json();
+                if (allReturns.length === 0) {
+                    await new Promise(r => setTimeout(r, 1000));
+                    const r2 = await fetch('/api/sales-returns');
+                    if (r2.ok) { const d2 = await r2.json(); if (d2.length > 0) allReturns = d2; }
+                }
+                if (allReturns.length === 0) {
+                    if (emptyEl) emptyEl.style.display = 'flex';
+                    return;
+                }
+                if (emptyEl) emptyEl.style.display = 'none';
+                if (tableEl) tableEl.style.display = 'table';
+                if (headerEl) headerEl.style.display = 'flex';
+
+                function renderRetPage(pageData) {
+                    const tbody = document.getElementById('returnsBody');
+                    tbody.innerHTML = pageData.map(ret => {
+                        const retAmt = parseFloat(ret.total_return_qty || 0);
+                        const isClosed = (ret.status || '').toUpperCase() === 'CLOSED';
+                        return `<tr onclick="viewReturn(${ret.id})" style="cursor:pointer;">
+                            <td></td>
+                            <td>${formatDate(ret.return_date)}</td>
+                            <td><a class="rma-link" href="#" onclick="event.preventDefault();viewReturn(${ret.id})">${ret.rma_number}</a></td>
+                            <td>${ret.sales_order_number || 'N/A'}</td>
+                            <td>${ret.customer_name || 'N/A'}</td>
+                            <td><span class="status-badge ${(ret.status || '').toLowerCase()}">${ret.status || 'DRAFT'}</span></td>
+                            <td>${ret.receive_status ? '<span style="color:' + ((ret.receive_status || '').toUpperCase() === 'RECEIVED' ? '#16a34a' : '#e37400') + ';font-weight:500;">' + ret.receive_status + '</span>' : ''}</td>
+                            <td>${ret.refund_status ? '<span style="color:' + (ret.refund_status.toUpperCase() === 'REFUNDED' || ret.refund_status.toUpperCase() === 'CREDIT APPLIED' ? '#16a34a' : ret.refund_status.toUpperCase() === 'N/A' ? '#999' : '#e37400') + ';font-weight:500;">' + ret.refund_status + '</span>' : ''}</td>
+                            <td>${retAmt.toFixed(2)}</td>
+                            <td>${formatCurrency(0)}</td>
+                            <td>${ret.warehouse_location || ''}</td>
+                        </tr>`;
+                    }).join('');
+                }
+
+                if (!window.retPager) {
+                    window.retPager = Pagination.create({
+                        data: allReturns,
+                        perPage: 14,
+                        containerId: 'retPaginationContainer',
+                        onPageChange: function (pageData) { srRenderReturnRows(pageData); }
+                    });
+                } else {
+                    window.retPager.updateData(allReturns);
+                }
+            } catch (err) {
+                console.error('Error loading sales returns:', err);
+            }
+        }
+
+        async function viewReturn(returnId) {
+            selectedReturnId = returnId;
+
+            // Update URL with returnId for refresh persistence
+            const url = new URL(window.location);
+            url.searchParams.set('returnId', returnId);
+            history.replaceState(null, '', url);
+
+            // Switch to detail view
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('detailView').classList.add('active');
+
+            // Fill left sidebar
+            renderLeftList();
+
+            // Load and render detail
+            try {
+                const res = await fetch(`/api/sales-returns/${returnId}`);
+                if (!res.ok) return;
+                const ret = await res.json();
+                currentDetail = ret;
+
+                // Fetch associated sales order info
+                let soData = null;
+                if (ret.sales_order_id) {
+                    try {
+                        const soRes = await fetch('/api/sales-orders/' + ret.sales_order_id);
+                        if (soRes.ok) soData = await soRes.json();
+                    } catch (e) { }
+                }
+
+                // Check if credit note already exists for this return
+                let hasCreditNote = false;
+                try {
+                    const cnRes = await fetch('/api/credit-notes/by-return/' + returnId);
+                    if (cnRes.ok) {
+                        const cnList = await cnRes.json();
+                        hasCreditNote = cnList.length > 0;
+                    }
+                } catch (e) { }
+
+                // Check if the sales order has invoices
+                let hasInvoicePaid = false;
+                let hasAnyInvoice = false;
+                if (ret.sales_order_number) {
+                    try {
+                        const invRes = await fetch('/api/invoices');
+                        if (invRes.ok) {
+                            const allInvoices = await invRes.json();
+                            const matchedInvoices = allInvoices.filter(inv => {
+                                const invOrderNum = (inv.order_number || '').trim().toLowerCase();
+                                const soNum = (ret.sales_order_number || '').trim().toLowerCase();
+                                return invOrderNum === soNum;
+                            });
+                            hasAnyInvoice = matchedInvoices.length > 0;
+                            hasInvoicePaid = matchedInvoices.some(inv => {
+                                const st = (inv.status || '').toUpperCase();
+                                return st === 'PAID' || st === 'PARTIALLY PAID';
+                            });
+                        }
+                    } catch (e) { }
+                }
+
+                renderDetail(ret, soData, hasCreditNote, hasInvoicePaid, hasAnyInvoice);
+            } catch (err) {
+                console.error('Error loading return detail:', err);
+            }
+        }
+
+        function renderLeftList() {
+            const list = document.getElementById('srLeftList');
+            list.innerHTML = allReturns.map(ret => {
+                const isActive = ret.id === selectedReturnId;
+                const statusCls = (ret.status || 'draft').toLowerCase();
+                // Calculate total qty from return items (we'll use a simple approach)
+                const totalQty = parseFloat(ret.total_return_qty || 0);
+                return `
+                    <div class="sr-left-item ${isActive ? 'active' : ''}" onclick="viewReturn(${ret.id})">
+                        <div class="sr-left-item-top">
+                            <span class="sr-left-item-name">${ret.customer_name || 'N/A'}</span>
+                            <span class="sr-left-item-amount">${totalQty > 0 ? totalQty.toFixed(2) : ''}</span>
+                        </div>
+                        <div class="sr-left-item-bottom">
+                            <span>${ret.rma_number}</span>
+                            <span>·</span>
+                            <span>${formatDate(ret.return_date)}</span>
+                            <span>·</span>
+                            <span>${ret.sales_order_number || ''}</span>
+                        </div>
+                        <div class="sr-left-item-status ${statusCls}">${(ret.status || 'DRAFT').toUpperCase()}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDetail(ret, soData, hasCreditNote, hasInvoicePaid, hasAnyInvoice) {
+            const panel = document.getElementById('srRightPanel');
+            const items = ret.items || [];
+            const status = (ret.status || 'DRAFT').toUpperCase();
+            const statusCls = status.toLowerCase();
+
+            // Build items rows
+            const itemRows = items.map((item, idx) => {
+                const returnQty = parseFloat(item.return_quantity || 0);
+                const rate = parseFloat(item.rate || 0);
+                const amount = rate * returnQty;
+                // Build location path: Branch > Warehouse > Shelf
+                let locPath = '';
+                if (item.location_name) {
+                    if (item.branch_location_name && item.parent_location_name) {
+                        locPath = `${item.branch_location_name} > ${item.parent_location_name} > ${item.location_name}`;
+                    } else if (item.parent_location_name) {
+                        locPath = `${item.parent_location_name} > ${item.location_name}`;
+                    } else {
+                        locPath = item.location_name;
+                    }
+                }
+                return `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>
+                            <span class="sr-item-img"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
+                            ${item.item_name}
+                        </td>
+                        <td>
+                            <div class="sr-qty-returned">${returnQty} pcs  Returned</div>
+                        </td>
+                        <td>${locPath ? '<span style="font-size:12px;color:#1a73e8;background:#eff6ff;padding:3px 8px;border-radius:4px;">' + locPath + '</span>' : '<span style="color:#aaa;">—</span>'}</td>
+                        <td style="text-align:right;">${formatCurrency(rate)}</td>
+                        <td style="text-align:right;">${formatCurrency(amount)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const isClosed = status === 'CLOSED';
+            const isReceived = (ret.receive_status || '').toUpperCase() === 'RECEIVED';
+            const isPendingReceive = (ret.receive_status || '').toUpperCase() === 'PENDING';
+            const showReceiveStatus = !!(ret.receive_status && ret.receive_status.trim());
+
+            panel.innerHTML = `
+                <div class="sr-right-header">
+                    <div class="sr-right-header-left" style="flex-direction:column;align-items:flex-start;gap:2px;">
+                        ${ret.sales_order_number ? '<span style="font-size:11px;color:#888;">From sales order: ' + ret.sales_order_number + '</span>' : ''}
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <button onclick="backToList()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#666;padding:0;">‹</button>
+                            <span class="sr-right-rma">${ret.rma_number}</span>
+                            <span class="status-badge ${statusCls}">${status}</span>
+                        </div>
+                    </div>
+                    <div class="sr-right-header-actions">
+                        <button title="Close" style="font-size:20px;color:#e53935;" onclick="backToList()">✕</button>
+                    </div>
+                </div>
+
+                <div class="sr-action-bar">
+                    ${!isClosed && !isReceived ? '<button class="sr-action-btn" onclick="editSalesReturn()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>' : ''}
+                    ${status === 'DRAFT' ? '<button class="sr-action-btn" onclick="markAsApproved()" style="font-weight:600;">Mark as Approved</button>' : ''}
+                    ${(status === 'DRAFT' || status === 'APPROVED') && !isReceived ? '<button class="sr-action-btn" onclick="markAsReceived()" style="font-weight:600;background:#16a34a;color:#fff;border-color:#16a34a;border-radius:4px;padding:6px 16px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Mark as Received</button>' : ''}
+                    ${((status === 'APPROVED' && isReceived) || status === 'CLOSED') && !hasCreditNote && hasInvoicePaid ? '<button class="sr-action-btn" onclick="createCreditNote()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>Create Credit Note</button>' : ''}
+
+                    <div class="sr-pdf-dropdown-wrap">
+                        <button class="sr-action-btn" onclick="toggleSrPdfDropdown(event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>PDF/Print <span style="font-size:10px;margin-left:2px;">▾</span></button>
+                        <div class="sr-pdf-dropdown" id="srPdfDropdown">
+                            <div class="sr-pdf-dropdown-item" onclick="printSalesReturnDetail()">
+                                <span class="sr-pdf-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span>
+                                Print
+                            </div>
+                            <div class="sr-pdf-dropdown-item" onclick="downloadSalesReturnPDF()">
+                                <span class="sr-pdf-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                                Download PDF
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sr-action-separator"></div>
+                    <div style="position:relative;">
+                        <button class="sr-action-btn" onclick="toggleSrKebab(event)">⋯</button>
+                        <div id="srKebabMenu" style="display:none;position:absolute;top:100%;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:160px;z-index:1000;padding:4px 0;margin-top:4px;">
+                            ${status === 'APPROVED' ? '<button onclick="markAsDecline()" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:none;color:#e37400;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;" onmouseover="this.style.background=\'#fef9e7\'" onmouseout="this.style.background=\'none\'">⛔ Mark as Decline</button>' : ''}
+                            <button onclick="deleteSalesReturn()" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;border:none;background:none;color:#dc2626;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                ${(() => {
+                    if (!((status === 'APPROVED' && isReceived) || status === 'CLOSED') || hasCreditNote || hasInvoicePaid) return '';
+                    const soClosedMsg = soData && (soData.status || '').toUpperCase() === 'CLOSED' ? 'The associated Sales Order has been automatically closed.' : 'The associated Sales Order will be automatically closed.';
+                    if (hasAnyInvoice) {
+                        return '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:10px 16px;margin:0 16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Inventory has been restored, but an invoice has already been issued for this order. You may need to void the invoice or issue a Credit Note. ' + soClosedMsg + '</span></div>';
+                    } else {
+                        return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 16px;margin:0 16px;font-size:13px;color:#166534;display:flex;align-items:center;gap:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Inventory has been restored. Since no invoice was issued, no Credit Note is required. ' + soClosedMsg + '</span></div>';
+                    }
+                })()}
+
+                <div class="sr-tabs">
+                    ${isReceived ? '<div class="sr-tab active" onclick="switchSrTab(\'receives\')" style="cursor:pointer;" id="tabReceives">Receives <span class="sr-tab-count">1</span></div>' : ''}
+                    <div class="sr-tab ${isReceived ? '' : 'active'}" onclick="switchSrTab('salesorders')" style="cursor:pointer;" id="tabSalesOrders">Sales Orders <span class="sr-tab-count">1</span></div>
+                    <div style="flex:1;"></div>
+                    <div class="sr-tab" style="margin-left:auto; display:flex; align-items:center; gap:4px; border-bottom:none; cursor:pointer;font-size:12px;color:#666;" onclick="toggleActiveTab()">
+                        <span id="soToggleArrow">▼</span>
+                    </div>
+                </div>
+
+                ${isReceived ? `
+                <div id="receivesSection" style="background:white;padding:0 24px 16px;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e9ecef;">Receive#</th>
+                                <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e9ecef;">Received On</th>
+                                <th style="width:40px;border-bottom:2px solid #e9ecef;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:12px;font-size:13px;"><a href="javascript:void(0)" style="color:#4285f4;text-decoration:none;font-weight:500;">RR-${String(ret.id).padStart(5, '0')}</a></td>
+                                <td style="padding:12px;font-size:13px;color:#333;">${formatDate(new Date())}</td>
+                                <td style="padding:12px;text-align:center;"><button onclick="deleteReceive()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#999;" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+                ${soData ? `
+                <div id="soDetailsSection" style="${isReceived ? 'display:none;' : ''}background:white;padding:0 24px 16px;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e9ecef;">Sales Order#</th>
+                                <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e9ecef;">Date</th>
+                                <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e9ecef;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:12px;font-size:13px;"><a href="/sales-orders.html" style="color:#4285f4;text-decoration:none;font-weight:500;">${soData.order_number || ret.sales_order_number}</a></td>
+                                <td style="padding:12px;font-size:13px;color:#333;">${formatDate(soData.order_date || soData.created_at)}</td>
+                                <td style="padding:12px;font-size:13px;color:${(soData.status || '').toUpperCase() === 'CLOSED' ? '#16a34a' : '#333'};font-weight:500;">${(soData.status || '').toUpperCase()}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+
+
+                <div class="sr-detail-scroll">
+                    <div class="sr-document-card">
+                        <div class="sr-doc-top">
+                            <div>
+                                <h2 class="sr-doc-title">SALES RETURN</h2>
+                                <p class="sr-doc-subtitle">RMA# <strong>${ret.rma_number}</strong></p>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="sr-bill-to-label">BILL TO</div>
+                                <div class="sr-bill-to-name">${ret.customer_name || 'N/A'}</div>
+                            </div>
+                        </div>
+
+                        <div class="sr-status-section">
+                            <div>
+                                <div class="sr-status-row" style="margin-bottom:8px;">
+                                    <span class="sr-status-label">Return Status</span>
+                                    <span class="status-badge ${statusCls}">${status}</span>
+                                </div>
+                                ${showReceiveStatus ? `<div class="sr-status-row">
+                                    <span class="sr-status-label">Receive Status</span>
+                                    <span class="sr-receive-status" style="color:${isReceived ? '#16a34a' : '#e37400'};">${ret.receive_status || ''}</span>
+                                </div>` : ''}
+                                ${ret.refund_status && ret.refund_status.trim() ? `<div class="sr-status-row">
+                                    <span class="sr-status-label">Refund Status</span>
+                                    <span style="font-weight:600;font-size:13px;color:${(ret.refund_status || '').toUpperCase() === 'REFUNDED' || (ret.refund_status || '').toUpperCase() === 'CREDIT APPLIED' ? '#16a34a' : (ret.refund_status || '').toUpperCase() === 'N/A' ? '#999' : '#e37400'};">${ret.refund_status}</span>
+                                </div>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="sr-date-row">
+                            <span class="sr-date-label">DATE</span>
+                            <span class="sr-date-value">${formatDate(ret.return_date)}</span>
+                        </div>
+
+                        <table class="sr-doc-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>ITEMS & DESCRIPTION</th>
+                                    <th>QUANTITY</th>
+                                    <th>RETURN LOCATION</th>
+                                    <th>RATE</th>
+                                    <th>AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemRows || '<tr><td colspan="6" style="text-align:center;color:#888;padding:24px;">No items</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function backToList() {
+            // Remove returnId from URL
+            const url = new URL(window.location);
+            url.searchParams.delete('returnId');
+            history.replaceState(null, '', url.pathname + url.search);
+
+            document.getElementById('detailView').classList.remove('active');
+            document.getElementById('listView').style.display = 'block';
+            selectedReturnId = null;
+        }
+
+        function editSalesReturn() {
+            if (!currentDetail) return;
+            const ret = currentDetail;
+            const panel = document.getElementById('srRightPanel');
+            const items = ret.items || [];
+
+            const itemRows = items.map((item, idx) => {
+                const shippedQty = parseFloat(item.shipped_quantity || item.return_quantity || 0);
+                const alreadyReturned = parseFloat(item.returned_quantity || 0);
+                const returnQty = parseFloat(item.return_quantity || 0);
+                const sku = item.item_id || '';
+                return `<tr data-eidx="${idx}">
+                    <td>
+                        <div style="font-size:14px;font-weight:500;color:#333;">${item.item_name || ''}</div>
+                        ${sku ? '<div style="font-size:12px;color:#1a73e8;margin-top:2px;">SKU: ' + sku + '</div>' : ''}
+                    </td>
+                    <td style="text-align:center;">${shippedQty}</td>
+                    <td style="text-align:center;">${alreadyReturned}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="number" class="edit-return-qty" value="${returnQty}" min="0" data-eidx="${idx}" style="width:80px;padding:6px 10px;border:1px solid #d0d5dd;border-radius:4px;font-size:14px;text-align:right;outline:none;font-family:inherit;" onchange="updateEditTotalItems()">
+                            <button onclick="document.querySelector('tr[data-eidx=\\'${idx}\\']').remove();updateEditTotalItems();" style="background:none;border:none;color:#e53935;font-size:18px;cursor:pointer;padding:4px;" title="Remove">✕</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            panel.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 32px;border-bottom:1px solid #e9ecef;background:#fff;">
+                    <h1 style="font-size:20px;font-weight:500;color:#333;margin:0;">Edit Sales Return</h1>
+                    <button onclick="viewReturn(${ret.id})" style="font-size:24px;background:none;border:none;cursor:pointer;color:#999;padding:4px 8px;line-height:1;" title="Close">×</button>
+                </div>
+                <div style="padding:24px 40px;flex:1;overflow-y:auto;">
+                    <div style="display:grid;grid-template-columns:150px 280px;gap:14px 20px;align-items:center;margin-bottom:12px;">
+                        <label style="font-size:13px;color:#dc2626;font-weight:500;">RMA#*</label>
+                        <div style="position:relative;">
+                            <input type="text" id="editRma" value="${ret.rma_number || ''}" readonly style="padding:9px 12px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;color:#333;background:#fff;outline:none;width:100%;box-sizing:border-box;">
+                            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#1a73e8;font-size:14px;cursor:pointer;">⚙</span>
+                        </div>
+                        <label style="font-size:13px;color:#dc2626;font-weight:500;">Date*</label>
+                        <input type="text" id="editDate" value="${formatDate(ret.return_date)}" readonly style="padding:9px 12px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;color:#333;background:#fff;outline:none;width:100%;box-sizing:border-box;">
+                        <label style="font-size:13px;color:#dc2626;font-weight:500;">Warehouse Location*</label>
+                        <select id="editWarehouse" style="padding:9px 12px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;color:#333;background:#fff;outline:none;width:100%;box-sizing:border-box;">
+                            <option value="Head Office" ${(ret.warehouse_location || '') === 'Head Office' ? 'selected' : ''}>Head Office</option>
+                        </select>
+                        <label style="font-size:13px;color:#dc2626;font-weight:500;">Reason*</label>
+                        <input type="text" id="editReason" value="${ret.reason || ''}" placeholder="e.g. Defective item, Wrong item shipped" style="padding:9px 12px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;color:#333;background:#fff;outline:none;width:100%;box-sizing:border-box;" required>
+                    </div>
+
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th style="background:#fafbfc;padding:10px 14px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;text-align:left;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;letter-spacing:0.5px;width:30%;">Items & Description</th>
+                                <th style="background:#fafbfc;padding:10px 14px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;text-align:center;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;letter-spacing:0.5px;width:15%;">Shipped / Fulfilled</th>
+                                <th style="background:#fafbfc;padding:10px 14px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;text-align:center;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;letter-spacing:0.5px;width:12%;">Returned</th>
+                                <th style="background:#fafbfc;padding:10px 14px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;text-align:left;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;letter-spacing:0.5px;width:25%;">Return Quantity</th>
+                                <th style="background:#fafbfc;padding:10px 14px;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;width:5%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="editItemsBody">
+                            ${itemRows || '<tr><td colspan="5" style="text-align:center;padding:30px;color:#999;">No items</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #e0e0e0;padding:14px 40px;display:flex;align-items:center;gap:10px;">
+                    <button onclick="saveEditReturn('${ret.status || 'DRAFT'}')" style="padding:8px 20px;border-radius:4px;font-size:13px;cursor:pointer;font-weight:500;background:#1a73e8;color:#fff;border:1px solid #1a73e8;font-family:inherit;">Save</button>
+                    ${(ret.status || 'DRAFT').toUpperCase() === 'DRAFT' ? '<button onclick="saveEditReturn(\'APPROVED\')" style="padding:8px 20px;border-radius:4px;font-size:13px;cursor:pointer;font-weight:500;border:1px solid #d0d5dd;background:#fff;color:#333;font-family:inherit;">Save and Approve</button>' : ''}
+                    <button onclick="viewReturn(${ret.id})" style="padding:8px 20px;border-radius:4px;font-size:13px;cursor:pointer;font-weight:500;background:#333;color:#fff;border:1px solid #333;font-family:inherit;">Cancel</button>
+                    <span id="editTotalItems" style="margin-left:auto;font-size:13px;color:#555;font-weight:500;">Total Items : 0</span>
+                </div>
+            `;
+            updateEditTotalItems();
+        }
+
+        function updateEditTotalItems() {
+            let total = 0;
+            document.querySelectorAll('.edit-return-qty').forEach(inp => {
+                total += parseFloat(inp.value || 0);
+            });
+            const el = document.getElementById('editTotalItems');
+            if (el) el.textContent = 'Total Items : ' + total;
+        }
+
+        // ===== Mark as Received (Atomic Transaction) =====
+        async function markAsReceived() {
+            if (!currentDetail || !selectedReturnId) return;
+            const items = currentDetail.items || [];
+
+            // Build a summary of what will be received
+            let summaryLines = items.map(item => {
+                const qty = parseFloat(item.return_quantity || 0);
+                let locPath = 'No location set';
+                if (item.location_name) {
+                    if (item.branch_location_name && item.parent_location_name) {
+                        locPath = item.branch_location_name + ' > ' + item.parent_location_name + ' > ' + item.location_name;
+                    } else if (item.parent_location_name) {
+                        locPath = item.parent_location_name + ' > ' + item.location_name;
+                    } else {
+                        locPath = item.location_name;
+                    }
+                }
+                return `• ${item.item_name}: ${qty} pcs → ${locPath}`;
+            }).join('\n');
+
+            const confirmed = confirm(
+                'Mark this sales return as received?\n\n' +
+                'The following items will be added back to inventory:\n\n' +
+                summaryLines + '\n\n' +
+                'This action cannot be undone.'
+            );
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch('/api/sales-returns/' + selectedReturnId + '/receive', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (res.ok) {
+                    await loadReturns();
+                    applyColumnVisibility();
+                    viewReturn(selectedReturnId);
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to process receive.');
+                }
+            } catch (e) {
+                console.error('Receive error:', e);
+                alert('Failed to process receive.');
+            }
+        }
+
+        async function markAsDecline() {
+            if (!selectedReturnId) return;
+            if (!confirm('Are you sure you want to decline this sales return?')) return;
+            try {
+                const res = await fetch('/api/sales-returns/' + selectedReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'DECLINED', receive_status: 'N/A', refund_status: 'N/A' })
+                });
+                if (res.ok) {
+                    await loadReturns();
+                    viewReturn(selectedReturnId);
+                } else {
+                    alert('Failed to decline.');
+                }
+            } catch (e) {
+                console.error('Error declining:', e);
+                alert('Failed to decline.');
+            }
+        }
+
+        async function saveEditReturn(status) {
+            const rmaNumber = document.getElementById('editRma').value;
+            const reason = document.getElementById('editReason').value;
+            const creditOnly = false;
+            const warehouseLocation = document.getElementById('editWarehouse').value;
+
+            const items = [];
+            const retItems = currentDetail.items || [];
+            document.querySelectorAll('.edit-return-qty').forEach(inp => {
+                const idx = parseInt(inp.dataset.eidx);
+                const item = retItems[idx];
+                if (!item) return;
+                const returnQty = parseFloat(inp.value || 0);
+                if (returnQty <= 0) return;
+                items.push({
+                    item_name: item.item_name,
+                    item_id: item.item_id || null,
+                    shipped_quantity: parseFloat(item.shipped_quantity || item.return_quantity || 0),
+                    returned_quantity: 0,
+                    return_quantity: returnQty,
+                    rate: parseFloat(item.rate || 0),
+                    amount: returnQty * parseFloat(item.rate || 0)
+                });
+            });
+
+            if (items.length === 0) {
+                alert('Please add at least one item with a return quantity.');
+                return;
+            }
+
+            if (!reason || reason.trim() === '') {
+                alert('Please enter a reason for this sales return.');
+                document.getElementById('editReason').focus();
+                return;
+            }
+
+            try {
+                // Delete old and re-create with same RMA
+                await fetch('/api/sales-returns/' + selectedReturnId, { method: 'DELETE' });
+                const body = {
+                    rma_number: rmaNumber,
+                    return_date: currentDetail.return_date || new Date().toISOString(),
+                    warehouse_location: warehouseLocation,
+                    reason: reason,
+                    credit_only: creditOnly,
+                    sales_order_id: currentDetail.sales_order_id,
+                    sales_order_number: currentDetail.sales_order_number || '',
+                    customer_name: currentDetail.customer_name || '',
+                    status: status,
+                    receive_status: (status === 'DRAFT' || status === 'APPROVED') ? 'Pending' : (currentDetail.receive_status || 'Pending'),
+                    refund_status: (status === 'DRAFT' || status === 'APPROVED') ? 'Pending' : (currentDetail.refund_status || 'Pending'),
+                    items: items
+                };
+                const res = await fetch('/api/sales-returns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    selectedReturnId = result.id;
+                    await loadReturns();
+                    viewReturn(result.id);
+                } else {
+                    alert('Failed to save.');
+                }
+            } catch (e) {
+                console.error('Edit save error:', e);
+                alert('Failed to save.');
+            }
+        }
+
+        // Create Credit Note from Sales Return
+        async function createCreditNote() {
+            if (!currentDetail) {
+                alert('Please select a sales return first');
+                return;
+            }
+
+            // Guard: check if the sales order has a paid invoice
+            if (currentDetail.sales_order_number) {
+                try {
+                    const invRes = await fetch('/api/invoices');
+                    if (invRes.ok) {
+                        const allInvoices = await invRes.json();
+                        const hasPaid = allInvoices.some(inv => {
+                            const invOrderNum = (inv.order_number || '').trim().toLowerCase();
+                            const soNum = (currentDetail.sales_order_number || '').trim().toLowerCase();
+                            if (invOrderNum !== soNum) return false;
+                            const st = (inv.status || '').toUpperCase();
+                            return st === 'PAID' || st === 'PARTIALLY PAID';
+                        });
+                        if (!hasPaid) {
+                            alert('Cannot create a Credit Note.\n\nThe sales order (' + currentDetail.sales_order_number + ') has not been converted to an invoice and paid yet.\n\nPlease invoice the sales order and record payment first.');
+                            return;
+                        }
+                    }
+                } catch (e) { console.error('Error checking invoices:', e); }
+            }
+
+            // Store data for credit note form
+            const creditData = {
+                customer_name: currentDetail.customer_name || '',
+                rma_number: currentDetail.rma_number || '',
+                sales_return_id: currentDetail.id,
+                return_date: currentDetail.return_date || '',
+                warehouse_location: currentDetail.warehouse_location || '',
+                items: (currentDetail.items || []).map(item => ({
+                    item_name: item.item_name || '',
+                    item_id: item.item_id || null,
+                    quantity: parseFloat(item.return_quantity || 0),
+                    rate: parseFloat(item.rate || 0),
+                    amount: parseFloat(item.rate || 0) * parseFloat(item.return_quantity || 0),
+                    location_id: item.location_id || null,
+                    location_name: item.location_name || ''
+                }))
+            };
+            sessionStorage.setItem('creditNoteFromReturn', JSON.stringify(creditData));
+            window.location.href = '/new-credit-note.html?from=sales-return';
+        }
+
+        async function markAsApproved() {
+            if (!selectedReturnId) return;
+            try {
+                const res = await fetch('/api/sales-returns/' + selectedReturnId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'APPROVED', receive_status: 'Pending', refund_status: 'Pending' })
+                });
+                if (res.ok) {
+                    await loadReturns();
+                    viewReturn(selectedReturnId);
+                } else {
+                    alert('Failed to approve.');
+                }
+            } catch (e) {
+                console.error('Error approving:', e);
+                alert('Failed to approve.');
+            }
+        }
+
+        function switchSrTab(tab) {
+            const receivesSection = document.getElementById('receivesSection');
+            const soSection = document.getElementById('soDetailsSection');
+            const tabReceives = document.getElementById('tabReceives');
+            const tabSalesOrders = document.getElementById('tabSalesOrders');
+            const arrow = document.getElementById('soToggleArrow');
+
+            if (tab === 'receives') {
+                if (receivesSection) receivesSection.style.display = '';
+                if (soSection) soSection.style.display = 'none';
+                if (tabReceives) { tabReceives.classList.add('active'); }
+                if (tabSalesOrders) { tabSalesOrders.classList.remove('active'); }
+            } else {
+                if (receivesSection) receivesSection.style.display = 'none';
+                if (soSection) soSection.style.display = '';
+                if (tabReceives) { tabReceives.classList.remove('active'); }
+                if (tabSalesOrders) { tabSalesOrders.classList.add('active'); }
+            }
+            if (arrow) arrow.textContent = '▼';
+        }
+
+        function toggleActiveTab() {
+            const receivesSection = document.getElementById('receivesSection');
+            const soSection = document.getElementById('soDetailsSection');
+            const arrow = document.getElementById('soToggleArrow');
+            // Find which is currently visible
+            const recVisible = receivesSection && receivesSection.style.display !== 'none';
+            const soVisible = soSection && soSection.style.display !== 'none';
+
+            if (recVisible || soVisible) {
+                // Hide both
+                if (receivesSection) receivesSection.style.display = 'none';
+                if (soSection) soSection.style.display = 'none';
+                if (arrow) arrow.textContent = '▶';
+            } else {
+                // Show the active tab's section
+                const tabRec = document.getElementById('tabReceives');
+                if (tabRec && tabRec.classList.contains('active')) {
+                    if (receivesSection) receivesSection.style.display = '';
+                } else {
+                    if (soSection) soSection.style.display = '';
+                }
+                if (arrow) arrow.textContent = '▼';
+            }
+        }
+
+        async function deleteReceive() {
+            if (!selectedReturnId) return;
+            if (!confirm('Delete this receive record?\n\nThis will reverse all inventory updates (stock decreases) and reset the receive status to Pending.\n\nThis action cannot be undone.')) return;
+            try {
+                const res = await fetch('/api/sales-returns/' + selectedReturnId + '/unreceive', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (res.ok) {
+                    await loadReturns();
+                    applyColumnVisibility();
+                    viewReturn(selectedReturnId);
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to reverse receive.');
+                }
+            } catch (e) {
+                console.error('Delete receive error:', e);
+                alert('Failed to reverse receive.');
+            }
+        }
+
+        function toggleSrKebab(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('srKebabMenu');
+            if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.addEventListener('click', function () {
+            const menu = document.getElementById('srKebabMenu');
+            if (menu) menu.style.display = 'none';
+        });
+
+        async function deleteSalesReturn() {
+            if (!selectedReturnId) return;
+            if (!confirm('Are you sure you want to delete this sales return?')) return;
+            try {
+                const res = await fetch('/api/sales-returns/' + selectedReturnId, { method: 'DELETE' });
+                if (res.ok) {
+                    selectedReturnId = null;
+                    backToList();
+                    await loadReturns();
+                } else {
+                    alert('Failed to delete.');
+                }
+            } catch (e) {
+                console.error('Error deleting:', e);
+                alert('Failed to delete.');
+            }
+        }
+
+        // On page load — check for view_id URL param
+        (async function () {
+            await loadReturns();
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view_id');
+            if (viewId) {
+                viewReturn(parseInt(viewId));
+            }
+        })();
+
+        // ===== Hamburger Menu & Customize Columns =====
+        let srWrapText = false;
+
+        // Teleport srHamburgerMenu to <body> on first call so it is never
+        // clipped by the sticky <th> stacking context.
+        let _srMenuTeleported = false;
+        function _teleportSrMenu() {
+            if (_srMenuTeleported) return;
+            const menu = document.getElementById('srHamburgerMenu');
+            if (menu) { document.body.appendChild(menu); _srMenuTeleported = true; }
+        }
+
+        function toggleHamburgerMenu(e) {
+            _teleportSrMenu();
+            const menu = document.getElementById('srHamburgerMenu');
+            const icon = e && (e.currentTarget || e.target.closest('.cust-filter-icon'));
+            const isOpen = menu.classList.contains('open');
+            menu.classList.toggle('open', !isOpen);
+            if (!isOpen && icon) {
+                const rect = icon.getBoundingClientRect();
+                menu.style.position = 'fixed';
+                menu.style.top  = (rect.bottom + 8) + 'px';
+                menu.style.left = rect.left + 'px';
+            }
+        }
+
+        // Close hamburger on outside click
+        document.addEventListener('click', function (e) {
+            const menu = document.getElementById('srHamburgerMenu');
+            if (!menu || !menu.classList.contains('open')) return;
+            if (!menu.contains(e.target) && !e.target.closest('.cust-filter-icon')) {
+                menu.classList.remove('open');
+            }
+        });
+
+        function toggleWrapText() {
+            srWrapText = !srWrapText;
+            const label = document.getElementById('wrapTextLabel');
+            const icon  = document.getElementById('srClipIcon');
+            const table = document.getElementById('returnsTable');
+            const clipSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
+            const wrapSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>';
+            if (srWrapText) {
+                // Do NOT use table-layout:fixed — it clips the hamburger icon column.
+                table.querySelectorAll('td').forEach(td => {
+                    if (td.cellIndex === 0) return;
+                    td.style.overflow = 'hidden';
+                    td.style.textOverflow = 'ellipsis';
+                    td.style.whiteSpace = 'nowrap';
+                    td.style.maxWidth = '150px';
+                });
+                if (icon) icon.innerHTML = wrapSvg;
+                if (label) label.textContent = 'Wrap Text';
+            } else {
+                table.style.tableLayout = '';
+                table.querySelector('thead th:first-child') && (table.querySelector('thead th:first-child').style.width = '');
+                table.querySelectorAll('td').forEach(td => {
+                    td.style.overflow = '';
+                    td.style.textOverflow = '';
+                    td.style.whiteSpace = '';
+                    td.style.maxWidth = '';
+                });
+                if (icon) icon.innerHTML = clipSvg;
+                if (label) label.textContent = 'Clip Text';
+            }
+            document.getElementById('srHamburgerMenu').classList.remove('open');
+        }
+
+        // Column definitions for Sales Returns
+        const srColumns = [
+            { id: 'date', label: 'Date', locked: true, visible: true },
+            { id: 'rma', label: 'RMA#', locked: true, visible: true },
+            { id: 'customer_name', label: 'Customer Name', locked: true, visible: true },
+            { id: 'sales_order', label: 'Sales Order#', locked: false, visible: true },
+            { id: 'status', label: 'Status', locked: false, visible: true },
+            { id: 'receive_status', label: 'Receive Status', locked: false, visible: true },
+            { id: 'refund_status', label: 'Refund Status', locked: false, visible: true },
+            { id: 'returned', label: 'Returned', locked: false, visible: true },
+            { id: 'amount_refunded', label: 'Amount Refunded', locked: false, visible: true },
+            { id: 'location', label: 'Location', locked: false, visible: true },
+        ];
+        let ccTempColumns = [];
+
+        // Restore saved column visibility from localStorage
+        (function restoreSrColumns() {
+            try {
+                const saved = localStorage.getItem('sr_columns');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    parsed.forEach(s => {
+                        const col = srColumns.find(c => c.id === s.id);
+                        if (col && !col.locked) col.visible = s.visible;
+                    });
+                }
+            } catch (e) { /* ignore */ }
+        })();
+
+        function openCustomizeColumns() {
+            document.getElementById('srHamburgerMenu').classList.remove('open');
+            ccTempColumns = srColumns.map(c => ({ ...c }));
+            document.getElementById('ccSearch').value = '';
+            renderCcList('');
+            document.getElementById('ccOverlay').classList.add('open');
+        }
+
+        function closeCustomizeColumns() {
+            document.getElementById('ccOverlay').classList.remove('open');
+        }
+
+        function renderCcList(filter) {
+            const q = (filter || '').toLowerCase();
+            const filtered = ccTempColumns.filter(c => c.label.toLowerCase().includes(q));
+            const list = document.getElementById('ccList');
+            const selected = ccTempColumns.filter(c => c.visible).length;
+            document.getElementById('ccSelectedCount').textContent = selected + ' of ' + ccTempColumns.length + ' Selected';
+            list.innerHTML = filtered.map((col, idx) => {
+                const realIdx = ccTempColumns.indexOf(col);
+                if (col.locked) {
+                    return `<div class="cc-item locked">
+                        <span class="cc-drag">⋮</span>
+                        <span class="cc-lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                        <span class="cc-label">${col.label}</span>
+                    </div>`;
+                }
+                return `<div class="cc-item ${col.visible ? 'checked' : ''}" onclick="toggleCcColumn(${realIdx})">
+                    <span class="cc-drag">⋮</span>
+                    <div class="cc-checkbox ${col.visible ? 'checked' : ''}">${col.visible ? '✓' : ''}</div>
+                    <span class="cc-label">${col.label}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function filterCcColumns(val) {
+            renderCcList(val);
+        }
+
+        function toggleCcColumn(idx) {
+            ccTempColumns[idx].visible = !ccTempColumns[idx].visible;
+            renderCcList(document.getElementById('ccSearch').value);
+        }
+
+        function saveCcColumns() {
+            // Apply changes to srColumns
+            ccTempColumns.forEach((col, i) => { srColumns[i].visible = col.visible; });
+            // Persist to localStorage
+            localStorage.setItem('sr_columns', JSON.stringify(srColumns.map(c => ({ id: c.id, visible: c.visible }))));
+            // Re-render table headers
+            applyColumnVisibility();
+            closeCustomizeColumns();
+        }
+
+        function applyColumnVisibility() {
+            const table = document.getElementById('returnsTable');
+            // Index 0 = hamburger column (always visible), then 1-10 map to srColumns
+            const colMap = ['_hamburger', 'date', 'rma', 'sales_order', 'customer_name', 'status', 'receive_status', 'refund_status', 'returned', 'amount_refunded', 'location'];
+            const ths = table.querySelectorAll('thead th');
+            const rows = table.querySelectorAll('tbody tr');
+            colMap.forEach((colId, thIdx) => {
+                if (colId === '_hamburger') return; // always visible
+                const col = srColumns.find(c => c.id === colId);
+                const show = col ? col.visible : true;
+                if (ths[thIdx]) ths[thIdx].style.display = show ? '' : 'none';
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells[thIdx]) cells[thIdx].style.display = show ? '' : 'none';
+                });
+            });
+        }
+        // ===== PDF/Print Dropdown =====
+        function toggleSrPdfDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('srPdfDropdown').classList.toggle('show');
+        }
+        document.addEventListener('click', function() {
+            var dd = document.getElementById('srPdfDropdown');
+            if (dd) dd.classList.remove('show');
+        });
+
+        // Build print HTML for the sales return detail
+        function buildSalesReturnPrintHTML(ret) {
+            if (!ret) return '';
+            const items = ret.items || [];
+            const status = (ret.status || 'DRAFT').toUpperCase();
+            const date = formatDate(ret.return_date);
+            const ribbonBg = status === 'APPROVED' ? '#43a047' : (status === 'CLOSED' ? '#1a73e8' : (status === 'DECLINED' ? '#e53935' : '#9e9e9e'));
+
+            let itemRowsHTML = items.map(function(item, idx) {
+                const returnQty = parseFloat(item.return_quantity || 0);
+                const rate = parseFloat(item.rate || 0);
+                const amount = rate * returnQty;
+                return '<tr>' +
+                    '<td style="padding:10px 12px;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0;text-align:center;">' + (idx + 1) + '</td>' +
+                    '<td style="padding:10px 12px;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0;">' + (item.item_name || '') + '</td>' +
+                    '<td style="padding:10px 12px;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0;text-align:center;">' + returnQty + ' pcs</td>' +
+                    '<td style="padding:10px 12px;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0;text-align:right;">' + formatCurrency(rate) + '</td>' +
+                    '<td style="padding:10px 12px;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0;text-align:right;">' + formatCurrency(amount) + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            // Calculate total
+            let totalAmount = items.reduce(function(sum, item) {
+                return sum + (parseFloat(item.rate || 0) * parseFloat(item.return_quantity || 0));
+            }, 0);
+
+            return '<div id="pdfContent" style="max-width:700px;margin:20px auto;background:#fff;border:1px solid #e0e0e0;border-radius:2px;position:relative;padding:40px 48px;font-family:Segoe UI,Arial,Helvetica,sans-serif;">' +
+                // Ribbon
+                '<div style="position:absolute;top:-6px;left:-6px;width:80px;height:80px;overflow:hidden;">' +
+                '<span style="display:block;position:absolute;width:120px;padding:6px 0;background:' + ribbonBg + ';color:#fff;font-size:11px;font-weight:700;text-align:center;text-transform:uppercase;transform:rotate(-45deg);top:20px;left:-28px;box-shadow:0 2px 4px rgba(0,0,0,0.2);">' + status + '</span>' +
+                '</div>' +
+                // Company
+                '<div style="margin-bottom:24px;">' +
+                '<div style="font-size:18px;font-weight:700;color:#333;margin:0 0 4px 0;">GIHON</div>' +
+                '</div>' +
+                // Title
+                '<div style="text-align:center;font-size:14px;font-weight:600;color:#555;letter-spacing:1px;margin:24px 0;text-transform:uppercase;">SALES RETURN</div>' +
+                // Info Grid
+                '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">' +
+                '<table style="border-collapse:collapse;font-size:13px;">' +
+                '<tr><td style="padding:4px 16px 4px 0;color:#666;">RMA#</td><td style="padding:4px 0;color:#333;font-weight:500;">' + (ret.rma_number || '') + '</td></tr>' +
+                '<tr><td style="padding:4px 16px 4px 0;color:#666;">Date</td><td style="padding:4px 0;color:#333;font-weight:500;">' + date + '</td></tr>' +
+                '<tr><td style="padding:4px 16px 4px 0;color:#666;">Sales Order#</td><td style="padding:4px 0;color:#333;font-weight:500;">' + (ret.sales_order_number || 'N/A') + '</td></tr>' +
+                (ret.reason ? '<tr><td style="padding:4px 16px 4px 0;color:#666;">Reason</td><td style="padding:4px 0;color:#333;font-weight:500;">' + ret.reason + '</td></tr>' : '') +
+                '</table>' +
+                // Customer box
+                '<div style="text-align:right;">' +
+                '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:4px;">BILL TO</div>' +
+                '<div style="font-size:14px;font-weight:600;color:#4285f4;">' + (ret.customer_name || 'N/A') + '</div>' +
+                '</div>' +
+                '</div>' +
+                // Items Table
+                '<div style="font-size:15px;font-weight:700;color:#333;margin-bottom:12px;">Return Items</div>' +
+                '<table style="width:100%;border-collapse:collapse;">' +
+                '<thead><tr>' +
+                '<th style="text-align:center;padding:10px 12px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #e0e0e0;width:40px;">#</th>' +
+                '<th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #e0e0e0;">Items & Description</th>' +
+                '<th style="text-align:center;padding:10px 12px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #e0e0e0;">Quantity</th>' +
+                '<th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #e0e0e0;">Rate</th>' +
+                '<th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #e0e0e0;">Amount</th>' +
+                '</tr></thead>' +
+                '<tbody>' + itemRowsHTML + '</tbody>' +
+                '<tfoot><tr>' +
+                '<td colspan="4" style="padding:12px;font-size:13px;font-weight:700;text-align:right;border-top:2px solid #333;">Total</td>' +
+                '<td style="padding:12px;font-size:14px;font-weight:700;text-align:right;border-top:2px solid #333;">' + formatCurrency(totalAmount) + '</td>' +
+                '</tr></tfoot>' +
+                '</table>' +
+                '</div>';
+        }
+
+        // Print using hidden iframe (no new tab)
+        function printSalesReturnDetail() {
+            document.getElementById('srPdfDropdown').classList.remove('show');
+            if (!currentDetail) { alert('No sales return selected.'); return; }
+
+            var printHTML = buildSalesReturnPrintHTML(currentDetail);
+
+            var oldIframe = document.getElementById('srPrintIframe');
+            if (oldIframe) oldIframe.remove();
+
+            var iframe = document.createElement('iframe');
+            iframe.id = 'srPrintIframe';
+            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:800px;height:1200px;border:none;visibility:hidden;';
+            document.body.appendChild(iframe);
+
+            var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write('<!DOCTYPE html><html><head><title>Sales Return - ' + (currentDetail.rma_number || '') + '</title>');
+            iframeDoc.write('<style>@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");*{margin:0;padding:0;box-sizing:border-box;}@page{size:A4;margin:20mm;}body{font-family:Inter,Segoe UI,Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#333;background:#fff;padding:0;}@media print{body{padding:0;}#pdfContent{max-width:100%!important;margin:0!important;border:none!important;padding:20px 30px!important;}}    </style>');            iframeDoc.write('</head><body>');
+            iframeDoc.write(printHTML);
+            iframeDoc.write('</body></html>');
+            iframeDoc.close();
+
+            setTimeout(function() {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 500);
+        }
+
+        // Download PDF using html2pdf.js
+        async function downloadSalesReturnPDF() {
+            document.getElementById('srPdfDropdown').classList.remove('show');
+            if (!currentDetail) { alert('No sales return selected.'); return; }
+
+            var receiptHTML = buildSalesReturnPrintHTML(currentDetail);
+            var filename = (currentDetail.rma_number || 'Sales-Return') + '.pdf';
+
+            // Load html2pdf.js in parent window if not already loaded
+            if (!window.html2pdf) {
+                var script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+                document.head.appendChild(script);
+                await new Promise(function(resolve, reject) {
+                    script.onload = resolve;
+                    script.onerror = function() { reject(new Error('Failed to load html2pdf')); };
+                });
+            }
+
+            // Create a temporary hidden container
+            var container = document.createElement('div');
+            container.id = 'srPdfTempContainer';
+            container.style.cssText = 'position:fixed;top:0;left:0;width:850px;z-index:-9999;opacity:0;pointer-events:none;background:#fff;';
+            container.innerHTML = receiptHTML;
+            document.body.appendChild(container);
+
+            try {
+                var el = container.querySelector('#pdfContent') || container;
+                await html2pdf().set({
+                    margin: 10,
+                    filename: filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).from(el).save();
+            } catch (err) {
+                console.error('PDF generation error:', err);
+                alert('Failed to generate PDF. Please try the Print option instead.');
+            } finally {
+                var c = document.getElementById('srPdfTempContainer');
+                if (c) c.remove();
+            }
+        }
+        // ===== Main Page Kebab Menu =====
+        function toggleSrMainMenu(e) {
+            e.stopPropagation();
+            document.getElementById('srMainMenu').classList.toggle('show');
+        }
+        document.addEventListener('click', function() {
+            var m = document.getElementById('srMainMenu');
+            if (m) m.classList.remove('show');
+        });
+
+        // Sort By
+        let srSortField = 'return_date';
+        let srSortDir = 'desc';
+        const SR_SORT_LABELS = {
+            customer_name: { asc: 'A → Z', desc: 'Z → A' },
+            sales_order_number: { asc: 'A → Z', desc: 'Z → A' },
+            rma_number: { asc: 'Ascending', desc: 'Descending' },
+            status: { asc: 'A → Z', desc: 'Z → A' },
+            total_return_qty: { asc: 'Lowest → Highest', desc: 'Highest → Lowest' },
+            return_date: { asc: 'Oldest → Newest', desc: 'Newest → Oldest' }
+        };
+        const SR_FIELD_NAMES = {
+            return_date: 'Date', rma_number: 'RMA#', sales_order_number: 'Sales Order#',
+            customer_name: 'Customer Name', status: 'Status', total_return_qty: 'Returned'
+        };
+
+        function sortReturnsBy(field, el) {
+            if (field === srSortField) {
+                srSortDir = srSortDir === 'desc' ? 'asc' : 'desc';
+            } else {
+                srSortField = field;
+                srSortDir = 'desc';
+            }
+            // Update active state
+            document.querySelectorAll('.sr-sort-item').forEach(function(item) {
+                item.classList.remove('active');
+                item.innerHTML = item.textContent.trim();
+            });
+            el.classList.add('active');
+            el.innerHTML = el.textContent.trim() + ' <span class="sr-sort-arrow">' + (srSortDir === 'desc' ? '↓' : '↑') + '</span>';
+
+            // Sort
+            allReturns.sort(function(a, b) {
+                var va = a[field], vb = b[field];
+                if (field === 'total_return_qty') {
+                    va = parseFloat(va) || 0; vb = parseFloat(vb) || 0;
+                }
+                if (field === 'return_date') {
+                    va = new Date(a.return_date || 0).getTime(); vb = new Date(b.return_date || 0).getTime();
+                }
+                if (typeof va === 'string') va = va.toLowerCase();
+                if (typeof vb === 'string') vb = vb.toLowerCase();
+                if (va < vb) return srSortDir === 'asc' ? -1 : 1;
+                if (va > vb) return srSortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            filterAndRenderReturns();
+            document.getElementById('srMainMenu').classList.remove('show');
+
+            // Toast notification
+            var dirLabel = (SR_SORT_LABELS[field] || { asc: 'Ascending', desc: 'Descending' })[srSortDir];
+            showToast('Sorted by ' + (SR_FIELD_NAMES[field] || field) + ': ' + dirLabel);
+        }
+
+        // Export CSV
+        function srExportCSV() {
+            document.getElementById('srMainMenu').classList.remove('show');
+            if (allReturns.length === 0) { alert('No sales returns to export.'); return; }
+            const headers = ['Date', 'RMA#', 'Sales Order#', 'Customer Name', 'Status', 'Receive Status', 'Refund Status', 'Returned', 'Amount Refunded'];
+            const rows = [headers.join(',')];
+            allReturns.forEach(function(r) {
+                rows.push([
+                    r.return_date ? new Date(r.return_date).toISOString().split('T')[0] : '',
+                    '"' + (r.rma_number || '').replace(/"/g, '""') + '"',
+                    '"' + (r.sales_order_number || '').replace(/"/g, '""') + '"',
+                    '"' + (r.customer_name || '').replace(/"/g, '""') + '"',
+                    (r.status || 'DRAFT').toUpperCase(),
+                    '"' + (r.receive_status || '').replace(/"/g, '""') + '"',
+                    '"' + (r.refund_status || '').replace(/"/g, '""') + '"',
+                    parseFloat(r.total_return_qty || 0).toFixed(2),
+                    '0.00'
+                ].join(','));
+            });
+            const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sales-returns-export.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Exported ' + allReturns.length + ' sales return' + (allReturns.length !== 1 ? 's' : '') + ' to CSV.');
+        }
+
+        // Refresh List
+        async function srRefreshList() {
+            document.getElementById('srMainMenu').classList.remove('show');
+
+            // Clear search box so UI matches the reloaded (unfiltered) data
+            const searchEl = document.getElementById('retSearchInput');
+            if (searchEl) searchEl.value = '';
+
+            // Reset filter dropdown back to 'All'
+            currentSrFilter = 'all';
+            const titleEl = document.getElementById('srFilterTitle');
+            if (titleEl) titleEl.textContent = 'All Sales Returns';
+            document.querySelectorAll('.sr-filter-option').forEach(function(opt) {
+                opt.classList.toggle('active', opt.getAttribute('onclick') && opt.getAttribute('onclick').includes("'all'"));
+            });
+
+            // Clear sort highlights
+            document.querySelectorAll('.sr-sort-item').forEach(function(item) {
+                item.classList.remove('active');
+            });
+
+            // Reset pager so loadReturns() creates a fresh one with correct callback
+            window.retPager = null;
+            await loadReturns();
+            applyColumnVisibility(); // re-hide any columns the user had hidden
+            showToast('Sales returns list refreshed.');
+        }
+
+        // Auto-open return detail from URL params on load
+        loadReturns().then(() => {
+            // Apply saved column visibility after table renders
+            applyColumnVisibility();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const returnId = urlParams.get('returnId');
+            if (returnId) {
+                const id = parseInt(returnId);
+                if (id && allReturns.find(r => r.id === id)) {
+                    viewReturn(id);
+                }
+            }
+        });
+    </script>
+
+    <!-- Customize Columns Modal -->
+    <div class="cc-overlay" id="ccOverlay" onclick="closeCustomizeColumns()">
+        <div class="cc-modal" onclick="event.stopPropagation()">
+            <div class="cc-header">
+                <div class="cc-header-left">
+                    <span class="cc-icon">⚙</span>
+                    <h3>Customize Columns</h3>
+                </div>
+                <div class="cc-header-right">
+                    <span id="ccSelectedCount">6 of 9 Selected</span>
+                    <button class="cc-close" onclick="closeCustomizeColumns()">✕</button>
+                </div>
+            </div>
+            <div class="cc-search-wrap">
+                <input type="text" class="cc-search" id="ccSearch" placeholder="Search"
+                    oninput="filterCcColumns(this.value)">
+            </div>
+            <div class="cc-list" id="ccList"></div>
+            <div class="cc-footer">
+                <button class="cc-btn-save" onclick="saveCcColumns()">Save</button>
+                <button class="cc-btn-cancel" onclick="closeCustomizeColumns()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Viewer - GIHON</title>
+  <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+  <link rel="stylesheet" href="/css/sidebar.css">
+  <link rel="stylesheet" href="/css/report-export.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    * {
+      font-family: 'Inter', 'Source Sans Pro', Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6fa;
+      font-size: 13px;
+      overflow-x: hidden;
+    }
+
+    .main-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .content {
+      flex: 1;
+      min-width: 0;
+      margin-left: 260px;
+      padding: 0;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ===== TOP HEADER BAR ===== */
+    .report-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      min-height: 44px;
+      flex-shrink: 0;
+    }
+
+    .report-top-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hamburger-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .breadcrumb-area {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .breadcrumb-category {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .breadcrumb-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .top-bar-actions button {
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #555;
+      transition: all 0.15s ease;
+    }
+
+    .top-bar-actions button:hover {
+      background: #f5f5f5;
+    }
+
+    .btn-export {
+      font-size: 12px !important;
+      font-weight: 500;
+    }
+
+    .btn-close-report {
+      color: #e53935 !important;
+      font-weight: bold;
+    }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e8e8e8;
+      flex-shrink: 0;
+    }
+
+    .filter-icon {
+      display: flex;
+      align-items: center;
+      color: #555;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .filter-dropdown-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .filter-dropdown-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      padding: 7px 10px 7px 14px;
+      white-space: nowrap;
+      border-right: 1px solid #e8e8e8;
+      background: #fafbfc;
+    }
+
+    .filter-dropdown-select {
+      border: none;
+      outline: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      background: transparent;
+      font-family: inherit;
+      padding: 7px 12px;
+      cursor: pointer;
+      appearance: auto;
+      min-width: 120px;
+    }
+
+    .filter-dropdown-wrapper:hover,
+    .filter-dropdown-wrapper:focus-within {
+      border-color: #8B1A1A;
+      box-shadow: 0 0 0 2px rgba(139, 26, 26, 0.08);
+    }
+
+    .filter-dropdown-select:focus {
+      color: #8B1A1A;
+    }
+
+    /* Hidden date inputs used internally */
+    .hidden-date-inputs {
+      display: none;
+    }
+
+    /* ===== REPORT BODY ===== */
+    .report-body {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      overflow-y: auto;
+      padding: 30px 20px 60px;
+    }
+
+    #reportContent {
+      width: 100%;
+    }
+
+    .report-header-section {
+      text-align: center;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .report-main-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 8px;
+    }
+
+    /* ===== DATE FILTER DISPLAY ===== */
+    .date-filter-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .date-filter-display svg {
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .date-filter-label {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .date-filter-divider {
+      color: #cbd5e1;
+    }
+
+    .date-filter-range {
+      font-weight: 400;
+    }
+
+    /* ===== REPORT TABLE ===== */
+    .report-table {
+      width: 100%;
+      min-width: 1400px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .report-table thead th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 10px 16px;           /* ← was 10px 10px — +6px breathing room */
+      border-bottom: 2px solid #dde3ec;
+      background: #f4f6f9;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    /* Header-data sync: right/center headers mirror their data cells */
+    .report-table thead th.align-right  { text-align: right;  padding-right: 20px; }
+    .report-table thead th.align-center { text-align: center; }
+
+    .report-table tbody td {
+      padding: 11px 16px;            /* ← was 11px 10px — +6px breathing room */
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* Zebra striping — helps the eye track across wide financial rows */
+    .report-table tbody tr:nth-child(even) {
+      background: #f9f9fb;
+    }
+
+    .report-table tbody tr:hover {
+      background: #f0f4ff !important;  /* hover wins over zebra stripe */
+    }
+
+    .report-table tfoot td {
+      padding: 12px 16px;            /* ← was 12px 10px */
+      font-weight: 700;
+      border-top: 2px solid #dde3ec;
+      background: #f4f6f9;
+      color: #1a1f3a;
+    }
+
+    /* Currency & numeric alignment — extra right padding prevents crowding */
+    .align-right {
+      text-align: right !important;
+      padding-right: 20px !important;  /* ← dedicated cushion for ₱ symbol */
+    }
+
+    .align-center {
+      text-align: center !important;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #666;
+      margin: 0 0 6px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      color: #999;
+      margin: 0;
+    }
+
+    /* ===== LOADING SPINNER ===== */
+    .loading-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #e8e8e8;
+      border-top-color: #8B1A1A;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-state p {
+      font-size: 13px;
+      color: #888;
+    }
+
+    /* ===== TOTALS ROW ===== */
+    .totals-row td {
+      font-weight: 700 !important;
+      background: #f4f6fa !important;
+      border-top: 2px solid #d0d5dd !important;
+      color: #1a1f3a !important;
+    }
+
+    /* ===== EXPORT DROPDOWN ===== */
+    .export-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* ===== RECORD COUNT ===== */
+    .record-count {
+      font-size: 11px;
+      color: #888;
+      text-align: right;
+      margin-top: 12px;
+    }
+
+    /* ===== INLINE EDIT ===== */
+    .editable-cell {
+      position: relative;
+    }
+    .editable-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      border-bottom: 1.5px dashed #bbb;
+      padding-bottom: 1px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .editable-display:hover {
+      border-bottom-color: #8B1A1A;
+      color: #8B1A1A;
+    }
+    .edit-icon {
+      opacity: 0;
+      transition: opacity 0.2s;
+      color: #999;
+    }
+    .editable-display:hover .edit-icon {
+      opacity: 1;
+      color: #8B1A1A;
+    }
+    .editable-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .inline-rate-input {
+      width: 58px;
+      padding: 3px 6px;
+      border: 1.5px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .inline-rate-input:focus {
+      border-color: #8B1A1A;
+      box-shadow: 0 0 0 2px rgba(139,26,26,0.12);
+    }
+    .inline-unit {
+      font-size: 12px;
+      color: #888;
+      margin-right: 2px;
+    }
+    .inline-save, .inline-cancel {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.15s;
+    }
+    .inline-save {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    .inline-save:hover {
+      background: #16a34a;
+      color: #fff;
+    }
+    .inline-cancel {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .inline-cancel:hover {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    /* ===== LOG TYPE BADGES ===== */
+    .log-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      color: var(--badge-color, #6b7280);
+      background: color-mix(in srgb, var(--badge-color, #6b7280) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--badge-color, #6b7280) 25%, transparent);
+    }
+    .log-badge::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--badge-color, #6b7280);
+      flex-shrink: 0;
+    }
+
+    /* ===== PAGINATION (Standardized to GiHon Modules) ===== */
+    .pagination-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 16px 0 10px;
+      margin-top: 20px;
+      gap: 16px;
+      border-top: 1px solid #f1f1f1;
+    }
+
+    .pagination-info {
+      font-size: 13px;
+      color: #64748b;
+      margin-right: auto;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pagination-btn {
+      min-width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #475569;
+      transition: all 0.2s;
+      padding: 0 10px;
+    }
+
+    .pagination-btn:hover:not(:disabled):not(.active) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #1e293b;
+    }
+
+    .pagination-btn.active {
+      background: #A33632;
+      border-color: #A33632;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: #f1f5f9;
+    }
+
+    .pagination-ellipsis {
+      padding: 0 4px;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 2px;
+    }
+
+    /* ===== DATE RANGE SPACING STANDARDIZATION ===== */
+    .date-filter-display {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #475569;
+      overflow: hidden;
+    }
+
+    .date-filter-icon-box {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      background: #eff6ff;
+      border-right: 1px solid #dbeafe;
+      color: #3b82f6;
+    }
+
+    .date-filter-label {
+      font-weight: 600;
+      color: #1e293b;
+      padding: 0 15px;
+      min-width: 100px;
+      text-align: center;
+      border-right: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .date-filter-range {
+      font-family: 'Inter', sans-serif;
+      padding: 0 15px;
+      white-space: nowrap;
+    }
+
+    /* ===== SUMMARY HEADER CARDS ===== */
+    .summary-cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 20px 0 24px;
+    }
+
+    .summary-card {
+      flex: 1;
+      min-width: 180px;
+      padding: 16px 20px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #8B1A1A;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+
+    .summary-card:hover {
+      box-shadow: 0 4px 12px rgba(139,26,26,0.10);
+      transform: translateY(-1px);
+    }
+
+    .summary-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    /* Colors for positive/negative/warning */
+    .summary-card-value.positive { color: #059669; }
+    .summary-card-value.negative { color: #A33632; }
+    .summary-card-value.net.negative { color: #A33632; }
+    .summary-card-value.warning { color: #d97706; }
+
+    /* Expiry highlight row styles */
+    .expiry-red { color: #dc2626 !important; font-weight: 600 !important; }
+    .expiry-yellow { color: #d97706 !important; font-weight: 600 !important; }
+
+    /* FIFO Consumption Drill-Down Drawer */
+    .fifo-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9998;
+      opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+    }
+    .fifo-drawer-overlay.open { opacity: 1; pointer-events: auto; }
+    .fifo-drawer {
+      position: fixed; top: 0; right: -520px; width: 500px; height: 100vh;
+      background: #fff; z-index: 9999; box-shadow: -6px 0 30px rgba(0,0,0,0.15);
+      transition: right 0.35s cubic-bezier(0.22,1,0.36,1); overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .fifo-drawer.open { right: 0; }
+    .fifo-drawer-header {
+      padding: 24px 28px 18px; border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(135deg, #f8f5f0, #fefaf6);
+    }
+    .fifo-drawer-header h3 {
+      margin: 0 0 4px; font-size: 16px; font-weight: 700; color: #1a1f3a;
+    }
+    .fifo-drawer-header .subtitle {
+      font-size: 12px; color: #718096; margin: 0;
+    }
+    .fifo-drawer-close {
+      position: absolute; top: 18px; right: 18px; background: none; border: none;
+      cursor: pointer; color: #64748b; font-size: 20px; line-height: 1;
+      padding: 4px 8px; border-radius: 4px; transition: all 0.15s;
+    }
+    .fifo-drawer-close:hover { background: #f1f5f9; color: #1a1f3a; }
+    .fifo-drawer-body { padding: 24px 28px; flex: 1; }
+    .fifo-drawer-lot-info {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;
+    }
+    .fifo-drawer-lot-info .info-card {
+      padding: 12px 14px; background: #f8f9fa; border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+    .fifo-drawer-lot-info .info-card .label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #718096; margin-bottom: 4px;
+    }
+    .fifo-drawer-lot-info .info-card .value {
+      font-size: 15px; font-weight: 700; color: #1a1f3a;
+    }
+    .fifo-drawer-section-title {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #8B1A1A; margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 2px solid #8B1A1A;
+    }
+    .fifo-drawer table {
+      width: 100%; border-collapse: collapse; font-size: 12px;
+    }
+    .fifo-drawer table th {
+      background: #f8f9fa; font-weight: 600; color: #475569;
+      text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;
+      padding: 10px 12px; border-bottom: 2px solid #e5e7eb; text-align: left;
+    }
+    .fifo-drawer table td {
+      padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #334155;
+    }
+    .fifo-drawer table tr:hover td { background: #fefaf6; }
+    .fifo-drawer .drawer-totals {
+      display: flex; gap: 16px; margin-top: 20px; padding-top: 16px;
+      border-top: 2px solid #8B1A1A;
+    }
+    .fifo-drawer .drawer-totals .total-box {
+      flex: 1; padding: 14px; background: linear-gradient(135deg, #f8f5f0, #fff);
+      border-radius: 8px; border: 1px solid #e9ecef; text-align: center;
+    }
+    .fifo-drawer .drawer-totals .total-box .label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      color: #718096; margin-bottom: 4px;
+    }
+    .fifo-drawer .drawer-totals .total-box .value {
+      font-size: 18px; font-weight: 700; color: #059669;
+    }
+    .fifo-drawer .no-consumption {
+      text-align: center; padding: 40px 20px; color: #a0aec0;
+    }
+    .fifo-drawer .no-consumption svg { margin-bottom: 12px; opacity: 0.4; }
+    .fifo-ref-link {
+      color: #8B1A1A; text-decoration: none; cursor: pointer;
+      border-bottom: 1px dashed #8B1A1A; padding-bottom: 1px;
+      transition: all 0.15s ease; font-weight: 600;
+    }
+    .fifo-ref-link:hover {
+      color: #5c1010; background: #fef2f2; padding: 1px 4px;
+      border-radius: 3px; border-bottom-color: transparent;
+    }
+  </style>
+</head><body>
+  <div id="sidebarContainer"></div>
+
+  <div class="main-layout">
+    <div class="content" id="content">
+
+      <!-- TOP HEADER BAR -->
+      <div class="report-top-bar">
+        <div class="report-top-left">
+          <button class="hamburger-btn" onclick="openReportsSidebar()" title="Browse Reports">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="breadcrumb-area">
+            <span class="breadcrumb-category" id="reportCategory">Loading...</span>
+            <span class="breadcrumb-title" id="reportTitle">Report</span>
+          </div>
+        </div>
+        <div class="top-bar-actions">
+          <div class="export-wrapper">
+            <button class="btn-export" onclick="toggleExport()">Export ▾</button>
+            <div class="export-dropdown" id="exportDropdown">
+              <div class="export-dropdown-header">Export As</div>
+              <button class="export-dropdown-item" onclick="exportCSV()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                CSV
+              </button>
+              <button class="export-dropdown-item" onclick="exportPDF()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-2h2a1.5 1.5 0 0 1 0 3H9z"/></svg>
+                PDF
+              </button>
+              <div class="export-dropdown-divider"></div>
+              <button class="export-dropdown-item" onclick="printReport()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print
+              </button>
+            </div>
+          </div>
+          <button class="btn-close-report" onclick="window.location.href='/reports.html'" title="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar" id="filterBar">
+        <span class="filter-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        </span>
+        <span class="filter-label">Filters :</span>
+        <div class="filter-dropdown-wrapper">
+          <span class="filter-dropdown-label">Date Range :</span>
+          <select class="filter-dropdown-select" id="dateRangeSelect" onchange="onDateRangeChange()">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month" selected>This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="last-quarter">Last Quarter</option>
+            <option value="year">This Year</option>
+            <option value="last-month">Last Month</option>
+            <option value="last-year">Last Year</option>
+          </select>
+        </div>
+        <!-- Dynamic extra filters (rendered by JS) -->
+        <div id="extraFiltersContainer" style="display:flex;align-items:center;gap:12px;"></div>
+        <!-- Hidden date inputs used by the report engine -->
+        <div class="hidden-date-inputs">
+          <input type="date" id="dateFrom">
+          <input type="date" id="dateTo">
+        </div>
+      </div>
+
+      <!-- REPORT BODY -->
+      <div class="report-body" id="reportBody">
+        <div class="report-header-section">
+          <div class="report-main-title" id="reportMainTitle">Report</div>
+          <div class="report-date-range" id="reportDateRange"></div>
+        </div>
+
+        <!-- Summary Cards Container -->
+        <div id="summaryCardsContainer" class="summary-cards-row"></div>
+
+        <div id="reportContent">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading report data...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/js/layout.js"></script>
+  <script src="/js/reports-sidebar.js"></script>
+  <script>
+    // ─── State ───
+    let currentData = { columns: [], rows: [] };
+    const params = new URLSearchParams(window.location.search);
+    const reportType = params.get('type') || 'sales-summary';
+
+    // Pagination State
+    let currentPage = 1;
+    let rowsPerPage = 20;
+    let totalRecords = 0;
+    let _extraFiltersRendered = false;
+
+    // ─── Date Range Dropdown Logic ───
+    function onDateRangeChange() {
+      const preset = document.getElementById('dateRangeSelect').value;
+      const now = new Date();
+      let from, to;
+      const toLocalISO = (d) => {
+        const offset = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - (offset * 60 * 1000));
+        return local.toISOString().slice(0, 10);
+      };
+      
+      to = toLocalISO(now);
+
+      switch (preset) {
+        case 'today':
+          from = to;
+          break;
+        case 'week': {
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          const monday = new Date(now);
+          monday.setDate(diff);
+          from = toLocalISO(monday);
+          break;
+        }
+        case 'month':
+          from = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+          break;
+        case 'quarter': {
+          const q = Math.floor(now.getMonth() / 3);
+          from = toLocalISO(new Date(now.getFullYear(), q * 3, 1));
+          break;
+        }
+        case 'last-quarter': {
+          const q = Math.floor(now.getMonth() / 3);
+          from = toLocalISO(new Date(now.getFullYear(), (q - 1) * 3, 1));
+          to = toLocalISO(new Date(now.getFullYear(), q * 3, 0));
+          break;
+        }
+        case 'year':
+          from = toLocalISO(new Date(now.getFullYear(), 0, 1));
+          break;
+        case 'last-month': {
+          // Strict Calendar Month: 1st of prev month to last day of prev month
+          from = toLocalISO(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+          to = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 0));
+          break;
+        }
+        case 'last-year':
+          from = toLocalISO(new Date(now.getFullYear() - 1, 0, 1));
+          to = toLocalISO(new Date(now.getFullYear() - 1, 11, 31));
+          break;
+        default:
+          from = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+      }
+
+      document.getElementById('dateFrom').value = from;
+      document.getElementById('dateTo').value = to;
+
+      // Reset page when date changes
+      currentPage = 1;
+
+      // Update URL to persist state on refresh
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('datePreset', preset);
+      newUrl.searchParams.set('from', from);
+      newUrl.searchParams.set('to', to);
+      window.history.replaceState({}, '', newUrl);
+
+      // Clear summary instantly to prevent stale data UX
+      const sc = document.getElementById('summaryCardsContainer');
+      if (sc) sc.style.display = 'none';
+
+      runReport();
+    }
+
+    // ─── Init dates & Run ───
+    const urlPreset = params.get('datePreset');
+    const urlFrom = params.get('from');
+    const urlTo = params.get('to');
+
+    if (urlPreset) {
+      document.getElementById('dateRangeSelect').value = urlPreset;
+    }
+    
+    if (urlFrom && urlTo && urlFrom !== 'sidebar' && urlTo !== 'sidebar') {
+      document.getElementById('dateFrom').value = urlFrom;
+      document.getElementById('dateTo').value = urlTo;
+    } else if (urlPreset) {
+      // Preset specified without from/to — calculate correct dates from preset
+      // Use onDateRangeChange but suppress the runReport call (we call it below)
+      const presetSelect = document.getElementById('dateRangeSelect');
+      const now = new Date();
+      let from, to;
+      const toLocalISO = (d) => {
+        const offset = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - (offset * 60 * 1000));
+        return local.toISOString().slice(0, 10);
+      };
+      to = toLocalISO(now);
+      switch (urlPreset) {
+        case 'today': from = to; break;
+        case 'week': {
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          const monday = new Date(now);
+          monday.setDate(diff);
+          from = toLocalISO(monday);
+          break;
+        }
+        case 'month':
+          from = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+          break;
+        case 'quarter': {
+          const q = Math.floor(now.getMonth() / 3);
+          from = toLocalISO(new Date(now.getFullYear(), q * 3, 1));
+          break;
+        }
+        case 'last-quarter': {
+          const q = Math.floor(now.getMonth() / 3);
+          from = toLocalISO(new Date(now.getFullYear(), (q - 1) * 3, 1));
+          to = toLocalISO(new Date(now.getFullYear(), q * 3, 0));
+          break;
+        }
+        case 'year':
+          from = toLocalISO(new Date(now.getFullYear(), 0, 1));
+          break;
+        case 'last-month':
+          from = toLocalISO(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+          to = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 0));
+          break;
+        case 'last-year':
+          from = toLocalISO(new Date(now.getFullYear() - 1, 0, 1));
+          to = toLocalISO(new Date(now.getFullYear() - 1, 11, 31));
+          break;
+        default:
+          from = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+      }
+      document.getElementById('dateFrom').value = from;
+      document.getElementById('dateTo').value = to;
+    } else {
+      // Default date range — "This Year" for turnover reports, "This Month" for everything else
+      const today = new Date();
+      const toLocalISO = (d) => {
+        const offset = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - (offset * 60 * 1000));
+        return local.toISOString().slice(0, 10);
+      };
+
+      if (reportType === 'inventory-turnover-amount') {
+        // Turnover analysis is most useful over a full year
+        document.getElementById('dateRangeSelect').value = 'year';
+        document.getElementById('dateFrom').value = toLocalISO(new Date(today.getFullYear(), 0, 1));
+      } else {
+        document.getElementById('dateFrom').value = toLocalISO(new Date(today.getFullYear(), today.getMonth(), 1));
+      }
+      document.getElementById('dateTo').value = toLocalISO(today);
+    }
+
+    // ─── Visit Tracking ───
+    async function recordVisit() {
+      try {
+        await fetch(`/api/reports/${encodeURIComponent(reportType)}/visit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: 'default' })
+        });
+      } catch (err) {
+        console.error('Failed to record visit:', err);
+      }
+    }
+
+    // ─── Force "This Year" for analysis reports on initial load ───
+    // The sidebar passes datePreset=month by default, but turnover and FIFO reports
+    // need a wider window to capture historical data. Override to "year" on first load.
+    if (reportType === 'inventory-turnover-amount' || reportType === 'fifo-cost-lot-tracking') {
+      const now = new Date();
+      const toLocalISOForce = (d) => {
+        const offset = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - (offset * 60 * 1000));
+        return local.toISOString().slice(0, 10);
+      };
+      document.getElementById('dateRangeSelect').value = 'year';
+      document.getElementById('dateFrom').value = toLocalISOForce(new Date(now.getFullYear(), 0, 1));
+      document.getElementById('dateTo').value = toLocalISOForce(now);
+      // Update URL to remove stale month params
+      const fixUrl = new URL(window.location);
+      fixUrl.searchParams.set('datePreset', 'year');
+      fixUrl.searchParams.set('from', document.getElementById('dateFrom').value);
+      fixUrl.searchParams.set('to', document.getElementById('dateTo').value);
+      window.history.replaceState({}, '', fixUrl);
+    }
+
+    // ─── Run on load ───
+    recordVisit();
+    runReport();
+
+    async function runReport() {
+      const from = document.getElementById('dateFrom').value;
+      const to = document.getElementById('dateTo').value;
+      const contentEl = document.getElementById('reportContent');
+
+      // Collect extra filter values (both select and input text)
+      const extraParams = {};
+      document.querySelectorAll('#extraFiltersContainer [data-filter-key]').forEach(el => {
+        extraParams[el.dataset.filterKey] = el.value;
+      });
+      // Capture hidden URL params like customerId for drill-down views
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('customerId'))      extraParams['customerId']      = urlParams.get('customerId');
+      if (urlParams.has('customerName'))    extraParams['customerName']    = urlParams.get('customerName');
+      if (urlParams.has('itemId'))          extraParams['itemId']          = urlParams.get('itemId');
+      if (urlParams.has('itemName'))        extraParams['itemName']        = urlParams.get('itemName');
+      if (urlParams.has('salespersonName')) extraParams['salespersonName'] = urlParams.get('salespersonName');
+      
+      const extraQs = Object.entries(extraParams).map(([k, v]) => `&${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('');
+
+      // Show loading
+      contentEl.innerHTML = `
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Generating report data...</p>
+        </div>`;
+
+      try {
+        const resp = await fetch(`/api/reports/data?type=${encodeURIComponent(reportType)}&from=${from}&to=${to}&page=${currentPage}&limit=${rowsPerPage}${extraQs}`);
+        const data = await resp.json();
+        currentData = data;
+        totalRecords = data.totalCount || 0;
+
+        // Auto-scroll to top of report body
+        document.getElementById('reportBody').scrollTop = 0;
+
+        // Update header
+        document.getElementById('reportTitle').textContent = data.title || 'Report';
+        document.getElementById('reportMainTitle').textContent = data.title || 'Report';
+        if (reportType === 'sales-by-customer-details') {
+          const uParams = new URLSearchParams(window.location.search);
+          const cName = uParams.get('customerName') || 'Details';
+          const pFrom = document.getElementById('dateFrom').value || uParams.get('from');
+          const pTo = document.getElementById('dateTo').value || uParams.get('to');
+          const pPreset = document.getElementById('dateRangeSelect').value || uParams.get('datePreset');
+          let backHref = '?type=sales-by-customer';
+          if (pFrom && pTo) {
+            backHref += `&from=${pFrom}&to=${pTo}`;
+          }
+          if (pPreset) {
+            backHref += `&datePreset=${pPreset}`;
+          }
+          
+          document.getElementById('reportTitle').textContent = `Sales: ${cName}`;
+          document.getElementById('reportMainTitle').textContent = `Sales: ${cName}`;
+          
+          document.getElementById('reportCategory').innerHTML = `
+            <a href="${backHref}" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:2px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Back to Summary
+            </a>
+          `;
+          document.title = `Sales: ${cName} - GIHON Reports`;
+        } else if (reportType === 'sales-by-item-details') {
+          const uParams = new URLSearchParams(window.location.search);
+          const iName = uParams.get('itemName') || 'Details';
+          const pFrom = document.getElementById('dateFrom').value || uParams.get('from');
+          const pTo = document.getElementById('dateTo').value || uParams.get('to');
+          const pPreset = document.getElementById('dateRangeSelect').value || uParams.get('datePreset');
+          let backHref = '?type=sales-by-item';
+          if (pFrom && pTo) backHref += `&from=${pFrom}&to=${pTo}`;
+          if (pPreset) backHref += `&datePreset=${pPreset}`;
+          
+          document.getElementById('reportTitle').textContent = `Sales by Item: ${iName}`;
+          document.getElementById('reportMainTitle').textContent = `Sales by Item: ${iName}`;
+          
+          document.getElementById('reportCategory').innerHTML = `
+            <a href="${backHref}" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:2px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Back to Sales by Item
+            </a>
+          `;
+          document.title = `Sales by Item: ${iName} - GIHON Reports`;
+        } else if (reportType === 'order-fulfillment-by-item-details') {
+          const uParams = new URLSearchParams(window.location.search);
+          const iName = uParams.get('itemName') || 'Details';
+          const pFrom = document.getElementById('dateFrom').value || uParams.get('from');
+          const pTo = document.getElementById('dateTo').value || uParams.get('to');
+          const pPreset = document.getElementById('dateRangeSelect').value || uParams.get('datePreset');
+          let backHref = '?type=order-fulfillment-by-item';
+          if (pFrom && pTo) backHref += `&from=${pFrom}&to=${pTo}`;
+          if (pPreset) backHref += `&datePreset=${pPreset}`;
+          
+          document.getElementById('reportTitle').textContent = `Order Fulfillment: ${iName}`;
+          document.getElementById('reportMainTitle').textContent = `Order Fulfillment: ${iName}`;
+          
+          document.getElementById('reportCategory').innerHTML = `
+            <a href="${backHref}" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:2px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Back to Order Fulfillment by Item
+            </a>
+          `;
+          document.title = `Fulfillment: ${iName} - GIHON Reports`;
+        } else if (reportType === 'sales-by-salesperson-details') {
+          const uParams = new URLSearchParams(window.location.search);
+          const spName = uParams.get('salespersonName') || 'Salesperson';
+          const pFrom  = document.getElementById('dateFrom').value || uParams.get('from');
+          const pTo    = document.getElementById('dateTo').value   || uParams.get('to');
+          const pPreset= document.getElementById('dateRangeSelect').value || uParams.get('datePreset');
+
+          // Back goes to the standalone Sales by Salesperson page, NOT salesman-commission
+          let backHref = '/sales-by-salesperson.html';
+          const backParams = [];
+          if (pFrom)   backParams.push(`from=${encodeURIComponent(pFrom)}`);
+          if (pTo)     backParams.push(`to=${encodeURIComponent(pTo)}`);
+          if (pPreset) backParams.push(`datePreset=${encodeURIComponent(pPreset)}`);
+          if (backParams.length) backHref += '?' + backParams.join('&');
+
+          document.getElementById('reportTitle').textContent = spName;
+          document.getElementById('reportMainTitle').textContent = `${spName} — Transactions`;
+
+          document.getElementById('reportCategory').innerHTML = `
+            <a href="${backHref}" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:2px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Back to Sales by Salesperson
+            </a>
+          `;
+          document.title = `${spName} Transactions - GIHON Reports`;
+        } else {
+          document.getElementById('reportCategory').textContent = data.category || '';
+          document.title = `${data.title} - GIHON Reports`;
+        }
+
+        // Hide date filter if not applicable
+        if (data.noDateFilter) {
+          // Hide date range dropdown but keep filter bar visible if extra filters exist
+          const filterBar = document.getElementById('filterBar');
+          if (data.filters && data.filters.length > 0) {
+            filterBar.style.display = 'flex';
+            // Hide only the date range dropdown wrapper inside the filter bar
+            const dateRangeWrapper = filterBar.querySelector('.filter-dropdown-wrapper');
+            if (dateRangeWrapper) dateRangeWrapper.style.display = 'none';
+          } else {
+            filterBar.style.display = 'none';
+          }
+          document.getElementById('reportDateRange').innerHTML = `
+            <div class="date-filter-display">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span class="date-filter-label">As of Date</span>
+              <span class="date-filter-range">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            </div>
+          `;
+        } else {
+          document.getElementById('filterBar').style.display = 'flex';
+          const presetSelect = document.getElementById('dateRangeSelect');
+          const presetName = presetSelect.options[presetSelect.selectedIndex].text;
+          
+          document.getElementById('reportDateRange').innerHTML = `
+            <div class="date-filter-display">
+              <div class="date-filter-icon-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </div>
+              <span class="date-filter-label">${presetName}</span>
+              <span class="date-filter-range">${formatDate(from)} to ${formatDate(to)}</span>
+            </div>
+          `;
+        }
+
+        // Render dynamic extra filters (only on first load or if not already rendered)
+        if (data.filters && data.filters.length > 0) {
+          renderExtraFilters(data.filters);
+        } else {
+          document.getElementById('extraFiltersContainer').innerHTML = '';
+        }
+
+        // Handle error from backend
+        if (data.error) {
+          renderEmpty(data.error);
+          return;
+        }
+
+        // Render Summary Cards (even when no table rows — these are all-in-all totals)
+        const summaryContainer = document.getElementById('summaryCardsContainer');
+        if (data.summaryData && data.summaryData.length > 0) {
+          summaryContainer.innerHTML = data.summaryData.map(s => `
+            <div class="summary-card">
+              <span class="summary-card-label">${escapeHtml(s.label)}</span>
+              <span class="summary-card-value ${s.color || ''}">${typeof s.value === 'number' ? formatNumber(s.value) : escapeHtml(String(s.value))}</span>
+            </div>
+          `).join('');
+          summaryContainer.style.display = 'flex';
+        } else {
+          summaryContainer.style.display = 'none';
+          summaryContainer.innerHTML = '';
+        }
+
+        // If no rows
+        if (!data.rows || data.rows.length === 0) {
+          if (reportType === 'sales-by-customer-details') {
+            renderEmpty('No transactions found for this period');
+          } else if (data.noDateFilter) {
+            renderEmpty('No pending records found', 'All data is fully processed and up to date.');
+          } else {
+            renderEmpty('No records found for this period');
+          }
+          return;
+        }
+
+        // Render table
+        renderTable(data.columns, data.rows, data.inlineEditable || [], data.reportType || '', data.colorColumn || null, data.colorMap || null, data.summaryData);
+
+      } catch (err) {
+        console.error('Report fetch error:', err);
+        contentEl.innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <h3>Failed to load report</h3>
+            <p>${err.message}</p>
+          </div>`;
+      }
+    }
+
+    function renderTable(columns, rows, inlineEditable = [], rptType = '', colorColumn = null, colorMap = null, summaryData = null) {
+      const container = document.getElementById('reportContent');
+      const editableCols = new Set(inlineEditable);
+
+      // Find the color column index (if any)
+      const colorColIdx = colorColumn ? columns.indexOf(colorColumn) : -1;
+
+      // Detect numeric columns for right-alignment
+      const numericCols = new Set();
+      // Center-aligned columns (force center regardless of data type)
+      const centerCols = new Set();
+      const dateKeywords = ['date', 'created', 'updated', 'expected', 'due', 'received'];
+      const textIdentifierKeywords = ['sku', 'so #', 'rma', 'barcode', 'reference', 'invoice', 'order', 'serial', 'batch', 'po #', 'receive #'];
+      columns.forEach((col, i) => {
+        if (i === colorColIdx) return; // skip color column from numeric detection
+        // Force center-align for 'Serial Number' columns
+        if (col.toLowerCase() === 'serial number') { centerCols.add(i); return; }
+        const key = Object.keys(rows[0])[i] || col;
+        const colLower = col.toLowerCase();
+        if (dateKeywords.some(kw => colLower.includes(kw))) return;
+        // Skip text identifier columns that may contain numeric-looking values
+        if (textIdentifierKeywords.some(kw => colLower.includes(kw))) return;
+        const sampleVals = rows.slice(0, 10).map(r => r[key]);
+        const hasRealNumber = sampleVals.some(v => v !== null && v !== undefined && !isNaN(Number(v)) && String(v).trim() !== '');
+        const allNumericOrNull = sampleVals.every(v => v === null || v === undefined || (!isNaN(Number(v)) && String(v).trim() !== ''));
+        if (hasRealNumber && allNumericOrNull) {
+          numericCols.add(i);
+        }
+      });
+
+      // ── Turnover Report: Summary Cards ──
+      let summaryCardsHtml = '';
+      if (rptType === 'inventory-turnover-amount' && rows.length > 0) {
+        const cogsIdx = columns.findIndex(c => c === 'COGS');
+        const ratioIdx = columns.findIndex(c => c === 'Turnover Ratio');
+        const daysIdx = columns.findIndex(c => c === 'Days Since Last Sale');
+        const statusIdx = columns.findIndex(c => c === 'Status');
+
+        let totalCogs = 0, fastMovers = 0, slowMovers = 0, deadStock = 0, deadAlert30 = 0;
+        rows.forEach(row => {
+          const cogsKey = cogsIdx >= 0 ? Object.keys(row)[cogsIdx] : null;
+          const ratioKey = ratioIdx >= 0 ? Object.keys(row)[ratioIdx] : null;
+          const daysKey = daysIdx >= 0 ? Object.keys(row)[daysIdx] : null;
+          const statusKey = statusIdx >= 0 ? Object.keys(row)[statusIdx] : null;
+
+          if (cogsKey) totalCogs += parseFloat(row[cogsKey]) || 0;
+          const ratio = ratioKey ? parseFloat(row[ratioKey]) || 0 : 0;
+          const daysVal = daysKey ? parseInt(row[daysKey]) : null;
+          const status = statusKey ? String(row[statusKey]) : '';
+
+          if (status === 'Dead Stock') {
+            deadStock++;
+            if (daysVal === null || daysVal < 0 || daysVal >= 30) deadAlert30++;
+          } else if (ratio > 0 && ratio < 1.0) {
+            slowMovers++;
+          } else if (ratio >= 2.0) {
+            fastMovers++;
+          }
+        });
+
+        const fmtC = (v) => '₱' + v.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        summaryCardsHtml = `
+          <div class="summary-cards-row" style="display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+            <div class="summary-card">
+              <span class="summary-card-label">Total Items</span>
+              <span class="summary-card-value">${rows.length}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Total COGS (₱)</span>
+              <span class="summary-card-value positive">${fmtC(totalCogs)}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Fast Movers (≥2.0)</span>
+              <span class="summary-card-value positive">${fastMovers}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Slow Movers (<1.0)</span>
+              <span class="summary-card-value warning">${slowMovers}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Dead Stock (0 Sales)</span>
+              <span class="summary-card-value negative">${deadStock}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">⚠ Dead 30+ Days</span>
+              <span class="summary-card-value negative">${deadAlert30}</span>
+            </div>
+          </div>`;
+      }
+
+      // ── FIFO Cost Lot Tracking: Summary Cards ──
+      if (rptType === 'fifo-cost-lot-tracking' && rows.length > 0) {
+        const lotValueIdx = columns.findIndex(c => c === 'Lot Value');
+        const statusIdx = columns.findIndex(c => c === 'Status');
+        let grandTotalValue = 0, activeLots = 0, depletedLots = 0, partialLots = 0;
+        rows.forEach(row => {
+          const lvKey = lotValueIdx >= 0 ? Object.keys(row)[lotValueIdx] : null;
+          const stKey = statusIdx >= 0 ? Object.keys(row)[statusIdx] : null;
+          if (lvKey) grandTotalValue += parseFloat(row[lvKey]) || 0;
+          const st = stKey ? String(row[stKey]) : '';
+          if (st === 'Full') activeLots++;
+          else if (st === 'Partial') partialLots++;
+          else if (st === 'Depleted') depletedLots++;
+        });
+        const fmtC = (v) => '₱' + v.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        summaryCardsHtml = `
+          <div class="summary-cards-row" style="display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+            <div class="summary-card">
+              <span class="summary-card-label">Total Lots</span>
+              <span class="summary-card-value">${rows.length}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Full Lots</span>
+              <span class="summary-card-value positive">${activeLots}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Partial Lots</span>
+              <span class="summary-card-value warning">${partialLots}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Depleted Lots</span>
+              <span class="summary-card-value negative">${depletedLots}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card-label">Grand Total Lot Value</span>
+              <span class="summary-card-value positive">${fmtC(grandTotalValue)}</span>
+            </div>
+          </div>`;
+      }
+
+      // Determine hidden columns (e.g. Lot ID is data-only)
+      const hiddenCols = new Set();
+      if (rptType === 'fifo-cost-lot-tracking') {
+        const lotIdIdx = columns.findIndex(c => c === 'Lot ID');
+        if (lotIdIdx >= 0) hiddenCols.add(lotIdIdx);
+      }
+      if (rptType === 'sales-by-customer' || rptType === 'sales-by-customer-details') {
+        const cusIdIdx = columns.findIndex(c => c === 'Customer ID');
+        if (cusIdIdx >= 0) hiddenCols.add(cusIdIdx);
+      }
+      if (rptType === 'sales-by-item' || rptType === 'sales-by-item-details') {
+        const iIdIdx = columns.findIndex(c => c === 'Item ID');
+        if (iIdIdx >= 0) hiddenCols.add(iIdIdx);
+        const cIdIdx = columns.findIndex(c => c === 'Customer ID');
+        if (cIdIdx >= 0) hiddenCols.add(cIdIdx);
+      }
+      if (rptType === 'order-fulfillment-by-item') {
+        const iIdIdx = columns.findIndex(c => c === 'Item ID');
+        if (iIdIdx >= 0) hiddenCols.add(iIdIdx);
+      }
+      if (rptType === 'sales-return-history') {
+        // Hide the three deep-link ID columns — visible as links only, not raw data
+        ['SR ID', 'SO ID', 'Customer ID'].forEach(colName => {
+          const idx = columns.findIndex(c => c === colName);
+          if (idx >= 0) hiddenCols.add(idx);
+        });
+      }
+
+      const visibleColsCount = columns.length - hiddenCols.size;
+      let tableStyleOverrides = visibleColsCount <= 6 ? 'min-width: 100%;' : '';
+      if (rptType === 'sales-by-customer-details' || rptType === 'sales-by-item-details' || rptType === 'order-fulfillment-by-item-details') {
+        tableStyleOverrides = 'width: 100%; table-layout: fixed; min-width: 0;';
+      }
+
+      let html = summaryCardsHtml + `<div style="overflow-x:auto;">
+        <table class="report-table" id="reportTable" style="${tableStyleOverrides}">
+          <thead><tr>`;
+
+      columns.forEach((col, i) => {
+        if (hiddenCols.has(i)) return; // skip hidden columns
+        let widthStyle = '';
+        if (rptType === 'automation-system-logs' || rptType === 'activity-log') {
+           const lCol = col.toLowerCase();
+           if (lCol === 'timestamp' || lCol === 'date') widthStyle = 'width: 16%; min-width: 140px;';
+           else if (lCol === 'log type' || lCol === 'entity type') widthStyle = 'width: 12%; min-width: 100px;';
+           else if (lCol === 'module' || lCol === 'entity name') widthStyle = 'width: 14%; min-width: 120px;';
+           else if (lCol === 'reference' || lCol === 'action') widthStyle = 'width: 12%; min-width: 100px;';
+           else if (lCol === 'description') widthStyle = 'width: 36%; min-width: 300px;';
+           else if (lCol === 'user') widthStyle = 'width: 10%; min-width: 100px;';
+        }
+        let alignClass = centerCols.has(i) ? 'align-center' : (numericCols.has(i) ? 'align-center' : '');
+        // FIFO report: match header alignment to cell alignment
+        if (rptType === 'fifo-cost-lot-tracking') {
+          const fifoCol = col.toLowerCase();
+          if (['qty received', 'remaining qty', 'unit cost', 'lot value'].includes(fifoCol)) {
+            alignClass = 'align-right';
+          } else if (fifoCol === 'status') {
+            alignClass = 'align-center';
+          }
+        }
+        // Turnover Qty report: match header alignment
+        if (rptType === 'inventory-turnover-quantity') {
+          const tqCol = col.toLowerCase();
+          if (['opening qty', 'closing qty', 'avg stock', 'qty sold', 'turnover ratio', 'current stock', 'reorder point'].includes(tqCol)) {
+            alignClass = 'align-right';
+          } else if (tqCol === 'action' || tqCol === 'days since last sale') {
+            alignClass = 'align-center';
+          }
+        }
+        // Sales by Customer reports
+        if (rptType === 'sales-by-customer' || rptType === 'sales-by-customer-details') {
+          const sCol = col.toLowerCase();
+          if (['total amount', 'total', 'sales', 'sales with tax', 'balance due'].includes(sCol)) alignClass = 'align-right';
+          // STATUS: anchored far-right, badges right-aligned within cell
+          if (sCol === 'status' && rptType === 'sales-by-customer-details') alignClass = 'align-right';
+          if (sCol === 'status' && rptType === 'sales-by-customer') alignClass = 'align-center';
+        }
+        // Sales by Item reports
+        if (rptType === 'sales-by-item' || rptType === 'sales-by-item-details') {
+          const sCol = col.toLowerCase();
+          if (['amount', 'average price', 'quantity sold'].includes(sCol)) alignClass = 'align-right';
+        }
+        // Fulfillment Reports — column alignment
+        if (rptType === 'order-fulfillment-by-item' || rptType === 'order-fulfillment-by-item-details') {
+          const sCol = col.toLowerCase();
+          // RIGHT-align all quantity columns + status far-right anchor
+          if (['quantity ordered', 'ordered qty', 'quantity packed', 'packed qty', 'quantity shipped',
+               'shipped qty', 'quantity invoiced', 'to be shipped',
+               'ordered', 'packed', 'shipped'].includes(sCol)) alignClass = 'align-right';
+          if (sCol === 'status') alignClass = 'align-right';
+          if (['fulfillment %'].includes(sCol)) alignClass = 'align-center';
+          // Invoice # and Invoiced: CENTER — creates a safe-zone buffer from numeric columns
+          if (sCol === 'invoice #' || sCol === 'invoiced') alignClass = 'align-center';
+        }
+        // Sales Return History — column alignment
+        if (rptType === 'sales-return-history') {
+          const sCol = col.toLowerCase();
+          if (sCol === 'qty returned' || sCol === 'return amount') alignClass = 'align-right';
+          if (sCol === 'receive status' || sCol === 'refund status') alignClass = 'align-center';
+        }
+        // Salesperson Detail — column alignment
+        if (rptType === 'sales-by-salesperson-details') {
+          const sCol = col.toLowerCase();
+          if (sCol === 'amount') alignClass = 'align-right';
+          if (sCol === 'type' || sCol === 'status') alignClass = 'align-center';
+        }
+        // Profit By Item — column alignment
+        if (rptType === 'profit-by-item') {
+          const sCol = col.toLowerCase();
+          if (['revenue','cost','profit','qty sold'].includes(sCol)) alignClass = 'align-right';
+          if (['margin %','cost status'].includes(sCol)) alignClass = 'align-center';
+        }
+        // Sales-by-Customer Details: Z-Pattern column grid (total = 100%)
+        if (rptType === 'sales-by-customer-details') {
+          const scdColMap = {
+            'date':           'width: 12%;',  // Identity Group — Left
+            'type':           'width: 10%;',  // Identity Group — Left
+            'reference #':    'width: 14%;',  // Identity Group — Left
+            'sales':          'width: 16%;',  // Financial Group — Right
+            'sales with tax': 'width: 16%;',  // Financial Group — Right
+            'balance due':    'width: 16%;',  // Financial Group — Right
+            'status':         'width: 16%;',  // Far-Right Anchor
+          };
+          widthStyle = scdColMap[col.toLowerCase()] || '';
+        }
+        // Profit By Item: 7-column financial grid (total = 100%)
+        if (rptType === 'profit-by-item') {
+          const pbiColMap = {
+            'item name':   'width: 24%;',  // Name anchor — Left
+            'qty sold':    'width:  8%;',  // Quantity — Right
+            'revenue':     'width: 13%;',  // Financial — Right (₱)
+            'cost':        'width: 13%;',  // Financial — Right (₱)
+            'profit':      'width: 13%;',  // Financial — Right (₱)
+            'margin %':    'width: 11%;',  // Percentage — Center
+            'cost status': 'width: 18%;',  // Audit flag — Center
+          };
+          widthStyle = pbiColMap[col.toLowerCase()] || '';
+        }
+        // Salesperson Transaction Detail: 6-column audit grid (total = 100%)
+        if (rptType === 'sales-by-salesperson-details') {
+          const spColMap = {
+            'date':         'width: 12%;',   // Date — Left
+            'type':         'width: 13%;',   // Type badge — Center
+            'reference #':  'width: 15%;',   // Ref link — Left
+            'customer':     'width: 28%;',   // Customer name — Left (widest)
+            'amount':       'width: 17%;',   // Currency — Right
+            'status':       'width: 15%;',   // Status badge — Center
+          };
+          widthStyle = spColMap[col.toLowerCase()] || '';
+        }
+        // Sales-by-Item Details: weighted 4-column layout (total = 100%)
+        if (rptType === 'sales-by-item-details') {
+          const sidColMap = {
+            'customer name': 'width: 40%;',  // Name group — Left
+            'quantity sold': 'width: 20%;',  // Financial — Right
+            'amount':        'width: 20%;',  // Financial — Right
+            'average price': 'width: 20%;',  // Far-Right Anchor
+          };
+          widthStyle = sidColMap[col.toLowerCase()] || '';
+        }
+        // Order Fulfillment by Item Details: Geometric 8-column grid (total = 100%)
+        if (rptType === 'order-fulfillment-by-item-details') {
+          const ofdColMap = {
+            'date':          'width:  9%;',               // DATE — Left
+            'so number':     'width: 11%;',               // SO Number — Left
+            'customer name': 'width: 20%;',               // Customer Name — Left (anchor)
+            'ordered':       'width: 10%; padding-right: 16px;',   // Ordered QTY — Right
+            'ordered qty':   'width: 10%; padding-right: 16px;',   // (old server alias)
+            'packed':        'width: 10%; padding-right: 16px;',   // Packed QTY — Right
+            'packed qty':    'width: 10%; padding-right: 16px;',   // (old server alias)
+            'shipped':       'width: 10%; padding-right: 16px;',   // Shipped QTY — Right
+            'shipped qty':   'width: 10%; padding-right: 16px;',   // (old server alias)
+            'invoice #':     'width: 18%;',               // Invoice # — Center (safe zone)
+            'invoiced':      'width: 18%;',               // (old server alias)
+            'status':        'width: 12%;',               // Status — Right (far anchor)
+          };
+          widthStyle = ofdColMap[col.toLowerCase()] || '';
+        }
+        // Sales Return History: 9-column audit grid (total = 100%)
+        if (rptType === 'sales-return-history') {
+          const srhColMap = {
+            'date':           'width: 10%;',   // Date — Left
+            'rma #':          'width: 10%;',   // RMA # — Left
+            'so #':           'width:  9%;',   // SO # — Left
+            'customer':       'width: 17%;',   // Customer — Left
+            'qty returned':   'width:  8%;',   // Qty — Right
+            'return amount':  'width: 11%;',   // Amount — Right (₱)
+            'reason':         'width: 15%;',   // Reason — Left
+            'receive status': 'width: 10%;',   // Receive Status — Center
+            'refund status':  'width: 10%;',   // Refund Status — Center
+          };
+          widthStyle = srhColMap[col.toLowerCase()] || '';
+        }
+        html += `<th class="${alignClass}" style="${widthStyle}">${escapeHtml(col)}</th>`;
+      });
+
+      html += `</tr></thead><tbody>`;
+
+      rows.forEach((row, rowIdx) => {
+        // Dead stock row highlighting: ratio=0 AND days since last sale >= 30 or never sold
+        let rowClass = '';
+        if (rptType === 'inventory-turnover-amount') {
+          const ratioIdx = columns.findIndex(c => c === 'Turnover Ratio');
+          const daysIdx = columns.findIndex(c => c === 'Days Since Last Sale');
+          const statusIdx = columns.findIndex(c => c === 'Status');
+          const ratioKey = ratioIdx >= 0 ? Object.keys(row)[ratioIdx] : null;
+          const daysKey = daysIdx >= 0 ? Object.keys(row)[daysIdx] : null;
+          const statusKey = statusIdx >= 0 ? Object.keys(row)[statusIdx] : null;
+          const ratioVal = ratioKey ? parseFloat(row[ratioKey]) || 0 : 0;
+          const daysVal = daysKey ? parseInt(row[daysKey]) : null;
+          const statusVal = statusKey ? String(row[statusKey]) : '';
+          if (statusVal === 'Dead Stock' && (daysVal === null || daysVal < 0 || daysVal >= 30)) {
+            rowClass = 'style="background:#fef2f2;border-left:3px solid #dc2626;"';
+          }
+        }
+        // Inventory Turnover by Qty: highlight action rows
+        if (rptType === 'inventory-turnover-quantity') {
+          const actionIdx = columns.findIndex(c => c === 'Action');
+          const actionKey = actionIdx >= 0 ? Object.keys(row)[actionIdx] : null;
+          const actionVal = actionKey ? String(row[actionKey]) : '';
+          if (actionVal === 'Stop Stocking') {
+            rowClass = 'style="background:#fef2f2;border-left:3px solid #dc2626;"';
+          } else if (actionVal === 'Restock') {
+            rowClass = 'style="background:#eff6ff;border-left:3px solid #2563eb;"';
+          }
+        }
+        // FIFO report: Depleted rows get gray text, Full/Partial get bold black
+        if (rptType === 'fifo-cost-lot-tracking') {
+          const fifoStatusIdx = columns.findIndex(c => c === 'Status');
+          const fifoStatusKey = fifoStatusIdx >= 0 ? Object.keys(row)[fifoStatusIdx] : null;
+          const fifoStatus = fifoStatusKey ? String(row[fifoStatusKey]) : '';
+          if (fifoStatus === 'Depleted') {
+            rowClass = 'style="color:#9ca3af;"';
+          } else {
+            rowClass = 'style="font-weight:600;color:#1a1f3a;"';
+          }
+        }
+        // Salesperson detail: CANCELLED rows are dimmed with a red left-border
+        // so they stand out as audit-only rows that don't contribute to revenue.
+        if (rptType === 'sales-by-salesperson-details') {
+          const stIdx = columns.findIndex(c => c === 'Status');
+          const stKey = stIdx >= 0 ? Object.keys(row)[stIdx] : null;
+          if (stKey && String(row[stKey]).toUpperCase() === 'CANCELLED') {
+            rowClass = 'style="opacity:0.55;border-left:3px solid #ef4444;background:#fef2f2;"';
+          }
+        }
+        html += `<tr data-row="${rowIdx}" ${rowClass}>`;
+        columns.forEach((col, i) => {
+          if (hiddenCols.has(i)) return; // skip hidden columns
+          const key = Object.keys(row)[i] || col;
+          let val = row[key];
+          const isEditable = editableCols.has(col);
+
+          if (val === null || val === undefined) val = '-';
+          else if (typeof val === 'string' && val.trim() === '') val = '—';
+          else if (numericCols.has(i) && !isNaN(Number(val))) {
+            val = formatNumber(val);
+          }
+
+          // Color-coded badge for designated column
+          if (i === colorColIdx && colorMap) {
+            const rawVal = String(row[key] || '');
+            const badgeColor = colorMap[rawVal] || '#6b7280';
+            // Right-anchor badge for sales-by-customer-details STATUS column
+            const badgeTdClass = rptType === 'sales-by-customer-details' ? 'align-right' : '';
+            html += `<td class="${badgeTdClass}"><span class="log-badge" style="--badge-color:${badgeColor}">${escapeHtml(rawVal)}</span></td>`;
+          } else if (isEditable) {
+            // Editable cell — show value with dashed underline + edit icon
+            const rawRate = parseFloat(String(row[key]).replace('%', '')) || 0;
+            html += `<td class="${numericCols.has(i) ? 'align-center' : ''} editable-cell" data-col="${col}" data-row="${rowIdx}" data-raw="${rawRate}">
+              <span class="editable-display" onclick="startInlineEdit(this)">
+                <span class="editable-value">${escapeHtml(String(row[key]))}</span>
+                <svg class="edit-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </span>
+              <span class="editable-input-wrap" style="display:none;">
+                <input type="number" class="inline-rate-input" min="0" step="0.01" value="${rawRate}" />
+                ${col.includes('Rate') ? '<span class="inline-unit">%</span>' : ''}
+                <button class="inline-save" title="Save" onclick="saveInlineEdit(this, '${escapeHtml(row['Salesperson'] || row['Transaction ID'] || '')}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="inline-cancel" title="Cancel" onclick="cancelInlineEdit(this)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </span>
+            </td>`;
+          } else {
+            const tdAlignClass = centerCols.has(i) ? 'align-center' : (numericCols.has(i) ? 'align-center' : '');
+            const colLower = col.toLowerCase();
+
+            // Dynamic color-coding for Expiry Date and Days to Expiry columns
+            if (colLower === 'expiry date' || colLower === 'days to expiry') {
+              // Check the Shelf Life column in the same row to determine color
+              const shelfLifeIdx = columns.findIndex(c => c === 'Shelf Life');
+              const shelfLifeKey = shelfLifeIdx >= 0 ? Object.keys(row)[shelfLifeIdx] : null;
+              const shelfLife = shelfLifeKey ? row[shelfLifeKey] : '';
+              // Also check raw Days to Expiry value for numeric-based coloring
+              const dteIdx = columns.findIndex(c => c === 'Days to Expiry');
+              const dteKey = dteIdx >= 0 ? Object.keys(row)[dteIdx] : null;
+              const dteVal = dteKey ? parseInt(row[dteKey]) : null;
+              let expiryStyle = '';
+              if (shelfLife === 'Expired' || (dteVal !== null && dteVal < 0)) {
+                expiryStyle = 'color: #dc2626; font-weight: 600;';
+              } else if (shelfLife === 'Expiring Soon' || (dteVal !== null && dteVal >= 0 && dteVal <= 30)) {
+                expiryStyle = 'color: #d97706; font-weight: 600;';
+              }
+              html += `<td class="${tdAlignClass}" style="${expiryStyle}">${escapeHtml(String(val))}</td>`;
+            } else if (colLower === 'purchase rate' || colLower === 'batch value'
+                       || colLower === 'purchase cost' || colLower === 'cogs' || colLower === 'avg inventory value'
+                       || colLower === 'unit cost' || colLower === 'lot value' || colLower === 'total amount' || colLower === 'total'
+                       || colLower === 'sales' || colLower === 'sales with tax' || colLower === 'balance due') {
+              // Format with PHP currency prefix and right-align
+              const numVal = parseFloat(row[key]);
+              const displayVal = !isNaN(numVal) ? '₱' + numVal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) : escapeHtml(String(val));
+              html += `<td class="align-right">${displayVal}</td>`;
+            } else if (colLower === 'turnover ratio') {
+              // Heat map: Red < 1.0, Orange 1.0-2.0, Green > 2.0
+              const ratioVal = parseFloat(row[key]) || 0;
+              let ratioStyle = '';
+              if (ratioVal === 0) {
+                ratioStyle = 'color: #dc2626; font-weight: 700;';
+              } else if (ratioVal < 1.0) {
+                ratioStyle = 'color: #dc2626; font-weight: 700;';
+              } else if (ratioVal >= 1.0 && ratioVal < 2.0) {
+                ratioStyle = 'color: #d97706; font-weight: 600;';
+              } else if (ratioVal >= 2.0) {
+                ratioStyle = 'color: #059669; font-weight: 600;';
+              }
+              html += `<td class="align-right" style="${ratioStyle}">${escapeHtml(String(val))}</td>`;
+            } else if (colLower === 'days since last sale') {
+              // Color-coded days since last sale
+              const daysVal = parseInt(row[key]);
+              let daysHtml = '';
+              if (isNaN(daysVal) || daysVal < 0) {
+                daysHtml = '<span style="color:#dc2626;font-weight:700;">Never Sold</span>';
+              } else if (daysVal >= 30) {
+                daysHtml = `<span style="color:#dc2626;font-weight:700;">${daysVal} days</span>`;
+              } else if (daysVal >= 14) {
+                daysHtml = `<span style="color:#d97706;font-weight:600;">${daysVal} days</span>`;
+              } else {
+                daysHtml = `<span style="color:#059669;font-weight:500;">${daysVal} days</span>`;
+              }
+              html += `<td class="align-center">${daysHtml}</td>`;
+            } else if (colLower === 'status' && rptType === 'inventory-turnover-amount') {
+              // Turnover status badges
+              const statusVal = String(row[key] || '');
+              let badgeHtml = '';
+              if (statusVal === 'Dead Stock') {
+                badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:2px 8px;border-radius:4px;">Dead Stock</span>`;
+              } else if (statusVal === 'Slow') {
+                badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:2px 8px;border-radius:4px;">Slow</span>`;
+              } else if (statusVal === 'Fast Mover') {
+                badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 8px;border-radius:4px;">Fast Mover</span>`;
+              } else {
+                badgeHtml = `<span style="color:#718096;font-size:11px;">Normal</span>`;
+              }
+              html += `<td class="align-center">${badgeHtml}</td>`;
+            } else if (colLower === 'action' && rptType === 'inventory-turnover-quantity') {
+              // Dynamic Action buttons: 3-tier system
+              const actVal = String(row[key] || '');
+              let actBadge = '';
+              if (actVal === 'Restock') {
+                actBadge = `<span style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#2563eb,#059669);padding:4px 12px;border-radius:4px;letter-spacing:0.3px;box-shadow:0 1px 3px rgba(37,99,235,0.3);cursor:default;">🔄 RESTOCK</span>`;
+              } else if (actVal === 'Stop Stocking') {
+                actBadge = `<span style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6b7280,#dc2626);padding:4px 12px;border-radius:4px;letter-spacing:0.3px;box-shadow:0 1px 3px rgba(107,114,128,0.3);cursor:default;">⛔ STOP STOCKING</span>`;
+              } else {
+                actBadge = `<span style="display:inline-block;font-size:10px;font-weight:500;color:#9ca3af;padding:4px 12px;">— Healthy</span>`;
+              }
+              html += `<td class="align-center">${actBadge}</td>`;
+            } else if ((colLower === 'opening qty' || colLower === 'closing qty' || colLower === 'avg stock'
+                        || colLower === 'qty sold' || colLower === 'current stock' || colLower === 'reorder point')
+                        && rptType === 'inventory-turnover-quantity') {
+              // Right-align numeric qty columns
+              const numVal = parseFloat(row[key]);
+              const displayVal = !isNaN(numVal) ? numVal.toLocaleString('en-PH', {minimumFractionDigits:0, maximumFractionDigits:2}) : escapeHtml(String(val));
+              html += `<td class="align-right">${displayVal}</td>`;
+            } else if (colLower === 'status' && rptType === 'fifo-cost-lot-tracking') {
+              // FIFO Status badges: Full (green), Partial (amber), Depleted (gray)
+              const statusVal = String(row[key] || '');
+              let badgeHtml = '';
+              if (statusVal === 'Full') {
+                badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 10px;border-radius:4px;">Full</span>`;
+              } else if (statusVal === 'Partial') {
+                badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#d97706;background:#fffbeb;border:1px solid #fde68a;padding:2px 10px;border-radius:4px;">Partial</span>`;
+              } else {
+                badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#9ca3af;background:#f3f4f6;border:1px solid #e5e7eb;padding:2px 10px;border-radius:4px;">Depleted</span>`;
+              }
+              html += `<td class="align-center">${badgeHtml}</td>`;
+            } else if (colLower === 'salesperson' && rptType === 'salesman-commission') {
+              // Drill-down: click Salesperson name → sales-by-salesperson-details
+              // Carries the EXACT date window the user is currently viewing.
+              const currentUrl = new URL(window.location.href);
+              currentUrl.searchParams.set('type',            'sales-by-salesperson-details');
+              currentUrl.searchParams.set('salespersonName',  String(val) || 'Unassigned');
+              const runFrom   = document.getElementById('dateFrom').value;
+              const runTo     = document.getElementById('dateTo').value;
+              const runPreset = document.getElementById('dateRangeSelect').value;
+              if (runFrom)   currentUrl.searchParams.set('from',       runFrom);
+              if (runTo)     currentUrl.searchParams.set('to',         runTo);
+              if (runPreset) currentUrl.searchParams.set('datePreset', runPreset);
+              const drillDownUrl = currentUrl.pathname + currentUrl.search;
+              const spLabel = escapeHtml(String(val));
+              html += `<td>
+                <a href="${drillDownUrl}"
+                   title="View transactions for ${spLabel}"
+                   style="color:#2563eb;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
+                   onmouseover="this.style.textDecoration='underline'"
+                   onmouseout="this.style.textDecoration='none'">
+                  ${spLabel}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                       stroke-linecap="round" stroke-linejoin="round" style="opacity:.55;flex-shrink:0;">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </a>
+              </td>`;
+
+            } else if (colLower === 'amount' && rptType === 'sales-by-salesperson-details') {
+              const numVal = parseFloat(row[key]) || 0;
+              html += `<td class="align-right">₱${numVal.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+
+            } else if (colLower === 'type' && rptType === 'sales-by-salesperson-details') {
+              const typeVal = String(row[key] || '');
+              const typeColor = typeVal === 'Invoice'
+                ? 'color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;'
+                : 'color:#047857;background:#d1fae5;border:1px solid #6ee7b7;';
+              html += `<td class="align-center"><span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 10px;border-radius:4px;${typeColor}">${escapeHtml(typeVal)}</span></td>`;
+
+            } else if (colLower === 'customer' && rptType === 'sales-by-customer') {
+              // Drill down link for customer sales
+              const cusIdIdx = columns.findIndex(c => c === 'Customer ID');
+              const cusIdKey = cusIdIdx >= 0 ? Object.keys(row)[cusIdIdx] : null;
+              const cusId = cusIdKey ? row[cusIdKey] : 0;
+              const currentUrl = new URL(window.location.href);
+              currentUrl.searchParams.set('type', 'sales-by-customer-details');
+              currentUrl.searchParams.set('customerId', cusId);
+              currentUrl.searchParams.set('customerName', String(val) || 'Walk-in');
+              
+              // Force inherit the exact custom date filters currently rendered
+              const runFrom = document.getElementById('dateFrom').value;
+              const runTo = document.getElementById('dateTo').value;
+              const runPreset = document.getElementById('dateRangeSelect').value;
+              if (runFrom) currentUrl.searchParams.set('from', runFrom);
+              if (runTo) currentUrl.searchParams.set('to', runTo);
+              if (runPreset) currentUrl.searchParams.set('datePreset', runPreset);
+              
+              const drillDownUrl = currentUrl.pathname + currentUrl.search;
+              html += `<td class="${tdAlignClass}"><a href="${drillDownUrl}" style="color:#2563eb;font-weight:600;text-decoration:none;">${escapeHtml(String(val))}</a></td>`;
+            } else if (colLower === 'status' && (rptType === 'sales-by-customer-details' || rptType === 'order-fulfillment-by-item-details')) {
+              const statusVal = String(row[key] || '').trim();
+              const statusUp  = statusVal.toUpperCase();
+              let badgeHtml   = '';
+              // ── Fulfillment-specific 4-tier status badges ──
+              if (rptType === 'order-fulfillment-by-item-details') {
+                if (statusUp === 'OVER-SHIPPED') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:700;color:#fff;background:#dc2626;border:1px solid #b91c1c;padding:2px 8px;border-radius:4px;">⚠ Over-shipped</span>`;
+                } else if (statusUp === 'FULFILLED') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 8px;border-radius:4px;">✓ Fulfilled</span>`;
+                } else if (statusUp === 'PENDING SHIPMENT') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#d97706;background:#fffbeb;border:1px solid #fde68a;padding:2px 8px;border-radius:4px;">⏳ Pending Shipment</span>`;
+                } else if (statusUp === 'TO BE SHIPPED') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:2px 8px;border-radius:4px;">🚚 To be Shipped</span>`;
+                } else {
+                  badgeHtml = `<span style="font-size:10px;color:#6b7280;">${escapeHtml(statusVal)}</span>`;
+                }
+              } else {
+                // Payment-state badges for sales-by-customer-details
+                if (statusUp === 'COMPLETED' || statusUp === 'FULFILLED' || statusUp === 'PAID') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 8px;border-radius:4px;">${statusUp}</span>`;
+                } else if (statusUp === 'OVERDUE' || statusUp === 'PARTIAL') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:2px 8px;border-radius:4px;">${statusUp}</span>`;
+                } else if (statusUp === 'CONFIRMED') {
+                  badgeHtml = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:2px 8px;border-radius:4px;">${statusUp}</span>`;
+                } else {
+                  badgeHtml = `<span style="color:#6b7280;font-weight:500;">${statusUp}</span>`;
+                }
+              }
+              html += `<td class="align-right">${badgeHtml}</td>`;
+            } else if (colLower === 'receive status' && rptType === 'sales-return-history') {
+              // Physical movement status — did the goods come back?
+              const rv = String(row[key] || 'Pending');
+              const rvUp = rv.toUpperCase();
+              let rvBadge;
+              if (rvUp === 'RECEIVED') {
+                rvBadge = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#047857;background:#d1fae5;border:1px solid #6ee7b7;padding:2px 9px;border-radius:4px;">✓ Received</span>`;
+              } else {
+                rvBadge = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#b45309;background:#fef3c7;border:1px solid #fcd34d;padding:2px 9px;border-radius:4px;">⏳ Pending</span>`;
+              }
+              html += `<td class="align-center">${rvBadge}</td>`;
+
+            } else if (colLower === 'refund status' && rptType === 'sales-return-history') {
+              // Financial settlement status — was the money returned?
+              const rf = String(row[key] || 'Pending');
+              const rfLow = rf.toLowerCase();
+              let rfBadge;
+              if (rfLow === 'refunded') {
+                rfBadge = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#047857;background:#d1fae5;border:1px solid #6ee7b7;padding:2px 9px;border-radius:4px;">✓ Refunded</span>`;
+              } else if (rfLow === 'credit applied') {
+                rfBadge = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#7c3aed;background:#ede9fe;border:1px solid #c4b5fd;padding:2px 9px;border-radius:4px;">◈ Credit Applied</span>`;
+              } else {
+                rfBadge = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:2px 9px;border-radius:4px;">⏳ Pending</span>`;
+              }
+              html += `<td class="align-center">${rfBadge}</td>`;
+
+            } else if (colLower === 'return amount' && rptType === 'sales-return-history') {
+              const numVal = parseFloat(row[key]) || 0;
+              const display = '₱' + numVal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+              html += `<td class="align-right" style="font-weight:600;">${display}</td>`;
+
+            } else if (colLower === 'qty returned' && rptType === 'sales-return-history') {
+              const numVal = parseFloat(row[key]) || 0;
+              html += `<td class="align-right">${numVal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>`;
+
+            } else if (colLower === 'rma #' && rptType === 'sales-return-history') {
+              // Deep-link → sales-returns.html?returnId=<SR ID>
+              const srIdKey = Object.keys(row).find(k => k.toLowerCase() === 'sr id');
+              const srId = srIdKey ? row[srIdKey] : '';
+              if (srId) {
+                html += `<td><a href="/sales-returns.html?returnId=${encodeURIComponent(srId)}" style="color:#2563eb;font-weight:600;text-decoration:none;" title="View Return ${escapeHtml(String(val))}">${escapeHtml(String(val))}</a></td>`;
+              } else {
+                html += `<td>${escapeHtml(String(val))}</td>`;
+              }
+
+            } else if (colLower === 'so #' && rptType === 'sales-return-history') {
+              // Deep-link → sales-orders.html?orderId=<SO ID>
+              const soIdKey = Object.keys(row).find(k => k.toLowerCase() === 'so id');
+              const soId = soIdKey ? row[soIdKey] : '';
+              const rawVal = String(val);
+              if (soId && rawVal !== '—' && rawVal !== '') {
+                html += `<td><a href="/sales-orders.html?orderId=${encodeURIComponent(soId)}" style="color:#2563eb;font-weight:600;text-decoration:none;" title="View Order ${escapeHtml(rawVal)}">${escapeHtml(rawVal)}</a></td>`;
+              } else {
+                html += `<td style="color:#9ca3af;">${escapeHtml(rawVal)}</td>`;
+              }
+
+            } else if (colLower === 'customer' && rptType === 'sales-return-history') {
+              // Deep-link → customers.html?customerId=<Customer ID>
+              const custIdKey = Object.keys(row).find(k => k.toLowerCase() === 'customer id');
+              const custId = custIdKey ? row[custIdKey] : '';
+              const rawVal = String(val);
+              if (custId) {
+                html += `<td><a href="/customers.html?customerId=${encodeURIComponent(custId)}" style="color:#2563eb;font-weight:600;text-decoration:none;" title="View Customer ${escapeHtml(rawVal)}">${escapeHtml(rawVal)}</a></td>`;
+              } else {
+                // Walk-in or unlinked — no customer record exists
+                html += `<td style="color:#6b7280;font-style:italic;">${escapeHtml(rawVal)}</td>`;
+              }
+
+            } else if (colLower === 'cost status' && rptType === 'profit-by-item') {
+              // Audit flag: red warning for missing cost, subtle green for OK
+              const csVal = String(row[key] || '');
+              let csBadge;
+              if (csVal === 'Missing Cost') {
+                csBadge = `<span style="display:inline-block;font-size:10px;font-weight:700;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:2px 10px;border-radius:4px;">⚠ Missing Cost</span>`;
+              } else {
+                csBadge = `<span style="display:inline-block;font-size:10px;font-weight:600;color:#047857;background:#d1fae5;border:1px solid #6ee7b7;padding:2px 10px;border-radius:4px;">✓ OK</span>`;
+              }
+              html += `<td class="align-center">${csBadge}</td>`;
+
+            } else if (colLower === 'profit' && rptType === 'profit-by-item') {
+              const numVal = parseFloat(row[key]) || 0;
+              const color  = numVal < 0 ? 'color:#dc2626;' : numVal === 0 ? 'color:#9ca3af;' : 'color:#047857;';
+              html += `<td class="align-right" style="font-weight:700;${color}">₱${numVal.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+
+            } else if ((colLower === 'revenue' || colLower === 'cost') && rptType === 'profit-by-item') {
+              const numVal = parseFloat(row[key]) || 0;
+              const zeroStyle = numVal === 0 && colLower === 'cost' ? 'color:#f59e0b;font-weight:600;' : '';
+              html += `<td class="align-right" style="${zeroStyle}">₱${numVal.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+
+            } else if (colLower === 'margin %' && rptType === 'profit-by-item') {
+              // Center-aligned percentage — distinct from currency columns
+              const marginVal = String(row[key] || '0%');
+              const pctNum = parseFloat(marginVal) || 0;
+              const pctColor = pctNum < 0 ? 'color:#dc2626;' : pctNum < 10 ? 'color:#d97706;' : 'color:#374151;';
+              html += `<td class="align-center" style="font-weight:600;${pctColor}">${marginVal}</td>`;
+
+            } else if (colLower === 'qty sold' && rptType === 'profit-by-item') {
+              const qtyVal = parseFloat(row[key]) || 0;
+              html += `<td class="align-right">${qtyVal.toLocaleString('en-PH',{minimumFractionDigits:0,maximumFractionDigits:2})}</td>`;
+
+            } else if (colLower === 'item name' && (rptType === 'sales-by-item' || rptType === 'order-fulfillment-by-item')) {
+
+              // Drill down link for specific Item ID tracking
+              const iIdIdx = columns.findIndex(c => c === 'Item ID');
+              const iIdKey = iIdIdx >= 0 ? Object.keys(row)[iIdIdx] : null;
+              const iId = iIdKey ? row[iIdKey] : 0;
+              const currentUrl = new URL(window.location.href);
+              if (rptType === 'sales-by-item') {
+                  currentUrl.searchParams.set('type', 'sales-by-item-details');
+              } else {
+                  currentUrl.searchParams.set('type', 'order-fulfillment-by-item-details');
+              }
+              currentUrl.searchParams.set('itemId', iId);
+              currentUrl.searchParams.set('itemName', String(val) || 'Unknown Item');
+              
+              const runFrom = document.getElementById('dateFrom').value;
+              const runTo = document.getElementById('dateTo').value;
+              const runPreset = document.getElementById('dateRangeSelect').value;
+              if (runFrom) currentUrl.searchParams.set('from', runFrom);
+              if (runTo) currentUrl.searchParams.set('to', runTo);
+              if (runPreset) currentUrl.searchParams.set('datePreset', runPreset);
+              
+              const drillDownUrl = currentUrl.pathname + currentUrl.search;
+              html += `<td class="${tdAlignClass}"><a href="${drillDownUrl}" style="color:#2563eb;font-weight:600;text-decoration:none;">${escapeHtml(String(val))}</a></td>`;
+            } else if (['amount', 'average price', 'total amount'].includes(colLower) && (rptType === 'sales-by-item' || rptType === 'sales-by-item-details')) {
+              const numVal = parseFloat(row[key]);
+              const displayVal = !isNaN(numVal) ? '₱' + numVal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) : escapeHtml(String(val));
+              html += `<td class="align-right">${displayVal}</td>`;
+            } else if (colLower === 'quantity sold' && (rptType === 'sales-by-item' || rptType === 'sales-by-item-details')) {
+              const numVal = parseFloat(row[key]);
+              const displayVal = !isNaN(numVal) ? numVal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) : escapeHtml(String(val));
+              html += `<td class="align-right">${displayVal}</td>`;
+            } else if (['quantity ordered', 'ordered qty', 'quantity packed', 'packed qty',
+              'quantity shipped', 'shipped qty', 'quantity invoiced', 'to be shipped',
+              'ordered', 'packed', 'shipped'].includes(colLower)
+              && (rptType === 'order-fulfillment-by-item' || rptType === 'order-fulfillment-by-item-details')) {
+              const numVal = parseFloat(row[key]);
+              const displayVal = !isNaN(numVal) ? numVal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) : escapeHtml(String(val));
+              // Highlight pending stock in red
+              const colorCode = (colLower === 'to be shipped' && numVal > 0) ? 'color:#dc2626;font-weight:600;' : '';
+              // Zero qty → dim gray so 0.00 reads as "empty / no activity"
+              const zeroStyle = (['ordered','packed','shipped','ordered qty','packed qty','shipped qty'].includes(colLower) && numVal === 0) ? 'color:#9ca3af;' : '';
+              // Right-align + 16px padding-right (matches footer exactly for vertical decimal alignment)
+              const qtyPad = ['ordered','packed','shipped','ordered qty','packed qty','shipped qty',
+                              'quantity ordered','quantity packed','quantity shipped'].includes(colLower)
+                             ? 'padding-right: 16px;' : '';
+              html += `<td class="align-right" style="${colorCode}${zeroStyle}${qtyPad}">${displayVal}</td>`;
+
+            } else if ((colLower === 'invoice #' || colLower === 'invoiced') && rptType === 'order-fulfillment-by-item-details') {
+
+              const invStr = String(row[key] || '');
+              if (invStr === 'Unbilled') {
+                // Centered + semantic red — creates safe zone from shipped qty on left
+                html += `<td class="align-center" style="color:#dc2626;font-weight:600;letter-spacing:0.3px;">Unbilled</td>`;
+              } else {
+                html += `<td class="align-center" style="font-weight:500;">${escapeHtml(invStr)}</td>`;
+              }
+            } else if (colLower === 'fulfillment %' && rptType === 'order-fulfillment-by-item') {
+              const pctStr = String(row[key] || '0%').replace('%', '');
+              const pct = Math.min(100, Math.max(0, parseFloat(pctStr) || 0));
+              const color = pct >= 100 ? '#059669' : (pct >= 50 ? '#d97706' : '#dc2626');
+              const barHtml = `
+                <div style="display:flex;align-items:center;gap:8px;justify-content:center;width:100%;">
+                  <span style="font-size:11px;font-weight:600;min-width:32px;color:${color}">${pct}%</span>
+                  <div style="flex-grow:1;max-width:60px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
+                  </div>
+                </div>`;
+              html += `<td class="align-center">${barHtml}</td>`;
+            } else if ((colLower === 'qty received' || colLower === 'remaining qty') && rptType === 'fifo-cost-lot-tracking') {
+              // Right-align qty columns with exactly 2 decimal places
+              const numVal = parseFloat(row[key]);
+              const displayVal = !isNaN(numVal) ? numVal.toFixed(2) : escapeHtml(String(val));
+              html += `<td class="align-right">${displayVal}</td>`;
+            } else if (colLower === 'receive ref' && rptType === 'fifo-cost-lot-tracking') {
+              // Clickable drill-down link for FIFO lot consumption
+              const lotIdIdx = columns.findIndex(c => c === 'Lot ID');
+              const lotIdKey = lotIdIdx >= 0 ? Object.keys(row)[lotIdIdx] : null;
+              const lotId = lotIdKey ? row[lotIdKey] : '';
+              const refVal = escapeHtml(String(val));
+              html += `<td><a class="fifo-ref-link" href="javascript:void(0)" onclick="openFifoLotDrawer(${lotId})" title="View consumption history for lot ${refVal}">${refVal}</a></td>`;
+            } else {
+              html += `<td class="${tdAlignClass}">${escapeHtml(String(val))}</td>`;
+            }
+          }
+        });
+        html += '</tr>';
+      });
+
+      html += `</tbody>`;
+
+      // ── FIFO Report: Grand Total Footer ──
+      if (rptType === 'fifo-cost-lot-tracking' && rows.length > 0) {
+        const lotValueIdx = columns.findIndex(c => c === 'Lot Value');
+        let grandTotal = 0;
+        rows.forEach(row => {
+          const lvKey = lotValueIdx >= 0 ? Object.keys(row)[lotValueIdx] : null;
+          if (lvKey) grandTotal += parseFloat(row[lvKey]) || 0;
+        });
+        const fmtGT = '₱' + grandTotal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        html += `<tfoot>
+          <tr style="background:#f8f5f0;border-top:2px solid #9a2424;font-weight:700;color:#1a1f3a;">
+            <td colspan="${Math.min(lotValueIdx, columns.length - hiddenCols.size - 1)}" style="text-align:right;padding:12px 16px;font-size:13px;letter-spacing:0.5px;">GRAND TOTAL</td>
+            <td class="align-right" style="font-size:14px;color:#059669;padding:12px 16px;">${fmtGT}</td>
+            <td></td>
+          </tr>
+        </tfoot>`;
+      }
+
+      // ── Sales by Customer Summary & Details: Footer Totals ──
+      if ((rptType === 'sales-by-customer' || rptType === 'sales-by-customer-details') && rows.length > 0) {
+        let totalSales = 0;
+        let totalAmount = 0;
+        let totalOrders = 0;
+        let totalBalance = 0;
+        const salesIdx = columns.findIndex(c => c.toLowerCase() === 'sales');
+        const amtIdx = columns.findIndex(c => c.toLowerCase() === 'total amount' || c.toLowerCase() === 'sales with tax');
+        const balIdx = columns.findIndex(c => c.toLowerCase() === 'balance due');
+        const ordersIdx = columns.findIndex(c => c === 'Transaction Count');
+        rows.forEach(row => {
+          if (salesIdx >= 0) {
+            const k = Object.keys(row)[salesIdx];
+            if (k) totalSales += parseFloat(row[k]) || 0;
+          }
+          if (amtIdx >= 0) {
+            const k = Object.keys(row)[amtIdx];
+            if (k) totalAmount += parseFloat(row[k]) || 0;
+          }
+          if (balIdx >= 0) {
+            const k = Object.keys(row)[balIdx];
+            if (k) totalBalance += parseFloat(row[k]) || 0;
+          }
+          if (ordersIdx >= 0) {
+            const k = Object.keys(row)[ordersIdx];
+            if (k) totalOrders += parseInt(row[k]) || 0;
+          }
+        });
+        const fmtSales = '₱' + totalSales.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const fmtGT = '₱' + totalAmount.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const fmtBal = '₱' + totalBalance.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        
+        let footerCells = '';
+        columns.forEach((col, i) => {
+          if (hiddenCols.has(i)) return;
+          if (i === salesIdx) {
+            footerCells += `<td class="align-right" style="font-size:14px;color:#1a1f3a;padding:12px 16px;">${fmtSales}</td>`;
+          } else if (i === amtIdx) {
+            footerCells += `<td class="align-right" style="font-size:14px;color:#059669;padding:12px 16px;">${fmtGT}</td>`;
+          } else if (i === balIdx) {
+            footerCells += `<td class="align-right" style="font-size:14px;color:#dc2626;padding:12px 16px;">${fmtBal}</td>`;
+          } else if (i === ordersIdx) {
+            footerCells += `<td class="align-center" style="font-weight:700;font-size:14px;color:#1a1f3a;padding:12px 16px;">${totalOrders}</td>`;
+          } else if (i === (rptType === 'sales-by-customer' ? 0 : 2)) {
+            footerCells += `<td style="text-align:right;padding:12px 16px;font-size:13px;letter-spacing:0.5px;">TOTALS</td>`;
+          } else {
+            footerCells += `<td></td>`;
+          }
+        });
+        
+        html += `<tfoot>
+          <tr style="background:#f8f5f0;border-top:2px solid #9a2424;font-weight:700;color:#1a1f3a;">
+            ${footerCells}
+          </tr>
+        </tfoot>`;
+      }
+
+      // ── Sales by Item Details: Footer Totals ──
+      if (rptType === 'sales-by-item-details' && rows.length > 0) {
+        let totalQty = 0;
+        let totalAmount = 0;
+        const qtyIdx = columns.findIndex(c => c.toLowerCase() === 'quantity sold');
+        const amtIdx = columns.findIndex(c => c.toLowerCase() === 'amount');
+        rows.forEach(row => {
+          if (qtyIdx >= 0) { const k = Object.keys(row)[qtyIdx]; if (k) totalQty += parseFloat(row[k]) || 0; }
+          if (amtIdx >= 0) { const k = Object.keys(row)[amtIdx]; if (k) totalAmount += parseFloat(row[k]) || 0; }
+        });
+        const fmtAmt = '₱' + totalAmount.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const fmtQty = totalQty.toLocaleString('en-PH');
+        let footerCells = '';
+        columns.forEach((col, i) => {
+          if (hiddenCols.has(i)) return;
+          if (i === qtyIdx) {
+            footerCells += `<td class="align-right" style="font-size:14px;color:#1a1f3a;padding:12px 16px;">${fmtQty}</td>`;
+          } else if (i === amtIdx) {
+            footerCells += `<td class="align-right" style="font-size:14px;color:#059669;padding:12px 16px;">${fmtAmt}</td>`;
+          } else if (i === 0) {
+            footerCells += `<td style="text-align:right;padding:12px 16px;font-size:13px;letter-spacing:0.5px;">TOTALS</td>`;
+          } else {
+            footerCells += `<td></td>`;
+          }
+        });
+        html += `<tfoot>
+          <tr style="background:#f8f5f0;border-top:2px solid #9a2424;font-weight:700;color:#1a1f3a;">
+            ${footerCells}
+          </tr>
+        </tfoot>`;
+      }
+
+      // ── Order Fulfillment by Item Details: Footer Totals ──
+      if (rptType === 'order-fulfillment-by-item-details' && rows.length > 0) {
+
+        // Column name aliases: works with OLD server (Ordered Qty) AND NEW server (Ordered)
+        const ORD_NAMES = ['ordered', 'ordered qty'];
+        const PKD_NAMES = ['packed', 'packed qty'];
+        const SHP_NAMES = ['shipped', 'shipped qty'];
+        const CUS_NAMES = ['customer name', 'customer'];
+        const INV_NAMES = ['invoice #', 'invoiced'];
+
+        // ── Summation: key-name lookup (immune to index drift) ────────────
+        let totOrdered = 0, totPacked = 0, totShipped = 0;
+        rows.forEach(row => {
+          const ordKey = Object.keys(row).find(k => ORD_NAMES.includes(k.toLowerCase()));
+          const pkdKey = Object.keys(row).find(k => PKD_NAMES.includes(k.toLowerCase()));
+          const shpKey = Object.keys(row).find(k => SHP_NAMES.includes(k.toLowerCase()));
+          if (ordKey) totOrdered += parseFloat(row[ordKey]) || 0;
+          if (pkdKey) totPacked  += parseFloat(row[pkdKey]) || 0;
+          if (shpKey) totShipped += parseFloat(row[shpKey]) || 0;
+        });
+
+        // ── 3-Tier Status (mathematically strict — never false green) ─────
+        const balance = Math.max(0, totOrdered - totShipped);
+        let statusLabel;
+        if (totShipped >= totOrdered && totOrdered > 0) {
+          statusLabel = `<span style="color:#047857;font-size:12px;font-weight:700;">✓ All Shipped</span>`;
+        } else if (totShipped > 0 && totShipped < totOrdered) {
+          statusLabel = `<span style="color:#b45309;font-size:12px;font-weight:700;">⚠ Partially Shipped</span>
+            <br><span style="color:#b45309;font-size:11px;font-weight:500;">${balance.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})} remaining</span>`;
+        } else {
+          statusLabel = '';
+        }
+
+        // ── Cell builder: matches BOTH old and new server column names ─────
+        const fmt = n => n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        let footerCells = '';
+        columns.forEach((col, i) => {
+          if (hiddenCols.has(i)) return;
+          const cLow = col.toLowerCase();
+
+          if (CUS_NAMES.includes(cLow)) {
+            // TOTALS anchored LEFT under Customer Name / Customer
+            footerCells += `<td style="text-align:left;padding:12px 16px;font-size:13px;letter-spacing:1px;font-weight:800;color:#1a1f3a;">TOTALS</td>`;
+
+          } else if (cLow === 'date' || cLow === 'so number') {
+            footerCells += `<td></td>`;
+
+          } else if (ORD_NAMES.includes(cLow)) {
+            footerCells += `<td class="align-right" style="padding:12px 16px 12px 0;padding-right:16px;">${fmt(totOrdered)}</td>`;
+
+          } else if (PKD_NAMES.includes(cLow)) {
+            footerCells += `<td class="align-right" style="padding:12px 16px 12px 0;padding-right:16px;">${fmt(totPacked)}</td>`;
+
+          } else if (SHP_NAMES.includes(cLow)) {
+            const shpColor = totShipped === 0 ? 'color:#dc2626;' : '';
+            footerCells += `<td class="align-right" style="padding:12px 16px 12px 0;padding-right:16px;${shpColor}">${fmt(totShipped)}</td>`;
+
+          } else if (INV_NAMES.includes(cLow)) {
+            footerCells += `<td></td>`;
+
+          } else if (cLow === 'status') {
+            footerCells += `<td class="align-right" style="padding:12px 16px;line-height:1.6;">${statusLabel}</td>`;
+
+          } else {
+            footerCells += `<td></td>`;
+          }
+        });
+
+        html += `<tfoot>
+          <tr style="background:#f0f0f0;border-top:2px solid #9a2424;font-weight:700;color:#1a1f3a;">
+            ${footerCells}
+          </tr>
+        </tfoot>`;
+      }
+
+
+
+
+      // ── Sales Return History: Footer Totals ──────────────────────────────
+      if (rptType === 'sales-return-history' && rows.length > 0) {
+        let totReturn = 0, totQty = 0;
+        rows.forEach(row => {
+          const amtKey = Object.keys(row).find(k => k.toLowerCase() === 'return amount');
+          const qtyKey = Object.keys(row).find(k => k.toLowerCase() === 'qty returned');
+          if (amtKey) totReturn += parseFloat(row[amtKey]) || 0;
+          if (qtyKey) totQty   += parseFloat(row[qtyKey]) || 0;
+        });
+        const fmtPHP = n => '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const fmtQty = n => n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        let srhFooter = '';
+        columns.forEach((col, i) => {
+          if (hiddenCols.has(i)) return;
+          const cLow = col.toLowerCase();
+          if (cLow === 'customer') {
+            srhFooter += `<td style="text-align:left;padding:12px 16px;font-size:13px;letter-spacing:1px;font-weight:800;color:#1a1f3a;">TOTALS</td>`;
+          } else if (cLow === 'qty returned') {
+            srhFooter += `<td class="align-right" style="padding:12px 16px;">${fmtQty(totQty)}</td>`;
+          } else if (cLow === 'return amount') {
+            srhFooter += `<td class="align-right" style="padding:12px 16px;font-size:13px;color:#9a2424;">${fmtPHP(totReturn)}</td>`;
+          } else {
+            srhFooter += `<td></td>`;
+          }
+        });
+        html += `<tfoot>
+          <tr style="background:#f0f0f0;border-top:2px solid #9a2424;font-weight:700;color:#1a1f3a;">
+            ${srhFooter}
+          </tr>
+        </tfoot>`;
+      }
+
+      // ── Profit By Item: Footer Totals ─────────────────────────────────────
+      if (rptType === 'profit-by-item' && rows.length > 0) {
+        let totRev = 0, totCost = 0, totQty = 0;
+        rows.forEach(row => {
+          const revKey  = Object.keys(row).find(k => k.toLowerCase() === 'revenue');
+          const cstKey  = Object.keys(row).find(k => k.toLowerCase() === 'cost');
+          const qtyKey  = Object.keys(row).find(k => k.toLowerCase() === 'qty sold');
+          if (revKey) totRev  += parseFloat(row[revKey])  || 0;
+          if (cstKey) totCost += parseFloat(row[cstKey])  || 0;
+          if (qtyKey) totQty  += parseFloat(row[qtyKey])  || 0;
+        });
+        const totProfit = totRev - totCost;
+        const totMargin = totRev > 0 ? ((totProfit / totRev) * 100).toFixed(1) + '%' : '0%';
+        const fmtP = n => '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const profitColor = totProfit < 0 ? '#dc2626' : '#047857';
+
+        let pbiFooter = '';
+        columns.forEach((col, i) => {
+          if (hiddenCols.has(i)) return;
+          const cLow = col.toLowerCase();
+          if (cLow === 'item name') {
+            pbiFooter += `<td style="text-align:left;padding:12px 16px;font-size:13px;letter-spacing:1px;font-weight:800;color:#1a1f3a;">TOTALS</td>`;
+          } else if (cLow === 'qty sold') {
+            pbiFooter += `<td class="align-right" style="padding:12px 16px;">${totQty.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
+          } else if (cLow === 'revenue') {
+            pbiFooter += `<td class="align-right" style="padding:12px 16px;">${fmtP(totRev)}</td>`;
+          } else if (cLow === 'cost') {
+            pbiFooter += `<td class="align-right" style="padding:12px 16px;">${fmtP(totCost)}</td>`;
+          } else if (cLow === 'profit') {
+            pbiFooter += `<td class="align-right" style="padding:12px 16px;font-size:13px;color:${profitColor};">${fmtP(totProfit)}</td>`;
+          } else if (cLow === 'margin %') {
+            pbiFooter += `<td class="align-center" style="padding:12px 16px;font-size:12px;">${totMargin}</td>`;
+          } else {
+            pbiFooter += `<td></td>`;
+          }
+        });
+
+        html += `<tfoot>
+          <tr style="background:#f0f0f0;border-top:2px solid #9a2424;font-weight:700;color:#1a1f3a;">
+            ${pbiFooter}
+          </tr>
+        </tfoot>`;
+      }
+
+      // ── Salesperson Transaction Detail: Two-Tier Footer ─────────────────
+      // PAGE TOTAL (valid)  = current page, CANCELLED excluded → matches summary cards
+      // ALL ROWS (incl.)    = current page raw sum → shows user the gross figure
+      // Grand Total         = authoritative figure from the Summary Cards above the table
+      if (rptType === 'sales-by-salesperson-details' && rows.length > 0) {
+        const amtColIdx = columns.findIndex(c => c.toLowerCase() === 'amount');
+        const stColIdx  = columns.findIndex(c => c.toLowerCase() === 'status');
+        const fmtP = n => '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+        let pageValidAmt = 0;
+        let pageAllAmt   = 0;
+        let pageCancelledCount = 0;
+
+        rows.forEach(row => {
+          const amtKey = amtColIdx >= 0 ? Object.keys(row)[amtColIdx] : null;
+          const stKey  = stColIdx  >= 0 ? Object.keys(row)[stColIdx]  : null;
+          const amt    = amtKey ? parseFloat(row[amtKey]) || 0 : 0;
+          const isCancelled = stKey && String(row[stKey]).toUpperCase() === 'CANCELLED';
+          pageAllAmt += amt;
+          if (!isCancelled) pageValidAmt += amt;
+          else pageCancelledCount++;
+        });
+
+        // Build aligned footer cells for both rows
+        const buildFooterRow = (label, amtValue, labelColor, amtColor) => {
+          let cells = '';
+          columns.forEach((col, i) => {
+            if (hiddenCols.has(i)) return;
+            const cLow = col.toLowerCase();
+            if (i === 0) {
+              cells += `<td style="text-align:left;padding:8px 16px;font-size:12px;letter-spacing:0.5px;font-weight:700;color:${labelColor};">${label}</td>`;
+            } else if (cLow === 'amount') {
+              cells += `<td class="align-right" style="padding:8px 16px;font-size:13px;font-weight:700;color:${amtColor};">${fmtP(amtValue)}</td>`;
+            } else {
+              cells += `<td></td>`;
+            }
+          });
+          return cells;
+        };
+
+        const cancelledNote = pageCancelledCount > 0
+          ? ` <span style="font-size:10px;font-weight:400;color:#ef4444;">(${pageCancelledCount} cancelled row${pageCancelledCount > 1 ? 's' : ''} excluded)</span>`
+          : '';
+
+        html += `<tfoot>
+          <!-- Row 1: Valid Page Total (CANCELLED excluded) -->
+          <tr style="background:#f0fdf4;border-top:2px solid #059669;">
+            ${buildFooterRow(
+              `PAGE TOTAL (valid)${cancelledNote}`,
+              pageValidAmt, '#047857', '#047857'
+            )}
+          </tr>
+          <!-- Row 2: All rows on this page including CANCELLED -->
+          ${pageCancelledCount > 0 ? `<tr style="background:#fef2f2;border-top:1px dashed #fca5a5;">
+            ${buildFooterRow('ALL ROWS (incl. cancelled)', pageAllAmt, '#6b7280', '#6b7280')}
+          </tr>` : ''}
+          <!-- Source note for Grand Total -->
+          <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+            <td colspan="${columns.length - hiddenCols.size}"
+                style="text-align:right;padding:6px 16px;font-size:11px;color:#9ca3af;font-style:italic;">
+              ↑ Grand Total across all pages is shown in the Summary Cards above
+            </td>
+          </tr>
+        </tfoot>`;
+      }
+
+      html += `</table></div>`;
+
+
+      
+      html += `<div class="pagination-wrapper">
+        <div class="pagination-controls" id="paginationControls"></div>
+      </div>`;
+
+      container.innerHTML = html;
+      renderPaginationControls();
+    }
+
+    // ─── Inline Edit Helpers ───
+    function startInlineEdit(displayEl) {
+      const cell = displayEl.closest('.editable-cell');
+      cell.querySelector('.editable-display').style.display = 'none';
+      const inputWrap = cell.querySelector('.editable-input-wrap');
+      inputWrap.style.display = 'inline-flex';
+      const input = inputWrap.querySelector('input');
+      input.focus();
+      input.select();
+    }
+
+    function cancelInlineEdit(btnEl) {
+      const cell = btnEl.closest('.editable-cell');
+      cell.querySelector('.editable-input-wrap').style.display = 'none';
+      cell.querySelector('.editable-display').style.display = 'inline-flex';
+      // Reset input value
+      const rawRate = parseFloat(cell.dataset.raw) || 0;
+      cell.querySelector('.inline-rate-input').value = rawRate;
+    }
+
+    async function saveInlineEdit(btnEl, rowIdentifier) {
+      const cell = btnEl.closest('.editable-cell');
+      const input = cell.querySelector('.inline-rate-input');
+      const newRate = parseFloat(input.value);
+      if (isNaN(newRate) || newRate < 0) {
+        input.style.borderColor = '#dc2626';
+        return;
+      }
+
+      btnEl.disabled = true;
+      btnEl.style.opacity = '0.5';
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const rptType = urlParams.get('type');
+        
+        if (rptType === 'pending-inventory-valuations') {
+          const resp = await fetch(`/api/inventory/transactions/${rowIdentifier}/finalize`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ final_asset_value: newRate })
+          });
+          const result = await resp.json();
+          if (!resp.ok) throw new Error(result.error || 'Failed to finalize valuation');
+          
+          const tr = cell.closest('tr');
+          if (tr) tr.remove();
+          recalcFooterTotals();
+          return;
+        }
+
+        const resp = await fetch('/api/salespersons/update-rate', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ salesperson_name: rowIdentifier, new_rate: newRate })
+        });
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || 'Failed to update');
+
+        // Update the display value
+        cell.dataset.raw = newRate;
+        cell.querySelector('.editable-value').textContent = newRate + '%';
+        cell.querySelector('.editable-input-wrap').style.display = 'none';
+        cell.querySelector('.editable-display').style.display = 'inline-flex';
+
+        // Recalculate commission amount for this row
+        const row = cell.closest('tr');
+        const totalSalesCell = row.querySelector('td:nth-child(2)');
+        const commAmountCell = row.querySelector('td:nth-child(4)');
+        if (totalSalesCell && commAmountCell) {
+          const totalSales = parseFloat(totalSalesCell.textContent.replace(/,/g, '')) || 0;
+          const newCommission = Math.round(totalSales * newRate / 100 * 100) / 100;
+          commAmountCell.textContent = formatNumber(newCommission);
+        }
+
+        // Recalculate Grand Total footer for Commission Amount
+        recalcFooterTotals();
+
+        // Flash success
+        cell.style.transition = 'background 0.3s';
+        cell.style.background = '#dcfce7';
+        setTimeout(() => { cell.style.background = ''; }, 800);
+
+      } catch (err) {
+        console.error('Inline edit error:', err);
+        input.style.borderColor = '#dc2626';
+        alert('Failed to update rate: ' + err.message);
+      } finally {
+        btnEl.disabled = false;
+        btnEl.style.opacity = '';
+      }
+    }
+
+    function recalcFooterTotals() {
+      const table = document.getElementById('reportTable');
+      if (!table) return;
+      const footerCells = table.querySelectorAll('tfoot td[data-footer-col]');
+      footerCells.forEach(td => {
+        const colName = td.dataset.footerCol;
+        if (colName.includes('%') || colName.includes('Rate')) return; // skip rate columns
+        // Find the column index
+        const headers = Array.from(table.querySelectorAll('thead th'));
+        const colIdx = headers.findIndex(h => h.textContent.trim() === colName);
+        if (colIdx < 0) return;
+        // Sum all tbody values for this column
+        let sum = 0;
+        table.querySelectorAll(`tbody tr`).forEach(tr => {
+          const cell = tr.querySelectorAll('td')[colIdx];
+          if (cell) {
+            const v = parseFloat(cell.textContent.replace(/,/g, ''));
+            if (!isNaN(v)) sum += v;
+          }
+        });
+        td.textContent = formatNumber(sum);
+      });
+    }
+
+    function renderPaginationControls() {
+      const totalPages = Math.ceil(totalRecords / rowsPerPage);
+      const container = document.getElementById('paginationControls');
+      if (!container) return;
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      
+      // Prev Button with "< Prev" label
+      html += `<button class="pagination-btn nav-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+        ‹ Prev
+      </button>`;
+
+      // Page Numbers
+      const range = 1; 
+      let lastAdded = 0;
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+          if (lastAdded > 0 && i - lastAdded > 1) {
+            html += `<span class="pagination-ellipsis">...</span>`;
+          }
+          html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+          lastAdded = i;
+        }
+      }
+
+      // Next Button with "Next >" label
+      html += `<button class="pagination-btn nav-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+        Next ›
+      </button>`;
+
+      container.innerHTML = html;
+    }
+
+    function changePage(page) {
+      if (page < 1 || page > Math.ceil(totalRecords / rowsPerPage)) return;
+      currentPage = page;
+      runReport();
+    }
+
+    function onRowsPerPageChange(val) {
+      rowsPerPage = parseInt(val);
+      currentPage = 1;
+      runReport();
+    }
+
+    function renderEmpty(message, subMessage = 'Try adjusting your date range or check back later.') {
+      document.getElementById('reportContent').innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <h3>${escapeHtml(message)}</h3>
+          <p>${escapeHtml(subMessage)}</p>
+        </div>`;
+    }
+
+    // ─── Dynamic Extra Filters ───
+    function renderExtraFilters(filters) {
+      if (_extraFiltersRendered) return; // only build DOM once
+      const container = document.getElementById('extraFiltersContainer');
+      container.innerHTML = '';
+
+      filters.forEach(f => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'filter-dropdown-wrapper';
+
+        const label = document.createElement('span');
+        label.className = 'filter-dropdown-label';
+        label.textContent = f.label + (f.label.endsWith(':') ? '' : ' :');
+
+        if (f.type === 'text') {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'filter-dropdown-select';
+          input.style.width = '200px';
+          input.id = 'filter_' + f.key;
+          input.dataset.filterKey = f.key;
+          if (f.placeholder) input.placeholder = f.placeholder;
+          
+          input.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#reportTable tbody tr');
+            rows.forEach(row => {
+              const text = row.textContent.toLowerCase();
+              row.style.display = text.includes(term) ? '' : 'none';
+            });
+          });
+
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') runReport();
+          });
+          wrapper.appendChild(label);
+          wrapper.appendChild(input);
+        } else {
+          const select = document.createElement('select');
+          select.className = 'filter-dropdown-select';
+          select.id = 'filter_' + f.key;
+          select.dataset.filterKey = f.key;
+
+          if (f.options) {
+            f.options.forEach(opt => {
+              const optEl = document.createElement('option');
+              optEl.value = opt;
+              optEl.textContent = opt;
+              select.appendChild(optEl);
+            });
+          }
+
+          select.addEventListener('change', () => runReport());
+          wrapper.appendChild(label);
+          wrapper.appendChild(select);
+        }
+
+        container.appendChild(wrapper);
+      });
+
+      _extraFiltersRendered = true;
+    }
+
+    // ─── Helpers ───
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const day = d.getDate().toString().padStart(2, '0');
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = monthNames[d.getMonth()];
+      const year = d.getFullYear();
+      return `${month} ${day}, ${year}`;
+    }
+
+    function formatNumber(val) {
+      const n = Number(val);
+      if (isNaN(n)) return val;
+      if (Number.isInteger(n) && Math.abs(n) < 1000) return String(n);
+      return n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ─── Export Functions ───
+    function toggleExport() {
+      const dd = document.getElementById('exportDropdown');
+      dd.classList.toggle('show');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.export-wrapper')) {
+        document.getElementById('exportDropdown').classList.remove('show');
+      }
+    });
+
+    function exportCSV() {
+      if (!currentData.rows || !currentData.rows.length) return;
+      const cols = currentData.columns;
+      const keys = Object.keys(currentData.rows[0]);
+      let csv = cols.join(',') + '\n';
+      currentData.rows.forEach(row => {
+        csv += keys.map(k => `"${String(row[k] ?? '').replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentData.title || 'report'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('exportDropdown').classList.remove('show');
+    }
+
+    function exportPDF() {
+      if (!currentData.rows || !currentData.rows.length) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+      doc.setFontSize(16);
+      doc.text(currentData.title || 'Report', 14, 20);
+      doc.setFontSize(10);
+      doc.text(document.getElementById('reportDateRange').textContent, 14, 28);
+
+      const keys = Object.keys(currentData.rows[0]);
+      const body = currentData.rows.map(r => keys.map(k => String(r[k] ?? '-')));
+
+      doc.autoTable({
+        head: [currentData.columns],
+        body,
+        startY: 34,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [139, 26, 26] }
+      });
+      doc.save(`${currentData.title || 'report'}.pdf`);
+      document.getElementById('exportDropdown').classList.remove('show');
+    }
+
+    function printReport() {
+      window.print();
+      document.getElementById('exportDropdown').classList.remove('show');
+    }
+
+    // ─── FIFO Lot Consumption Drawer ───
+    async function openFifoLotDrawer(lotId) {
+      if (!lotId) return;
+      // Remove existing drawer if any
+      let overlay = document.getElementById('fifoDrawerOverlay');
+      let drawer = document.getElementById('fifoDrawer');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'fifoDrawerOverlay';
+        overlay.className = 'fifo-drawer-overlay';
+        overlay.onclick = closeFifoDrawer;
+        document.body.appendChild(overlay);
+      }
+      if (!drawer) {
+        drawer = document.createElement('div');
+        drawer.id = 'fifoDrawer';
+        drawer.className = 'fifo-drawer';
+        document.body.appendChild(drawer);
+      }
+
+      // Show loading state
+      drawer.innerHTML = `
+        <div class="fifo-drawer-header">
+          <h3>Lot Consumption History</h3>
+          <p class="subtitle">Loading...</p>
+          <button class="fifo-drawer-close" onclick="closeFifoDrawer()">&times;</button>
+        </div>
+        <div class="fifo-drawer-body" style="display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;color:#a0aec0;">Loading consumption data...</div>
+        </div>`;
+
+      // Open drawer
+      requestAnimationFrame(() => {
+        overlay.classList.add('open');
+        drawer.classList.add('open');
+      });
+
+      try {
+        const resp = await fetch(`/api/reports/fifo-lot-consumption/${lotId}`);
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Failed to load lot data');
+
+        const lot = data.lot;
+        const fmtP = (v) => '₱' + parseFloat(v).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+        let consumptionHtml = '';
+        if (data.consumption.length === 0) {
+          consumptionHtml = `
+            <div class="no-consumption">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <p style="font-size:14px;font-weight:600;margin:0 0 4px;">No Consumption Records</p>
+              <p style="font-size:12px;margin:0;">This lot has not been consumed by any sales transactions yet.</p>
+            </div>`;
+        } else {
+          consumptionHtml = `
+            <table>
+              <thead><tr>
+                <th>Reference</th>
+                <th style="text-align:right;">Qty Consumed</th>
+                <th style="text-align:right;">Unit Cost</th>
+                <th style="text-align:right;">COGS Amount</th>
+                <th>Date</th>
+              </tr></thead>
+              <tbody>`;
+          data.consumption.forEach(c => {
+            consumptionHtml += `<tr>
+              <td style="font-weight:600;color:#1a1f3a;">${escapeHtml(c['Reference'] || '-')}</td>
+              <td style="text-align:right;">${parseFloat(c['Qty Consumed']).toFixed(2)}</td>
+              <td style="text-align:right;">${fmtP(c['Unit Cost'])}</td>
+              <td style="text-align:right;font-weight:600;color:#dc2626;">${fmtP(c['COGS Amount'])}</td>
+              <td style="font-size:11px;color:#64748b;">${escapeHtml(c['Date'] || '-')}</td>
+            </tr>`;
+          });
+          consumptionHtml += `</tbody></table>
+            <div class="drawer-totals">
+              <div class="total-box">
+                <div class="label">Total Consumed</div>
+                <div class="value">${parseFloat(data.totalConsumed).toFixed(2)} units</div>
+              </div>
+              <div class="total-box">
+                <div class="label">Total COGS</div>
+                <div class="value">${fmtP(data.totalCOGS)}</div>
+              </div>
+            </div>`;
+        }
+
+        // Determine lot status
+        const remQty = parseFloat(lot.remaining_qty) || 0;
+        const origQty = parseFloat(lot.original_qty) || 0;
+        let statusBadge = '';
+        if (remQty <= 0) statusBadge = '<span style="display:inline-block;font-size:10px;font-weight:700;color:#9ca3af;background:#f3f4f6;border:1px solid #e5e7eb;padding:2px 10px;border-radius:4px;">Depleted</span>';
+        else if (remQty < origQty) statusBadge = '<span style="display:inline-block;font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;padding:2px 10px;border-radius:4px;">Partial</span>';
+        else statusBadge = '<span style="display:inline-block;font-size:10px;font-weight:700;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 10px;border-radius:4px;">Full</span>';
+
+        drawer.innerHTML = `
+          <div class="fifo-drawer-header">
+            <h3>Lot Consumption History</h3>
+            <p class="subtitle">${escapeHtml(lot.item_name || '')} — ${escapeHtml(lot.receive_reference || '')} ${statusBadge}</p>
+            <button class="fifo-drawer-close" onclick="closeFifoDrawer()">&times;</button>
+          </div>
+          <div class="fifo-drawer-body">
+            <div class="fifo-drawer-lot-info">
+              <div class="info-card">
+                <div class="label">Receive Date</div>
+                <div class="value">${escapeHtml(lot.receive_date || '-')}</div>
+              </div>
+              <div class="info-card">
+                <div class="label">Unit Cost</div>
+                <div class="value">${fmtP(lot.unit_cost)}</div>
+              </div>
+              <div class="info-card">
+                <div class="label">Original Qty</div>
+                <div class="value">${parseFloat(lot.original_qty).toFixed(2)}</div>
+              </div>
+              <div class="info-card">
+                <div class="label">Remaining Qty</div>
+                <div class="value">${parseFloat(lot.remaining_qty).toFixed(2)}</div>
+              </div>
+              <div class="info-card">
+                <div class="label">Current Lot Value</div>
+                <div class="value" style="color:#059669;">${fmtP(lot.lot_value)}</div>
+              </div>
+              <div class="info-card">
+                <div class="label">Consumption Rate</div>
+                <div class="value">${origQty > 0 ? ((1 - remQty/origQty) * 100).toFixed(1) + '%' : '0%'}</div>
+              </div>
+            </div>
+            <div class="fifo-drawer-section-title">Transaction History</div>
+            ${consumptionHtml}
+          </div>`;
+
+      } catch (err) {
+        drawer.innerHTML = `
+          <div class="fifo-drawer-header">
+            <h3>Lot Consumption History</h3>
+            <p class="subtitle">Error loading data</p>
+            <button class="fifo-drawer-close" onclick="closeFifoDrawer()">&times;</button>
+          </div>
+          <div class="fifo-drawer-body">
+            <div class="no-consumption">
+              <p style="color:#dc2626;font-weight:600;">Error: ${escapeHtml(err.message)}</p>
+            </div>
+          </div>`;
+      }
+    }
+
+    function closeFifoDrawer() {
+      const overlay = document.getElementById('fifoDrawerOverlay');
+      const drawer = document.getElementById('fifoDrawer');
+      if (overlay) overlay.classList.remove('open');
+      if (drawer) drawer.classList.remove('open');
+    }
+  </script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>

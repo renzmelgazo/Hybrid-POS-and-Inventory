@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voided Transactions - Reports</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sticky-headers.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/report-export.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f5f6fa; font-size: 13px; margin: 0; padding: 0; }
+        .main-layout { display: flex; min-height: 100vh; }
+        .content { flex: 1; margin-left: 260px; background: #fff; }
+        .report-top-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid #e0e0e0; }
+        .report-body { padding: 30px 20px; }
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table thead th { text-align: left; padding: 10px; border-bottom: 2px solid #ddd; background: #fafafa; }
+        .report-table tbody td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; }
+        .status-void { color: #dc2626; background: #fee2e2; padding: 4px 10px; border-radius: 4px; font-weight: 600; }
+    </style>
+</head>
+
+<body>
+    <div id="sidebarContainer"></div>
+    <div class="main-layout">
+        <div class="content">
+            <div class="report-top-bar">
+                <div class="report-top-left">
+                    <button class="hamburger-btn" onclick="window.location.href='/reports.html'">☰</button>
+                    <div>
+                        <span style="font-size: 11px; color: #999;">Operations & Audit</span><br>
+                        <span style="font-size: 15px; font-weight: 600;">Voided Transactions Audit Report</span>
+                    </div>
+                </div>
+                <button onclick="window.location.href='/reports.html'" style="border:none; cursor:pointer; color:#e53935; font-weight:bold; background:none;">✕</button>
+            </div>
+            <div class="report-body">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>TRANSACTION#</th>
+                            <th>TYPE</th>
+                            <th>VOIDED BY</th>
+                            <th>VOIDED DATE</th>
+                            <th>REASON</th>
+                            <th>AMOUNT</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>INV-0099</td>
+                            <td>Invoice</td>
+                            <td>John Doe</td>
+                            <td>2026-03-28</td>
+                            <td>Wrong Price Applied</td>
+                            <td>PHP 15,000.00</td>
+                            <td><span class="status-void">Voided</span></td>
+                        </tr>
+                        <tr>
+                            <td>BILL-552</td>
+                            <td>Purchase Bill</td>
+                            <td>System</td>
+                            <td>2026-03-27</td>
+                            <td>Duplicate Entry</td>
+                            <td>PHP 52,000.00</td>
+                            <td><span class="status-void">Cancelled</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="/js/layout.js"></script>
+    <script src="/js/sticky-headers.js"></script>
+</body>
+
+</html>
