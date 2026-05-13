@@ -1,0 +1,40 @@
+/* ============================================
+   GLOBAL SEARCH BAR STYLES
+   ============================================ */
+.global-search-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 16px;
+}
+
+.global-search-input {
+    width: 240px;
+    padding: 7px 14px 7px 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.global-search-input::placeholder {
+    color: #9ca3af;
+}
+
+.global-search-input:focus {
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    width: 300px;
+}
+
+.global-search-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 13px;
+    color: #9ca3af;
+    pointer-events: none;
+}
