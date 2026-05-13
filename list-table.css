@@ -1,0 +1,1195 @@
+/* ================================================================
+   list-table.css — GiHon ERP Shared List-View Design Tokens
+   ================================================================
+   MASTER REFERENCE: /public/customers.html
+   Single source of style for all list-view tables.
+
+   Load order: injected just before </head> on each page so
+   these rules WIN over the page-local <style> block at the
+   same specificity level (last declaration wins).
+
+   Editing guide
+   ─────────────
+   • To change a colour, edit the CSS custom property in :root.
+   • All tokens are documented with the source rule from customers.html.
+   ================================================================ */
+
+
+/* ── 0. DESIGN TOKENS (CSS CUSTOM PROPERTIES) ──────────────────
+   Extracted verbatim from customers.html — the master reference.
+   ─────────────────────────────────────────────────────────────── */
+:root {
+    /* Brand */
+    --gi-maroon:          #8B1A1A;   /* .customer-name-link, .btn-new, active sort pill  */
+    --gi-maroon-dark:     #6d1515;   /* :hover on maroon elements                        */
+    --gi-maroon-bg:       #fdf2f2;   /* hover rows in dropdowns                          */
+
+    /* Table header */
+    --gi-th-bg:           #dde3ec;   /* .customers-table thead tr background             */
+    --gi-th-color:        #2d3a4a;   /* .customers-table th  color                       */
+    --gi-th-border:       #8b9fb8;   /* .customers-table th  border-bottom               */
+
+    /* Table body */
+    --gi-td-border:       #f0f0f0;   /* .customers-table td  border-bottom               */
+    --gi-td-color:        #333;      /* .customers-table td  color                       */
+    --gi-row-hover-bg:    #f8f9ff;   /* .customers-table tbody tr:hover                  */
+
+    /* Dropdowns / submenus */
+    --gi-dd-bg:           #fff;
+    --gi-dd-radius:       8px;       /* .more-dropdown border-radius                     */
+    --gi-dd-shadow:       0 6px 24px rgba(0, 0, 0, 0.15);  /* .more-dropdown box-shadow */
+    --gi-dd-item-size:    13px;      /* .more-dropdown-item font-size                    */
+    --gi-dd-item-pad:     10px 16px; /* .more-dropdown-item padding                      */
+
+    /* Page chrome */
+    --gi-page-bg:         #f5f6fa;
+    --gi-header-bg:       #fff;
+    --gi-header-border:   #e9ecef;
+    --gi-title-color:     #333;
+    --gi-title-size:      16px;
+    --gi-title-weight:    600;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   1. TABLE BASE
+   Switch from border-collapse:collapse → separate+spacing:0.
+   Visually identical, but "separate" is required for
+   position:sticky on <th> to work reliably in Chrome/Safari.
+   ═══════════════════════════════════════════════════════════════ */
+.customers-table,
+.vendors-table,
+.bills-table,
+.orders-table,
+.receives-table,
+.returns-table,
+.payments-table,
+.credits-table,
+.invoices-table,
+.items-table,
+/* ── New pages (batch 2) ── */
+.receipts-table,
+.notes-table,
+.adjustments-table,
+.pkg-list-table,
+.shipments-table {
+    border-collapse: separate;
+    border-spacing:  0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   2. COLUMN HEADERS
+   Design tokens extracted from .customers-table th
+   ═══════════════════════════════════════════════════════════════ */
+.vendors-table       th,
+.bills-table         th,
+.orders-table        th,
+.receives-table      th,
+.returns-table       th,
+.payments-table      th,
+.credits-table       th,
+.invoices-table      th,
+.items-table  thead  th,
+.receipts-table      th,
+.notes-table         th,
+.adjustments-table   th,
+.pkg-list-table      th,
+.shipments-table     th,
+/* ── Batch 3: all other list-view tables ── */
+.customers-table     th,
+.groups-table        th {
+    background:      var(--gi-th-bg);
+    color:           var(--gi-th-color);
+    font-size:       11px;
+    font-weight:     700;
+    text-transform:  uppercase;
+    letter-spacing:  0.7px;
+    /* ═══════════════════════════════════════════════════════
+       CANONICAL HEIGHT — matches Inventory Adjustments:
+       .adjustments-table thead th { padding: 10px 14px }
+
+       NOTE: Only vertical padding is locked here.
+       Horizontal padding (left/right) is intentionally omitted
+       so that special columns like .gihon-th-filter and
+       .gihon-th-checkbox can keep their own padding:4px on
+       the sides without being overridden.
+       ═══════════════════════════════════════════════════════== */
+    padding-top:     10px    !important;
+    padding-bottom:  10px    !important;
+    border-bottom:   2px solid var(--gi-th-border);
+    box-shadow:      0 2px 0 var(--gi-th-border);
+    white-space:     nowrap;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   3. DATA CELLS
+   Harmonise row divider colour across all pages.
+   ═══════════════════════════════════════════════════════════════ */
+.vendors-table       td,
+.bills-table         td,
+.orders-table        td,
+.receives-table      td,
+.returns-table       td,
+.payments-table      td,
+.credits-table       td,
+.invoices-table      td,
+.items-table  tbody  td,
+.receipts-table      td,
+.notes-table         td,
+.adjustments-table   td,
+.pkg-list-table      td,
+.shipments-table     td {
+    border-bottom: 1px solid var(--gi-td-border);
+    color:         var(--gi-td-color);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   4. ROW HOVER
+   Subtle blue tint on hover — customers-table tbody tr:hover
+   uses background: #f8f9ff.
+   ═══════════════════════════════════════════════════════════════ */
+.vendors-table       tbody tr:hover,
+.bills-table         tbody tr:hover,
+.orders-table        tbody tr:hover,
+.receives-table      tbody tr:hover,
+.returns-table       tbody tr:hover,
+.payments-table      tbody tr:hover,
+.credits-table       tbody tr:hover,
+.invoices-table      tbody tr:hover,
+.items-table         tbody tr:hover,
+.receipts-table      tbody tr:hover,
+.notes-table         tbody tr:hover,
+.adjustments-table   tbody tr:hover,
+.pkg-list-table      tbody tr:hover,
+.shipments-table     tbody tr:hover {
+    background: var(--gi-row-hover-bg);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   5. IN-CELL ACTIONABLE LINKS
+   Brand maroon for all clickable record identifiers,
+   matching .customer-name-link on the master reference page.
+   ═══════════════════════════════════════════════════════════════ */
+.vendor-name-link,
+.inv-number-link,
+.order-number-link,
+.gihon-item-link,
+.bill-number-link,
+.po-number-link,
+.payment-number-link,
+.credit-note-link,
+.receive-number-link,
+.return-number-link,
+.link-blue,
+/* ── Batch 2 clickable identifiers ── */
+.receipt-num-link,   /* sales-receipts  */
+.payment-num-link,   /* payments-received */
+.rma-link,           /* sales-returns   */
+.cn-number-link,     /* credit-notes    */
+.header-link,        /* inventory-adjustments */
+.pkg-list-link,      /* packages        */
+.so-link,            /* packages → SO cross-link */
+.shipment-link,      /* shipments       */
+.ship-info-link      /* shipments (alt) */ {
+    color:           #1a1f3a;
+    text-decoration: none;
+    font-weight:     500;
+    cursor:          pointer;
+}
+
+.vendor-name-link:hover,
+.inv-number-link:hover,
+.order-number-link:hover,
+.gihon-item-link:hover,
+.bill-number-link:hover,
+.po-number-link:hover,
+.payment-number-link:hover,
+.credit-note-link:hover,
+.receive-number-link:hover,
+.return-number-link:hover,
+.link-blue:hover,
+.receipt-num-link:hover,
+.payment-num-link:hover,
+.rma-link:hover,
+.cn-number-link:hover,
+.header-link:hover,
+.pkg-list-link:hover,
+.so-link:hover,
+.shipment-link:hover,
+.ship-info-link:hover {
+    text-decoration: underline;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   6. CHECKBOX BRAND COLOUR
+   Accent all list-view checkboxes with the GiHon maroon.
+   ═══════════════════════════════════════════════════════════════ */
+.vendors-table       input[type="checkbox"],
+.bills-table         input[type="checkbox"],
+.orders-table        input[type="checkbox"],
+.receives-table      input[type="checkbox"],
+.returns-table       input[type="checkbox"],
+.payments-table      input[type="checkbox"],
+.credits-table       input[type="checkbox"],
+.invoices-table      input[type="checkbox"],
+.items-table         input[type="checkbox"],
+.receipts-table      input[type="checkbox"],
+.notes-table         input[type="checkbox"],
+.adjustments-table   input[type="checkbox"],
+.pkg-list-table      input[type="checkbox"],
+.shipments-table     input[type="checkbox"] {
+    accent-color: var(--gi-maroon);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   7. SORT-BY ACTIVE STATE  ← PRIMARY FIX
+   ═══════════════════════════════════════════════════════════════
+   SOURCE OF TRUTH: customers.html  .more-submenu-item.active
+       background: #8B1A1A;
+       color: white;
+       border-radius: 4px;
+       margin: 2px 6px;
+       padding: 10px 12px;
+       width: calc(100% - 12px);
+
+   We replicate this exact "maroon pill" highlight for every
+   variant class used by the other pages.
+   ─────────────────────────────────────────────────────────────── */
+
+/* 7a. bills / purchase-orders / purchase-receives /
+        purchase-returns / payments-made / vendor-credits
+   These pages all use .sort-sub-item. Their local CSS only makes
+   the active item bold with no colour change — we override here. */
+.sort-sub-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    font-weight:   700                   !important;
+    border-radius: 4px;
+    margin:        2px 6px;
+    padding:       10px 12px            !important;
+    width:         calc(100% - 12px);
+    box-sizing:    border-box;
+    display:       block;
+}
+
+/* Keep the sort-direction arrow white when inside an active pill */
+.sort-sub-item.active .sort-dir {
+    color: #fff;
+}
+
+/* Hover for inactive sort items — match customers .more-submenu-item:hover */
+.sort-sub-item:hover {
+    background: var(--gi-maroon-bg);    /* #fdf2f2 */
+    color:      #333;
+}
+
+/* Don't change the active pill's bg on hover */
+.sort-sub-item.active:hover {
+    background: var(--gi-maroon-dark) !important;   /* #6d1515 */
+}
+
+
+/* 7b. items.html uses .sort-option.selected
+   Local CSS sets background: #3b82f6 (blue) — override to maroon. */
+.sort-option.selected {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px;
+    margin:        2px 6px;
+    width:         calc(100% - 12px);
+    box-sizing:    border-box;
+}
+
+.sort-option.selected:hover {
+    background: var(--gi-maroon-dark) !important;
+}
+
+.sort-option:hover {
+    background: var(--gi-maroon-bg);
+}
+
+/* Keep sort arrow white inside a selected pill */
+.sort-option.selected .sort-arrow {
+    color: #fff;
+}
+
+
+/* 7c. invoices.html uses .inv-sort-active
+   The active button carries inline style="background:#4285f4".
+   !important is required to win over inline styles. */
+button.inv-sort-active,
+.inv-sort-item.inv-sort-active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 6px                   !important;
+}
+
+.inv-sort-item:hover:not(.inv-sort-active) {
+    background: var(--gi-maroon-bg) !important;
+    color:      #333                !important;
+}
+
+
+/* 7d. sales-orders.html uses .so-sort-item.active
+   Active item is set via JS inline styles; !important overrides them. */
+.so-sort-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px                   !important;
+    font-weight:   600                   !important;
+}
+
+/* Inactive items hover — Reuse maroon-bg */
+.so-sort-item:not(.active):hover {
+    background: var(--gi-maroon-bg)      !important;
+}
+
+
+/* 7e. vendors.html uses .vendor-kebab-sub-item.active
+   Already correct (uses #8B1A1A in its own CSS).
+   Reinforce to prevent any future drift. */
+.vendor-kebab-sub-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+}
+
+.vendor-kebab-sub-item.active .vendor-kebab-sort-dir {
+    color: #fff;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   8. DROPDOWN CONTAINER STANDARDIZATION
+   Match customers.html .more-dropdown and .more-submenu styling:
+       border-radius: 8px
+       box-shadow: 0 6px 24px rgba(0,0,0,0.15)
+       background: white
+   Applied to the widest set of class names found across pages.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* "More / ⋯" dropdown containers */
+.more-dropdown,
+.kebab-dropdown,
+.sort-submenu,
+.more-submenu,
+.hamburger-dropdown,
+.cust-filter-dropdown-menu,
+.title-dropdown-menu,
+.inv-sort-sub-wrap,
+#invSortSub,
+#soSortSubmenu,
+#sortSubmenu {
+    background:    var(--gi-dd-bg);
+    border-radius: var(--gi-dd-radius);
+    box-shadow:    var(--gi-dd-shadow);
+}
+
+/* Dropdown item base: font-size 13px, no border, bg none */
+.more-dropdown-item,
+.kebab-item,
+.sort-sub-item,
+.sort-option,
+.more-submenu-item,
+.hamburger-dropdown-item,
+.vendor-kebab-sub-item {
+    font-size:   var(--gi-dd-item-size);
+    font-weight: 400;
+}
+
+/* Highlighted/selected active item — generic catch-all:
+   any element inside a dropdown with `.active` that isn't
+   already handled above (future-proofing). */
+.kebab-dropdown .sort-sub-item.active,
+.sort-submenu .sort-option.selected {
+    background:    var(--gi-maroon)  !important;
+    color:         #fff              !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   9. PAGE TITLE FILTER DROPDOWN ACTIVE ITEM
+   customers.html: .title-dropdown-item.active → color:#8B1A1A; font-weight:600
+   Same pattern is used across pages with the same class name.
+   ═══════════════════════════════════════════════════════════════ */
+.title-dropdown-item.active {
+    color:       var(--gi-maroon) !important;
+    font-weight: 600              !important;
+}
+
+.title-dropdown-item:hover {
+    background: var(--gi-maroon-bg);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   10. BULK ACTION BAR — SELECTED COUNT COLOUR
+   customers.html: .bulk-count { color: #8B1A1A; font-weight:600 }
+   ═══════════════════════════════════════════════════════════════ */
+.bulk-count {
+    color:       var(--gi-maroon);
+    font-weight: 600;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   11. FILTER ICON / COLUMN SORTER HOVER
+   customers.html: .filter-icon:hover { color: #8B1A1A }
+                   .search-icon:hover { color: #8B1A1A }
+   Applied globally so all pages get the same maroon accent.
+   ═══════════════════════════════════════════════════════════════ */
+.filter-icon:hover,
+.search-icon:hover {
+    color: var(--gi-maroon);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   12. PAGE TITLE HOVER COLOUR
+   customers.html: .page-title:hover { color: #8B1A1A }
+   ═══════════════════════════════════════════════════════════════ */
+.page-title:hover {
+    color: var(--gi-maroon);
+}
+
+.dropdown-arrow {
+    color: var(--gi-maroon);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   13. SORT-BY ACTIVE STATE — BATCH 2 PAGES
+   ═══════════════════════════════════════════════════════════════
+
+   13a. payments-received.html  → .pr-sort-item.active
+        Current: background:#4285f4 (blue pill)
+        Fix: maroon pill to match customers.html .more-submenu-item.active
+   ─────────────────────────────────────────────────────────────── */
+.pr-sort-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px                   !important;
+}
+.pr-sort-item.active:hover {
+    background: var(--gi-maroon-dark)    !important;
+}
+.pr-sort-item:not(.active):hover {
+    background: var(--gi-maroon-bg);
+    color:      #333;
+}
+
+
+/* 13b. sales-returns.html  → .sr-sort-item.active
+        Current: background:#4285f4 (blue pill)  */
+.sr-sort-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px                   !important;
+}
+.sr-sort-item.active:hover {
+    background: var(--gi-maroon-dark)    !important;
+}
+.sr-sort-item:not(.active):hover {
+    background: var(--gi-maroon-bg);
+    color:      #333;
+}
+
+
+/* 13c. credit-notes.html  → .cn-sort-active  (button element)
+        Buttons carry inline styles — !important required.        */
+button.cn-sort-active,
+.cn-sort-item.cn-sort-active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 6px                   !important;
+    font-weight:   600;
+}
+.cn-sort-item:not(.cn-sort-active):hover {
+    background: var(--gi-maroon-bg)      !important;
+    color:      #333                     !important;
+}
+
+
+/* 13d. inventory-adjustments.html
+        The SORT uses .submenu-item (no active class — JS adds the arrow only).
+        We apply hover colour so it feels branded.
+        The FILTER uses .dropdown-item.selected (active filter pill).
+        Override both to maroon.                                   */
+.submenu-item:hover {
+    background: var(--gi-maroon-bg);
+    color:      var(--gi-maroon);
+}
+
+/* Filter pill (Adjustments filter dropdown — "All", "Draft", etc.) */
+.dropdown-item.selected {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+}
+/* When hovering any other row, un-highlight the selected pill only if
+   the parent is in a hover state — the page already handles this logic;
+   we just make the base selected state maroon. */
+.dropdown-menu:hover .dropdown-item.selected:not(.new-view) {
+    background: #fff                     !important;
+    color:      #333                     !important;
+}
+.dropdown-item:hover {
+    background: var(--gi-maroon-bg)      !important;
+    color:      #333;
+}
+
+
+/* 13e. packages.html  → .col-sort-item.active
+        Current: background:#4285f4 (blue pill)
+        .col-sort-item.active-secondary stays light (secondary sort)  */
+.col-sort-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px                   !important;
+}
+.col-sort-item.active:hover {
+    background: var(--gi-maroon-dark)    !important;
+}
+/* secondary sort: subtle maroon tint instead of the blue-tinted #e8eef7 */
+.col-sort-item.active-secondary {
+    background:    #f5e6e6               !important; /* very light maroon tint */
+    color:         var(--gi-maroon)      !important;
+    border-radius: 4px;
+}
+.col-sort-item:not(.active):not(.active-secondary):hover {
+    background: var(--gi-maroon-bg);
+    color:      #333;
+}
+
+
+/* 13f. shipments.html  → .ship-sort-submenu button.active
+        Current: color:#4285f4; font-weight:600 (text-only, no pill)
+        Upgrade to full maroon pill for consistency.               */
+.ship-sort-submenu button.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px                   !important;
+    font-weight:   700                   !important;
+    margin:        2px 6px;
+    padding:       10px 12px            !important;
+    width:         calc(100% - 12px)     !important;
+    box-sizing:    border-box;
+    display:       block;
+}
+.ship-sort-submenu button:not(.active):hover {
+    background: var(--gi-maroon-bg);
+    color:      #333;
+}
+
+
+/* 13g. sales-receipts.html  → .sort-submenu-item
+         No active state class currently applied via JS.
+         We style hover + add a general active support class
+         should it ever be toggled in future.                      */
+.sort-submenu-item:hover {
+    background:    var(--gi-maroon-bg);
+    color:         var(--gi-maroon);
+}
+.sort-submenu-item.active {
+    background:    var(--gi-maroon)      !important;
+    color:         #fff                  !important;
+    border-radius: 4px;
+    margin:        2px 6px;
+    padding:       10px 12px            !important;
+    width:         calc(100% - 12px);
+    box-sizing:    border-box;
+    display:       block;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   14. ROW STRIPING — SUBTLE ODD/EVEN CONTRAST
+   Customers page doesn't use nth-child striping, just hover.
+   Most other pages also rely on hover. We add a very subtle
+   alternating background (nearly invisible, ≈ the #f8f9ff
+   hover value) so dense tables have scannable rows.
+   Using :nth-child(even) to leave odd rows white.
+   ═══════════════════════════════════════════════════════════════ */
+.receipts-table    tbody tr:nth-child(even),
+.notes-table       tbody tr:nth-child(even),
+.adjustments-table tbody tr:nth-child(even),
+.pkg-list-table    tbody tr:nth-child(even),
+.shipments-table   tbody tr:nth-child(even) {
+    background: #fafbfe;   /* almost-white blue-tint stripe */
+}
+
+/* Hover overrides stripe (already defined in section 4, repeating
+   here with the same specificity to ensure row-stripe doesn't
+   win over hover) */
+.receipts-table    tbody tr:hover,
+.notes-table       tbody tr:hover,
+.adjustments-table tbody tr:hover,
+.pkg-list-table    tbody tr:hover,
+.shipments-table   tbody tr:hover {
+    background: var(--gi-row-hover-bg) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   15. CELL PADDING HARMONIZATION
+   Reference: .customers-table td { padding: 10px 14px; font-size: 13px; }
+   Applied to all batch-2 tables to match exactly.
+   ═══════════════════════════════════════════════════════════════ */
+.receipts-table    td,
+.notes-table       td,
+.adjustments-table td,
+.pkg-list-table    td,
+.shipments-table   td {
+    padding:   10px 14px;
+    font-size: 13px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   16. SELECTED ROW STATE  (checkbox-selected rows)
+   When a row checkbox is checked, highlight with a very light
+   maroon tint — consistent with the customers page behavior.
+   ═══════════════════════════════════════════════════════════════ */
+.receipts-table    tbody tr.selected-row,
+.notes-table       tbody tr.selected-row,
+.adjustments-table tbody tr.selected-row,
+.pkg-list-table    tbody tr.selected-row,
+.shipments-table   tbody tr.selected-row,
+.vendors-table     tbody tr.selected-row,
+.bills-table       tbody tr.selected-row,
+.orders-table      tbody tr.selected-row,
+.returns-table     tbody tr.selected-row,
+.payments-table    tbody tr.selected-row,
+.credits-table     tbody tr.selected-row,
+.invoices-table    tbody tr.selected-row {
+    background: #fdf2f2;   /* var(--gi-maroon-bg) */
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   17. CONTEXTUAL BULK ACTION BAR
+   ═══════════════════════════════════════════════════════════════
+   Implements the "header swap" visual design — when rows are
+   selected, the bulk bar replaces the page-header in-place,
+   using the same blue-grey background as the table column
+   headers so it reads as part of a unified header band.
+   SOURCE OF TRUTH: customers.html table header + action bar.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Base: ALL bulk bars share the same visual band ── */
+.sr-bulk-bar.show,
+.pr-bulk-bar.show,
+.cn-bulk-bar.active,
+.bulk-action-bar.show,
+.ship-sel-bar.show {
+    display:       flex         !important;
+    background:    var(--gi-th-bg)            !important;   /* #dde3ec */
+    border-bottom: 2px solid var(--gi-th-border) !important; /* #8b9fb8 */
+    box-shadow:    0 2px 0 var(--gi-th-border)   !important;
+    align-items:   center;
+    padding:       0 20px;
+    min-height:    57px;        /* matches page-header height */
+    gap:           8px;
+    box-sizing:    border-box;
+}
+
+/* ── Selection count: maroon + bold ── */
+.sr-bulk-count,
+.pr-bulk-count,
+.cn-bulk-count,
+.selected-count,
+.ship-sel-spacer ~ span,
+#shipSelCount {
+    color:       var(--gi-maroon);
+    font-weight: 700;
+    font-size:   13px;
+}
+
+/* Wrap the count in a span for shipments */
+.ship-sel-count {
+    color:       var(--gi-maroon);
+    font-weight: 700;
+    font-size:   13px;
+}
+
+/* ── Action buttons: clean white pill, maroon on hover ── */
+.sr-bulk-btn,
+.pr-bulk-btn,
+.cn-bulk-btn,
+.ship-sel-icon-btn,
+.ship-sel-action-btn,
+.btn-bulk-delete,
+.btn-bulk-deselect {
+    background:    white;
+    border:        1px solid #c8d0da;
+    border-radius: 4px;
+    padding:       5px 12px;
+    font-size:     12px;
+    font-weight:   500;
+    color:         #444;
+    cursor:        pointer;
+    display:       inline-flex;
+    align-items:   center;
+    gap:           5px;
+    transition:    border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.sr-bulk-btn:hover,
+.pr-bulk-btn:hover,
+.cn-bulk-btn:hover,
+.ship-sel-icon-btn:hover,
+.ship-sel-action-btn:hover,
+.btn-bulk-delete:hover,
+.btn-bulk-deselect:hover {
+    border-color: var(--gi-maroon);
+    color:        var(--gi-maroon);
+    background:   var(--gi-maroon-bg);
+}
+
+/* Icon-only buttons (Print / PDF icons) */
+.sr-bulk-btn.icon-only,
+.pr-bulk-btn.icon-only,
+.ship-sel-icon-btn {
+    padding: 5px 8px;
+}
+
+/* ── Danger / delete buttons: maroon text ── */
+.sr-bulk-more-item.danger,
+.pr-bulk-more-item.danger,
+.cn-bulk-more-item.danger,
+.btn-bulk-delete,
+.ship-sel-action-btn {
+    color:       var(--gi-maroon) !important;
+    font-weight: 600;
+}
+
+/* ── Close / Escape / X button ── */
+.sr-bulk-close,
+.pr-bulk-close,
+.cn-bulk-close,
+.ship-sel-close,
+.sr-bulk-esc,
+.pr-bulk-esc {
+    margin-left:   auto;
+    background:    none;
+    border:        none;
+    font-size:     16px;
+    color:         #777;
+    cursor:        pointer;
+    border-radius: 4px;
+    padding:       4px 8px;
+    line-height:   1;
+}
+
+.sr-bulk-close:hover,
+.pr-bulk-close:hover,
+.cn-bulk-close:hover,
+.ship-sel-close:hover,
+.sr-bulk-esc:hover,
+.pr-bulk-esc:hover {
+    color:      var(--gi-maroon);
+    background: var(--gi-maroon-bg);
+}
+
+/* ── Spacer (pushes close button to far right) ── */
+.ship-sel-spacer,
+.sr-bulk-spacer,
+.pr-bulk-spacer,
+.cn-bulk-spacer {
+    flex: 1;
+}
+
+/* ── Vertical separator between button groups ── */
+.sr-bulk-sep,
+.pr-bulk-sep,
+.cn-bulk-sep,
+.adj-bulk-sep {
+    width:      1px;
+    height:     24px;
+    background: #b0baca;
+    margin:     0 2px;
+    flex-shrink: 0;
+}
+
+/* ── Dropdown more-menus inside bulk bars ── */
+.sr-bulk-more-menu,
+.pr-bulk-more-menu,
+.cn-bulk-more-menu {
+    background:    white;
+    border:        1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow:    0 4px 16px rgba(0,0,0,0.12);
+    padding:       4px 0;
+    min-width:     160px;
+    z-index:       9999;
+}
+
+.sr-bulk-more-item,
+.pr-bulk-more-item,
+.cn-bulk-more-item {
+    padding:     9px 16px;
+    font-size:   13px;
+    color:       #333;
+    cursor:      pointer;
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+}
+
+.sr-bulk-more-item:hover,
+.pr-bulk-more-item:hover,
+.cn-bulk-more-item:hover {
+    background: var(--gi-maroon-bg);
+    color:      var(--gi-maroon);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   18. CONTEXTUAL BULK BAR — ITEMS-PAGE STYLE OVERRIDE
+   ═══════════════════════════════════════════════════════════════
+   Overrides Section 17 (blue-grey) and ALL existing page bulk
+   bars to match the Items page (.bulk-action-toolbar) design:
+   white background, subtle shadow, outline action buttons,
+   red danger button, numeric "Selected" count badge.
+   Applies to all pages: Customers, Vendors, Bills, Payments Made,
+   Purchase Returns, Vendor Credits, Item Groups, Packages.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Universal bulk bar container reset ── */
+.bulk-action-bar.show,
+.bulk-actions-bar.show,
+.bulk-actions-bar.active,
+.ig-selection-bar.show,
+.pkg-selection-bar.show,
+/* Section 17 bars also switch to white */
+.sr-bulk-bar.show,
+.pr-bulk-bar.show,
+.cn-bulk-bar.active,
+.bulk-action-bar.show,
+.ship-sel-bar.show {
+    display:         flex        !important;
+    background:      #ffffff     !important;
+    border-bottom:   1px solid #e8e8e8 !important;
+    box-shadow:      0 2px 8px rgba(0,0,0,0.06) !important;
+    min-height:      64px        !important;
+    padding:         0 24px      !important;
+    align-items:     center      !important;
+    gap:             12px        !important;
+    box-sizing:      border-box  !important;
+    width:           100%        !important;
+    position:        sticky      !important;
+    top:             0           !important;
+    z-index:         200         !important;
+}
+
+/* ── Action buttons — outline style (matches .bulk-action-btn) ── */
+.bulk-action-bar .bulk-btn,
+.bulk-actions-bar .bulk-btn,
+.bulk-actions-bar .bulk-action-btn,
+.ig-selection-bar .sel-btn,
+.pkg-selection-bar .pkg-sel-action-btn,
+.pkg-selection-bar .pkg-sel-icon-btn,
+.bulk-action-bar button:not(.bulk-close):not(.bulk-esc),
+.bulk-actions-bar button:not(.bulk-close):not(.bulk-esc) {
+    padding:       8px 16px;
+    background:    white;
+    border:        1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size:     13px;
+    font-weight:   500;
+    color:         #374151;
+    cursor:        pointer;
+    transition:    all 0.2s ease;
+    white-space:   nowrap;
+    display:       inline-flex;
+    align-items:   center;
+    gap:           5px;
+}
+
+.bulk-action-bar .bulk-btn:hover,
+.bulk-actions-bar .bulk-btn:hover,
+.bulk-actions-bar .bulk-action-btn:hover,
+.ig-selection-bar .sel-btn:hover,
+.pkg-selection-bar .pkg-sel-action-btn:hover,
+.pkg-selection-bar .pkg-sel-icon-btn:hover,
+.bulk-action-bar button:not(.bulk-close):not(.bulk-esc):hover,
+.bulk-actions-bar button:not(.bulk-close):not(.bulk-esc):hover {
+    background:    #f3f4f6;
+    border-color:  #d1d5db;
+}
+
+/* ── Print / icon-only buttons ── */
+.bulk-action-bar .bulk-btn-print,
+.bulk-actions-bar .bulk-btn-print,
+.pkg-selection-bar .pkg-sel-icon-btn {
+    padding: 8px 10px;
+}
+
+/* ── Danger / Delete buttons — red fill ── */
+.bulk-action-bar .bulk-btn-delete,
+.bulk-action-bar .bulk-btn-danger,
+.bulk-actions-bar .bulk-btn-delete,
+.bulk-actions-bar .bulk-btn-danger,
+.ig-selection-bar .sel-btn-delete,
+.ig-selection-bar .sel-btn-danger,
+.pkg-selection-bar .pkg-sel-action-btn[onclick*="Delete"],
+.pkg-selection-bar .pkg-sel-action-btn[onclick*="delete"],
+/* Section 17 bars */
+.sr-bulk-bar .sr-bulk-more-item.danger,
+.pr-bulk-bar .pr-bulk-more-item.danger,
+.cn-bulk-bar .cn-bulk-more-item.danger,
+.bulk-action-bar.show .btn-bulk-delete,
+.ship-sel-bar .ship-sel-action-btn {
+    background:   #ef4444 !important;
+    border-color: #ef4444 !important;
+    color:        white   !important;
+    font-weight:  600;
+}
+
+.bulk-action-bar .bulk-btn-delete:hover,
+.bulk-action-bar .bulk-btn-danger:hover,
+.bulk-actions-bar .bulk-btn-delete:hover,
+.bulk-actions-bar .bulk-btn-danger:hover {
+    background:   #dc2626 !important;
+    border-color: #dc2626 !important;
+}
+
+/* ── Count / "X Selected" badge ── */
+.bulk-action-bar .bulk-count,
+.bulk-actions-bar .bulk-count,
+.bulk-action-count,
+.ig-selection-bar .ig-sel-count,
+.pkg-selection-bar .pkg-sel-count,
+.bulk-action-bar .bulk-selected-label,
+.bulk-actions-bar .bulk-selected-label {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           5px;
+    font-size:     13px;
+    color:         #374151;
+    font-weight:   500;
+}
+
+/* Count number bubble */
+.bulk-action-bar .bulk-count-num,
+.bulk-actions-bar .bulk-sel-num,
+.bulk-action-count-number,
+#pkgSelCount,
+#igSelCount {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    min-width:       22px;
+    height:          22px;
+    padding:         0 5px;
+    background:      #3b82f6;
+    color:           white;
+    border-radius:   11px;
+    font-size:       12px;
+    font-weight:     700;
+    line-height:     1;
+}
+
+/* ── Divider / Separator ── */
+.bulk-action-bar .bulk-divider,
+.bulk-actions-bar .bulk-divider,
+.bulk-actions-bar .bulk-sep,
+.pkg-selection-bar .pkg-sel-divider {
+    width:      1px;
+    height:     28px;
+    background: #e5e7eb;
+    margin:     0 4px;
+    flex-shrink:0;
+}
+
+/* ── Spacer (pushes count to right) ── */
+.bulk-action-bar .bulk-spacer,
+.bulk-actions-bar .bulk-spacer,
+.pkg-selection-bar .pkg-sel-spacer {
+    flex: 1;
+}
+
+/* ── Close / Escape button ── */
+.bulk-action-bar .bulk-close,
+.bulk-actions-bar .bulk-close,
+.ig-selection-bar .ig-sel-close,
+.pkg-selection-bar .pkg-sel-esc {
+    background:    none;
+    border:        none;
+    font-size:     18px;
+    color:         #9ca3af;
+    cursor:        pointer;
+    padding:       4px 8px;
+    border-radius: 4px;
+    line-height:   1;
+    margin-left:   auto;
+}
+
+.bulk-action-bar .bulk-close:hover,
+.bulk-actions-bar .bulk-close:hover,
+.ig-selection-bar .ig-sel-close:hover,
+.pkg-selection-bar .pkg-sel-esc:hover {
+    color:      #ef4444;
+    background: #fef2f2;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   19. GLOBAL TH PADDING LOCK — "Inventory Adjustments" standard
+   ═══════════════════════════════════════════════════════════════
+   The canonical height is defined in inventory-adjustments.html:
+       .adjustments-table thead th { padding: 10px 14px }
+
+   Some pages (e.g. customers.html) set padding: 9px 14px in their
+   own <style> block which loads BEFORE this file, so the rule
+   above in Section 2 already wins at equal specificity.
+   However, customers.html also applies a direct .customers-table th
+   rule in-page. The !important in Section 2 above covers it, but
+   this catch-all below serves as a belt-and-suspenders override
+   for any new module added in the future that ships with a
+   different vertical padding.
+
+   ZERO SIDE-EFFECTS GUARANTEE:
+   • Only padding-top and padding-bottom are locked.
+   • Left/right padding (14px), font sizes, colors, column widths
+     are intentionally NOT touched here.
+   • Horizontal icon alignment inside <th> is unaffected because
+     10px vertical padding matches the existing majority value.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Belt-and-suspenders: target every known list-view th directly */
+.customers-table th,
+.vendors-table th,
+.bills-table th,
+.orders-table th,
+.receives-table th,
+.returns-table th,
+.payments-table th,
+.credits-table th,
+.invoices-table th,
+.items-table thead th,
+.receipts-table th,
+.notes-table th,
+.adjustments-table th,
+.pkg-list-table th,
+.shipments-table th,
+.groups-table th {
+    padding-top:    10px !important;
+    padding-bottom: 10px !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   20. GLOBAL LIST-STYLE KILL — browser bullet-dot bug fix
+   ═══════════════════════════════════════════════════════════════
+   Some browsers (Chrome observed in items.html) render a
+   bullet (•) character inside <th> and <td> cells when the
+   browser UA stylesheet applies list-style to table elements.
+   This happened on the Items page checkbox column header.
+
+   The inventory-adjustments.html page already had a local fix:
+       .adjustments-table th { list-style: none !important; }
+   We apply it globally here for all list-view tables.
+   ═══════════════════════════════════════════════════════════════ */
+.customers-table th, .customers-table td,
+.vendors-table th,   .vendors-table td,
+.bills-table th,     .bills-table td,
+.orders-table th,    .orders-table td,
+.receives-table th,  .receives-table td,
+.returns-table th,   .returns-table td,
+.payments-table th,  .payments-table td,
+.credits-table th,   .credits-table td,
+.invoices-table th,  .invoices-table td,
+.items-table th,     .items-table td,
+.receipts-table th,  .receipts-table td,
+.notes-table th,     .notes-table td,
+.adjustments-table th, .adjustments-table td,
+.pkg-list-table th,  .pkg-list-table td,
+.shipments-table th, .shipments-table td,
+.groups-table th,    .groups-table td {
+    list-style:      none !important;
+    list-style-type: none !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   21. HAMBURGER / COLUMN-SETTINGS DROPDOWN — GLOBAL CLIP FIX
+   ═══════════════════════════════════════════════════════════════
+   ROOT CAUSE — three-layer overflow stacking chain:
+
+     Layer 1 → scroll container (e.g. .bills-container)
+               overflow-y: auto; overflow-x: auto;
+               Any position:absolute child is clipped at the
+               container boundary UNLESS it has a stacking context
+               that escapes the clip chain.
+
+     Layer 2 → <th> base rule (e.g. .bills-table th)
+               overflow: hidden   ← clips the dropdown directly
+               text-overflow: ellipsis
+
+     Layer 3 → .hamburger-wrap { position: relative }
+               .hamburger-dropdown { position: absolute; top: 100% }
+               z-index: 100 on the dropdown is meaningless when the
+               parent th already has overflow:hidden — z-index only
+               controls painting order, NOT overflow clipping.
+
+   FIX STRATEGY:
+   ─────────────────────────────────────────────────────────────
+   • The <th> that CONTAINS .hamburger-wrap must have
+     overflow: visible so the absolutely-positioned dropdown
+     is not scissored by the cell boundary.
+
+   • .hamburger-wrap needs overflow: visible to propagate the
+     escape up the stacking context chain.
+
+   • .hamburger-dropdown gets z-index: 500 — safely above the
+     sticky thead z-index (10) and all table content (1), but
+     well below global modals (z-index:5000) and the sidebar.
+
+   • We do NOT touch the scroll container's overflow because
+     that would break the table's horizontal/vertical scrolling.
+     The dropdown escapes via the stacking context, not via
+     changing overflow on the scroll wrapper.
+
+   WHY :has() WORKS:
+   Using :has(.hamburger-wrap) targets ONLY the first <th>
+   (the one containing the icon) — no other th cells are
+   affected, so text truncation (overflow:hidden + text-overflow)
+   on all other headers is fully preserved.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Layer 2 fix: only the th that CONTAINS the hamburger wrap ── */
+/* :has() is supported in Chrome 105+, Edge 105+, Safari 15.4+   */
+th:has(> .hamburger-wrap),
+th:has(> .filter-dropdown-container),
+th:has(> .gihon-filter-icon) {
+    overflow: visible !important;
+}
+
+/* ── Fallback for older browsers: the wrap's own class-names ──  */
+/* These classes are always direct children of the th             */
+.hamburger-wrap,
+.filter-dropdown-container {
+    position:   relative;
+    overflow:   visible !important;  /* prevents clip from propagating up */
+    display:    inline-flex;
+    align-items: center;
+}
+
+/* ── The dropdown panel itself ── */
+.hamburger-dropdown,
+.cust-filter-dropdown,
+.filter-dropdown-menu {
+    position:   absolute;
+    z-index:    500 !important;  /* above sticky thead (z:10), below modals (z:5000) */
+    overflow:   visible !important;
+}
+
+/* ── Ensure the icon button is also not clipped ── */
+.cust-filter-icon {
+    overflow: visible !important;
+    position: relative;
+}
