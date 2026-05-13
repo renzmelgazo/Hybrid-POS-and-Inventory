@@ -1,0 +1,203 @@
+/* ===== Authorization Modal (GiHon Branded — Reusable Component) ===== */
+.auth-pw-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-pw-overlay.active {
+    display: flex;
+}
+
+.auth-pw-modal {
+    background: white;
+    border-radius: 12px;
+    width: 380px;
+    max-width: 90vw;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: authPwSlideIn 0.25s ease-out;
+}
+
+@keyframes authPwSlideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-pw-header {
+    background: linear-gradient(135deg, #8e1616, #d84040);
+    padding: 20px 24px;
+    text-align: center;
+}
+
+.auth-pw-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.auth-pw-header p {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+}
+
+.auth-pw-body {
+    padding: 24px;
+}
+
+.auth-pw-user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.auth-pw-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8e1616, #d84040);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.auth-pw-user-info {
+    flex: 1;
+}
+
+.auth-pw-user-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+
+.auth-pw-user-role {
+    font-size: 11px;
+    color: #666;
+}
+
+.auth-pw-input-group {
+    position: relative;
+}
+
+.auth-pw-input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.auth-pw-input {
+    width: 100%;
+    padding: 10px 40px 10px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.auth-pw-input:focus {
+    outline: none;
+    border-color: #8e1616;
+}
+
+.auth-pw-toggle {
+    position: absolute;
+    right: 12px;
+    top: 34px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    padding: 2px;
+    line-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.auth-pw-toggle:hover {
+    color: #555;
+}
+
+.auth-pw-toggle svg {
+    display: block;
+}
+
+.auth-pw-error {
+    display: none;
+    color: #dc2626;
+    font-size: 11px;
+    margin-top: 6px;
+}
+
+.auth-pw-error.show {
+    display: block;
+}
+
+.auth-pw-footer {
+    display: flex;
+    gap: 10px;
+    padding: 0 24px 24px;
+}
+
+.auth-pw-btn-cancel {
+    flex: 1;
+    padding: 10px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #333;
+    transition: background 0.2s;
+}
+
+.auth-pw-btn-cancel:hover {
+    background: #e5e5e5;
+}
+
+.auth-pw-btn-confirm {
+    flex: 1;
+    padding: 10px;
+    background: linear-gradient(135deg, #8e1616, #d84040);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.auth-pw-btn-confirm:hover {
+    opacity: 0.9;
+}
+
+.auth-pw-btn-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

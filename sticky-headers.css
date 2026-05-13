@@ -1,0 +1,37 @@
+/* ============================================
+   STICKY HEADERS — Global Utility Styles
+   Keeps table headers fixed when scrolling 
+   within a container.
+   ============================================ */
+
+/* Table with sticky header support */
+.sticky-table-wrap {
+    overflow-y: auto;
+    overflow-x: auto;
+    position: relative;
+}
+
+.sticky-table-wrap table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+/* Make thead sticky inside its scroll container */
+.sticky-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #fff;
+}
+
+/* Sticky column (first column) */
+.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: #fff;
+}
+
+thead .sticky-col {
+    z-index: 15;
+}

@@ -1,0 +1,83 @@
+/* Report Export Dropdown Styles */
+.export-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.export-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    min-width: 280px;
+    z-index: 9999;
+    padding: 6px 0;
+    margin-top: 4px;
+}
+
+.export-dropdown.show {
+    display: block;
+}
+
+.export-dropdown-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 16px 6px;
+    width: auto;
+    height: auto;
+    display: block;
+    background: none;
+    border: none;
+    text-align: left;
+}
+
+.export-dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: auto !important;
+    text-align: left !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 9px 16px !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    cursor: pointer !important;
+    font-family: inherit !important;
+    font-weight: 400 !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.export-dropdown-item svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.export-dropdown-item:hover {
+    background: #2563eb !important;
+    color: #fff !important;
+}
+
+.export-dropdown-item:hover svg {
+    opacity: 1;
+}
+
+.export-dropdown-divider {
+    border-top: 1px solid #e8e8e8;
+    margin: 4px 0;
+}

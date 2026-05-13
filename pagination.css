@@ -1,0 +1,89 @@
+/* ============================================
+   GLOBAL PAGINATION STYLES
+   ============================================ */
+
+/* Add space at the bottom of content so rows aren't hidden behind fixed pagination */
+/* Add space at the bottom of content */
+[id$="PaginationContainer"] {
+    margin-top: 24px;
+    padding-bottom: 24px;
+    width: 100%;
+}
+
+.pagination-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 16px 0;
+    gap: 12px;
+    font-size: 13px;
+    color: #555;
+    background: transparent;
+    z-index: 10;
+    border-top: 1px solid #e2e8f0;
+}
+
+.pagination-info {
+    margin-right: 16px;
+    font-size: 13px;
+    color: #888;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+    background: linear-gradient(135deg, rgba(216, 64, 64, 0.1) 0%, rgba(142, 22, 22, 0.1) 100%);
+    border-color: #d84040;
+    color: #8e1616;
+}
+
+.pagination-btn.active {
+    background: linear-gradient(135deg, #b22828 0%, #6b0000 100%) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(128, 0, 0, 0.3) !important;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-btn.nav-btn {
+    font-size: 12px;
+    padding: 0 10px;
+    font-weight: 500;
+}
+
+.pagination-ellipsis {
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 14px;
+}
